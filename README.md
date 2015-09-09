@@ -1,6 +1,6 @@
 # Angelix #
 
-Semantics-based automated program repair tool for C programs. Angelix fixes bugs manifested by failing test cases by modifying side-effect free program expressions. It searches for the minimal possible change in order to preserve original source code. Angelix is powered by KLEE symbolic execution engine and Z3 SMT solver.
+Semantics-based automated program repair tool for C programs. Angelix fixes bugs manifested by failing test cases by modifying side-effect free program expressions. It searches for the minimal change in order to preserve the original source code. Powered by KLEE symbolic execution engine and Z3 SMT solver.
 
 ## Prerequisites ##
 
@@ -73,7 +73,10 @@ Output values are specified by wrapping them with `ANGELIX` macro:
 
 The following types are supported for output expressions:
 
-    int bool char str (null-terminated string)
+    int
+    bool
+    char
+    str (null-terminated string)
 
 ### Test model ###
 
@@ -84,8 +87,9 @@ To abstract over test framework, we use the following format (tests JSON databas
             "id": "test1",
             "executable": "tests/test1.exe",
             "arguments": "-a 1 -b 2",
-            "build-cmd": "make test1",        # optional, if not provided assume that already built
-            "build-dir": "tests"              # optional, source root by default
+            "build": {                       # optional
+                "command": "make test1",
+                "directory": "tests"
             }
         },
         ...
@@ -93,11 +97,11 @@ To abstract over test framework, we use the following format (tests JSON databas
 
 _oracle_ - an executable that takes test identifier as the only argument and terminates with `0` exit code if and only if the corresponding test passes.
 
-Angelix dumps output variables values for each test case. Extracted information is stored in dump files:
+Angelix dumps output values for each test case. Extracted information is stored in dump files:
 
     dump/test1/x/2
 
-where `x` is an output id, `2` is its execution instance.
+where `x` is output id, `2` is its execution instance.
 
 ## Contributors ##
 
