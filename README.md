@@ -87,8 +87,8 @@ To abstract over test framework, we use the following format (tests JSON databas
             "id": "test1",
             "executable": "tests/test1.exe",
             "arguments": "-a 1 -b 2",
-            "build": {                       # optional
-                "command": "make test1",
+            "make": {                         # optional
+                "arguments": "test1",
                 "directory": "tests"
             }
         },

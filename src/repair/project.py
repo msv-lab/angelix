@@ -57,7 +57,7 @@ class Backend(Project):
         pass
 
 
-class Correct(Project):
+class Golden(Project):
 
     def build(self):
         pass

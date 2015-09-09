@@ -14,10 +14,10 @@ from compilation import Builder
 class Repair:
 
     def __init__(self, source, buggy, oracle, tests,
-                 correct_source=None, correct_dump=None, make_args='', config=None):
-        if not(correct_source is None) and not(correct_dump is None) \
-           or correct_source is None and correct_dump is None:
-            raise Exception("error: correct source or correct dump must be provided (exclusively)")
+                 golden=None, dump=None, make_args='', config=None):
+        if not(golden is None) and not(dump is None) \
+           or golden is None and dump is None:
+            raise Exception("error: golden source or correct dump must be provided (exclusively)")
 
         defaults = os.path.join(os.environ['ANGELIX_ROOT'], 'defaults.cfg')
         self.config = configparser.ConfigParser()
@@ -53,20 +53,21 @@ class Repair:
         init_repair_source(source, backend_dir)
         self.backend_source = Backend(backend_dir, buggy, make_args, tests_spec)
         
-        if correct_source is None:
-            self.correct_source = None
+        if golden is None:
+            self.golden_source = None
         else:
-            correct_dir = os.path.join(working_dir, "correct")
-            init_repair_source(correct_source, correct_dir)
-            self.correct_source = Correct(correct_dir, buggy, make_args, tests_spec)
+            golden_dir = os.path.join(working_dir, "golden")
+            init_repair_source(golden, golden_dir)
+            self.golden_source = Golden(golden_dir, buggy, make_args, tests_spec)
 
-        if correct_dump is None:
+        if dump is None:
             self.correct_dump = None
         else:
             self.correct_dump = os.path.join(working_dir, 'correct-dump')
-            shutil.copytree(correct_dump, self.correct_dump)
+            shutil.copytree(dump, self.correct_dump)
 
-        os.mkdir(os.path.join(working_dir, 'dump'))
+        self.dump = os.path.join(working_dir, 'dump')
+        os.mkdir(self.dump)
 
     def generate(self):
         self.meta = dict()
@@ -87,8 +88,8 @@ if __name__ == "__main__":
     parser.add_argument('--buggy', metavar='FILE', help='relative path to buggy file', required=True)
     parser.add_argument('--oracle', metavar='FILE', help='oracle script', required=True)
     parser.add_argument('--tests', metavar='FILE', help='tests JSON database', required=True)
-    parser.add_argument('--correct-source', metavar='DIR', help='correct source directory')
-    parser.add_argument('--correct-dump', metavar='DIR', help='correct dump for failing test cases')
+    parser.add_argument('--golden', metavar='DIR', help='golden source directory')
+    parser.add_argument('--dump', metavar='DIR', help='correct dump for failing test cases')
     parser.add_argument('--make-args', metavar='ARGS', default='', help='make arguments')
     parser.add_argument('--config', help='configuration file')
     
@@ -98,8 +99,8 @@ if __name__ == "__main__":
                     buggy = args.buggy,
                     oracle = args.oracle,
                     tests = args.tests,
-                    correct_source = args.correct_source,
-                    correct_dump = args.correct_dump,
+                    golden = args.golden,
+                    dump = args.dump,
                     make_args = args.make_args,
                     config = args.config)
 
