@@ -1,0 +1,64 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+# Supported instructions:
+#
+# llvm.memory.barrier
+# llvm.atomic.load.*
+# llvm.atomic.cmp.swap
+# llvm.objectsize.*
+
+my $bc_file = $ARGV[0];
+(my $ll_file = $bc_file) =~ s/\.bc$/.ll/;
+
+system("llvm-dis $bc_file -o $ll_file");
+
+(my $new_ll_file = $bc_file) =~ s/\.bc$/.patched.ll/;
+(my $new_bc_file = $bc_file) =~ s/\.bc$/.patched.bc/;
+
+open my $in,  '<', $ll_file or die "Can't read old file: $!";
+open my $out, '>', $new_ll_file or die "Can't write new file: $!";
+
+my $linenumber = 0;
+while( <$in> ) {
+		$linenumber = $linenumber + 1;
+		if (/.*llvm\.memory\.barrier.*/) {
+				print "[af-patch-bc] patching llvm.memory.barrier at line $linenumber\n";
+				print $out "; [disabled] $_";
+		} elsif (/%(\d+)\s=\scall\s(\w+)\s\@llvm\.atomic\.load\.(\w+)\..*\(\w+\*\s(%?\w+),\s\w+\s(%?-?\w+)\)/) {
+				print $out "; [begin] $_";
+				my ($var, $type, $op, $ptr, $delta) = ($1, $2, $3, $4, $5);
+				print "patching llvm.atomic.load.${op} at line $linenumber\n";
+				print $out "  %${var} = load ${type}* ${ptr}\n";
+				print $out "  %aux${var} = ${op} ${type} %${var}, ${delta}\n";
+				print $out "  store ${type} %aux${var}, ${type}* ${ptr}\n";
+				print $out "; [end]\n";
+		} elsif (/%(\d+)\s=\scall\s(\w+)\s\@llvm\.atomic\.cmp\.swap\..*\(\w+\*\s(%?\w+),\s\w+\s(%?-?\w+)\,\s\w+\s(%?-?\w+)\)/) {
+				print "[af-patch-bc] patching llvm.atomic.cmp.swap at line $linenumber\n";
+				print $out "; [begin] $_";
+				my ($var, $type, $ptr, $cmp, $val) = ($1, $2, $3, $4, $5);
+				print $out "  %${var} = load ${type}* ${ptr}\n";
+				print $out "  %cond${var} = icmp eq ${type} %${var}, ${cmp}\n";
+				print $out "  br i1 %cond${var}, label %IfEqual${var}, label %IfUnequal${var}\n";
+				print $out "IfEqual${var}:\n";
+				print $out "  store ${type} ${val}, ${type}* ${ptr}\n";
+				print $out "  br label %Finish${var}\n";
+				print $out "IfUnequal${var}:\n";
+				print $out "  br label %Finish${var}\n";
+				print $out "Finish${var}:\n";
+				print $out "; [end]\n";
+		} elsif (/%(\d+)\s=\scall\s(\w+)\s\@llvm\.objectsize\..*/) {
+				print "[af-patch-bc] patching llvm.objectsize at line $linenumber\n";
+				print $out "; [begin] $_";
+				my ($var, $type) = ($1, $2);
+				print $out "  %${var} = sub ${type} 0, 1\n";
+				print $out "; [end]\n";
+		} else {
+				print $out $_;
+		}
+}
+
+close $out;
+
+system("llvm-as $new_ll_file -o $new_bc_file");

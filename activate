@@ -1,0 +1,49 @@
+if [[ `uname -m` != "x86_64" ]]; then
+    echo "Error: Angelix supports only x86_64"
+    exit 1
+fi
+
+export ANGELIX_ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+# locations of submodules:
+
+export LLVM_GCC_DIR="$ANGELIX_ROOT/build/llvm-gcc4.2-2.9-x86_64-linux"
+export LLVM2_DIR="$ANGELIX_ROOT/build/llvm-2.9"
+export LLVM3_DIR="$ANGELIX_ROOT/build/llvm-3.7.0.src"
+export CLANG_HEADERS="$LLVM3_DIR/tools/clang/lib/Headers/"
+export STP_DIR="$ANGELIX_ROOT/build/stp"
+export MINISAT_DIR="$ANGELIX_ROOT/build/minisat"
+export Z3_DIR="$ANGELIX_ROOT/build/z3"
+export KLEE_DIR="$ANGELIX_ROOT/build/klee"
+export KLEE_INCLUDE_PATH="$KLEE_DIR/include"
+export KLEE_LIBRARY_PATH="$KLEE_DIR/Release+Asserts/lib"
+export KLEE_UCLIBC_DIR="$ANGELIX_ROOT/build/klee-uclibc"
+export BEAR_DIR="$ANGELIX_ROOT/build/Bear"
+
+# envorinment for building and execution:
+
+export PATH="$LLVM_GCC_DIR/bin/:$PATH"
+export PATH="$LLVM2_DIR/Release+Asserts/bin/:$PATH"
+export PATH="$KLEE_DIR/Release+Asserts/bin/:$PATH"
+export PATH="$Z3_DIR/build/:$PATH"
+export PATH="$ANGELIX_ROOT/src/tools:$PATH"
+export PATH="$LLVM3_DIR/build/bin/angelix/:$PATH"
+
+export ANGELIX_LIBRARY_PATH_KLEE="$ANGELIX_ROOT/build/lib/klee"
+export ANGELIX_LIBRARY_PATH_TEST="$ANGELIX_ROOT/build/lib/test"
+export ANGELIX_RUNTIME_H="$ANGELIX_ROOT/src/runtime/runtime.h"
+
+# to run tests when linked with runtime:
+export LD_LIBRARY_PATH="$KLEE_LIBRARY_PATH"
+
+# Do I need $STP_DIR/build/lib and $Z3_DIR/build/ in LD_LIBRARY_PATH?
+
+ulimit -s unlimited
+
+mkdir -p $ANGELIX_ROOT/build
+
+# utilities
+
+dump-ast () {
+    "$LLVM3_DIR/build/bin/clang" -Xclang -ast-dump -fsyntax-only "$1"
+}

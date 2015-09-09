@@ -1,0 +1,234 @@
+#!/usr/bin/perl
+#
+# Based on the arguments we try to guess whether to call llvm-gcc or llvm-ld 
+# and add necessary paths to AngelicFix libraries.
+
+use strict;
+use warnings;
+
+
+my $af_headers   = $ENV{'AF_INCLUDE_PATH'};
+my $af_libs_klee = $ENV{'AF_LIBRARY_PATH_KLEE'};
+my $af_libs_test = $ENV{'AF_LIBRARY_PATH_TEST'};
+my $klee_libs    = $ENV{'AF_KLEE_LIBRARY_PATH'};
+my $klee_headers = $ENV{'AF_KLEE_INCLUDE_PATH'};
+
+
+sub debug {
+    #    if ($ENV{'AF_DEBUG'}) { print("[af-cc] @_\n"); }
+    print("[af-cc] @_\n");
+}
+
+
+# Assume that command has "-o *.o" if and only if it is not linking
+sub is_link_cmd() {
+    my $last_o = 0;
+    foreach (@ARGV) {
+        if ($last_o) {
+            if (/\.o$/) {
+                return 0;
+            } else {
+                return 1;
+            }
+        }
+        if (/^-o$/) {
+            $last_o = 1;
+        }
+    }
+    return 0;
+}
+
+
+sub source_in_gcc_args {
+    foreach (@_) {
+        my $source = $_;
+        if (my ($matched) = grep /$source$/, @ARGV) {
+            return $matched;
+        }
+    }
+    return 0;
+}
+
+
+sub wrap_args {
+    return map "\'$_\'", @_;
+}
+
+
+sub filter_non_link_args {
+    my @keys = qw/-g -pthread -O -O1 -O2 -O3 -pedantic -std=gnu99 -m64 -mtune=k8 -march=k8 -prune-eh/; # The argument that llvm-ld does not understand
+    my %non_link_args;
+    @non_link_args{@keys} = ();
+    my @link_args;
+    foreach (@_) {
+        if (/(^-Wl,)|(^-D)|(^-f)|(^-W)|(^-I)/ || exists($non_link_args{$_})) {
+            debug("filtering out non-linking option $_");
+            next;
+        }
+        push @link_args, $_;
+    }
+    return @link_args;
+}
+
+
+sub filter_non_comp_args {
+    my @args = @{$_[0]};
+    my $optimize = $_[1];
+    my @comp_args;
+    foreach (@args) {
+        if (/(^-DPLUGIN_DIR=)|(^-fvisibility=)|(^-fexcess-precision=)|(^-DPHP_ATOM_INC$)/) {
+            debug("filtering out non-compilaton option $_");
+            next;
+        }
+        if (/(-O1)|(-O2)|(-O3)/ && not $optimize) {
+            debug("filtering out non-compilaton option $_");
+            next;
+        }
+        push @comp_args, $_;
+    }
+    return @comp_args;
+}
+
+
+sub prepare_pp_args {
+    my $tmp_file = $_[0];
+    my $source = $_[1];
+    
+    my $after_includes =`cat $tmp_file | grep -n '\#include' | cut -f 1 -d : | sort -rn | head -1` + 1;
+    my $after_macro = $after_includes + 1;
+    my $macro = "#define AF_START_FAULT_LOCALIZATION_AUX AF_START_FAULT_LOCALIZATION";
+    system("sed -i \"${after_includes}i$macro\" $tmp_file");
+    system("sed -i \"${after_macro}iAF_START_FAULT_LOCALIZATION_AUX\" $tmp_file");
+    
+    my @pp_args;
+    my $last_o = 0;
+    foreach (@ARGV) {
+        if ($last_o) {
+            $last_o = 0;
+            next;
+        }
+        if (/(^-o$)/) {
+            $last_o = 1;
+            next;
+        }
+        if (/$source$/) {
+            push @pp_args, $tmp_file;
+        } else {
+            push @pp_args, $_;
+        }       
+    }
+    return @pp_args;
+}
+
+
+my @pp_sources = ();
+my $pp = 0;
+
+
+if ($ARGV[0] eq '--pp') {
+    $pp = 1;
+
+    shift @ARGV;
+
+    while (not ($ARGV[0] eq '--test') and not ($ARGV[0] eq '--klee')) {
+        push @pp_sources, $ARGV[0];
+        shift @ARGV;
+    }
+}
+
+
+my $compilation_mode;
+
+if ($ARGV[0] eq '--test') {
+    
+    $compilation_mode = "test";
+    
+} elsif ($ARGV[0] eq '--klee') {
+    
+    $compilation_mode = "klee";
+    
+}  else {
+    print("Usage: af-cc [ --pp SOURCES ] --test ARGS\n",
+          "       af-cc [ --pp SOURCES ] --klee ARGS\n");
+    exit 1;
+}
+
+shift @ARGV;
+
+if ($pp) {
+    
+    my $source = source_in_gcc_args(@pp_sources);
+    
+    if ($source) {
+        (my $tmp_file = $source) =~ s/c$/pp.${compilation_mode}.tmp.c/;
+        system("cp $source $tmp_file");
+        my @pp_args = prepare_pp_args($tmp_file, $source);
+        my @comp_args = filter_non_comp_args(\@pp_args, 0);
+        my $pp_file = $source;
+        $pp_file =~ s/c$/pp.${compilation_mode}.c/;
+        my @args = ("llvm-gcc",
+                    "-E",
+                    ($compilation_mode eq "klee") ? "-D AF_SYMBOLIC_RUNTIME" : "",
+                    "-I$af_headers",
+                    wrap_args(@comp_args),
+                    "> $pp_file");
+        my $call_gcc_pp = join(' ', @args);
+        debug($call_gcc_pp);
+        system($call_gcc_pp);
+        system("sed -i 's/^#.*\$//' $pp_file"); # removing references to the original file
+        system("rm $tmp_file");
+    } else {
+        debug("skip pp");
+    }
+}
+
+if ($compilation_mode eq "test") {
+
+    my @test_comp_args = filter_non_comp_args(\@ARGV, 1);
+    my @args = ("llvm-gcc",
+                "-I$af_headers",
+                "-D AF_START_FAULT_LOCALIZATION=\"\"",
+                wrap_args(@test_comp_args),
+                "-L$af_libs_test",
+                "-langelic",
+# in this generic build, runtime component requires this stub library:                
+                "-L$klee_libs",
+                "-lkleeRuntest"
+                );
+    my $call_gcc = join(' ', @args);
+    debug($call_gcc);
+    system($call_gcc);
+
+} elsif ($compilation_mode eq "klee") {
+
+    if (!is_link_cmd()) {
+
+        my @klee_comp_args = filter_non_comp_args(\@ARGV, 0);
+        my @args = ("llvm-gcc",
+                    "-emit-llvm",
+                    "-g",
+                    "-O0",
+                    "-D AF_START_FAULT_LOCALIZATION=\"\"",
+                    "-D AF_SYMBOLIC_RUNTIME",
+                    "-I$af_headers",
+# TODO do we actually need it? it breaks compilation of .s files on openssl                    
+#                    "-include \"angelicfix/runtime.h\"",
+                    wrap_args(@klee_comp_args));
+        my $call_llvm_gcc = join(' ', @args);
+        debug($call_llvm_gcc);
+        system($call_llvm_gcc);
+
+    } else {
+        my @link_args = filter_non_link_args(@ARGV);
+        my @args = ("llvm-ld",
+                    "--disable-opt",
+                    wrap_args(@link_args),
+                    "-L$af_libs_klee",
+                    "-langelic",
+                    );
+        my $call_llvm_ld = join(' ', @args);
+        debug($call_llvm_ld);
+        system($call_llvm_ld);
+    }
+
+}

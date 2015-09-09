@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ -z "$ANGELIX_ROOT" ]; then
+    echo 'Error: execute "source /path/to/angelix/activate" to set environment'
+    exit 1
+fi  
+
+python "$BEAR_DIR/build/bear/bear" -l "$BEAR_DIR/build/libear/libear.so" $@
