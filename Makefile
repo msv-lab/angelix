@@ -1,4 +1,4 @@
-MODULES = llvm-gcc llvm2 minisat stp klee-uclibc klee runtime z3 clang bear # frontend synthesis
+MODULES = llvm-gcc llvm2 minisat stp klee-uclibc klee z3 clang bear runtime rontend
 CLEAN_MODULES = $(addprefix clean-, $(MODULES))
 
 help:
@@ -7,6 +7,7 @@ help:
 	@echo
 	@echo \'make all\''                  'build all modules
 	@echo \'make MODULE\''                    'build module
+	@echo \'make clean-all\''            'clean all modules
 	@echo \'make clean-MODULE\''              'clean module
 	@echo \'make test\''                         'run tests
 	@echo
@@ -14,9 +15,9 @@ help:
 	@echo -n ' '$(foreach module, $(MODULES),"* $(module)\n")
 
 all: $(MODULES)
-clean: $(CLEAN_MODULES)
+clean-all: $(CLEAN_MODULES)
 
-.PHONY: help all clean test $(MODULES) $(CLEAN_MODULES)
+.PHONY: help all $(MODULES) clean-all $(CLEAN_MODULES) test
 
 # Information for retrieving dependencies
 
@@ -30,6 +31,7 @@ LLVM3_URL="http://llvm.org/releases/3.7.0/llvm-3.7.0.src.tar.xz"
 LLVM3_ARCHIVE="llvm-3.7.0.src.tar.xz"
 CLANG_URL="http://llvm.org/releases/3.7.0/cfe-3.7.0.src.tar.xz"
 CLANG_ARCHIVE="cfe-3.7.0.src.tar.xz"
+CLANG_TOOLS_EXTRA_URL="http://llvm.org/git/clang-tools-extra.git"
 COMPILER_RT_URL="http://llvm.org/releases/3.7.0/compiler-rt-3.7.0.src.tar.xz"
 COMPILER_RT_ARCHIVE="compiler-rt-3.7.0.src.tar.xz"
 CLANG_TOOLS_EXTRA_URL="http://llvm.org/git/clang-tools-extra.git"
@@ -160,6 +162,7 @@ clang: build/$(LLVM3_ARCHIVE) build/$(CLANG_ARCHIVE) build/$(COMPILER_RT_ARCHIVE
 	cd build && tar xf $(CLANG_ARCHIVE) --directory "$(LLVM3_DIR)/tools/clang" --strip-components=1
 	mkdir -p "$(LLVM3_DIR)/projects/compiler-rt"
 	cd build && tar xf $(COMPILER_RT_ARCHIVE) --directory "$(LLVM3_DIR)/projects/compiler-rt" --strip-components=1
+	cd "$(LLVM3_DIR)/tools/clang/tools/" && git clone --branch release_37 $(CLANG_TOOLS_EXTRA_URL) extra
 	mkdir -p "$(LLVM3_DIR)/build" && cd "$(LLVM3_DIR)/build" && cmake -G "Unix Makefiles" ../ && make
 
 build/$(LLVM3_ARCHIVE):

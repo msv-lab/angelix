@@ -34,9 +34,11 @@ export ANGELIX_LIBRARY_PATH_TEST="$ANGELIX_ROOT/build/lib/test"
 export ANGELIX_RUNTIME_H="$ANGELIX_ROOT/src/runtime/runtime.h"
 
 # to run tests when linked with runtime:
-export LD_LIBRARY_PATH="$KLEE_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$KLEE_LIBRARY_PATH:$LD_LIBRARY_PATH"
+# because I didn't manage to build stp statically:
+export LD_LIBRARY_PATH="$STP_DIR/build/lib:$LD_LIBRARY_PATH"
 
-# Do I need $STP_DIR/build/lib and $Z3_DIR/build/ in LD_LIBRARY_PATH?
+# Do I need $Z3_DIR/build/ in LD_LIBRARY_PATH?
 
 ulimit -s unlimited
 

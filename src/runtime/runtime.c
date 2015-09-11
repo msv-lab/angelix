@@ -4,7 +4,7 @@
 #include <limits.h>
 #include <time.h>
 #include "klee/klee.h"
-#include "angelix/runtime.h"
+#include "runtime.h"
 
 typedef char* str;
 
