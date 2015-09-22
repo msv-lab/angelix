@@ -1,0 +1,3 @@
+[submodule "src/synthesis"]
+	path = src/synthesis
+	url = https://github.com/mechtaev/repair-synthesis.git
