@@ -7,7 +7,8 @@ Semantics-based automated program repair tool for C programs. Angelix fixes bugs
 Install dependencies:
 
     sudo apt-get install g++ curl dejagnu subversion bison flex bc libcap-dev
-    sudp apt-get install cmake libncurses5-dev libboost-all-dev
+    sudo apt-get install cmake libncurses5-dev libboost-all-dev
+    sudo apt-get install default-jdk sbt
 
 Set environment variables:
 
@@ -30,7 +31,7 @@ Tested on Ubuntu 14.04 64-bit.
 
 ## Usage ##
 
-Angelix supports Makefile-based projects, and it assumes that compilation and linking are done by separate compiler calls. Note that you need to configure your project to use static linking so that it can be executed by KLEE. Angelix copies all data to the `.angelix` directory and do not modify the original files. Run `angelix -h` to see the list of available options.
+Angelix supports Makefile-based projects, and it assumes that (1) compiler is defined by the `CC` variable, (2) compilation and linking are done by separate compiler calls. Note that you need to configure your project to use static linking so that it can be executed by KLEE. Angelix copies all data to the `.angelix` directory and do not modify the original files. Run `angelix -h` to see the list of available options.
 
 There are four activities that are performed manually by the user:
 
