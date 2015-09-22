@@ -40,6 +40,9 @@ export LD_LIBRARY_PATH="$STP_DIR/build/lib:$LD_LIBRARY_PATH"
 
 # Do I need $Z3_DIR/build/ in LD_LIBRARY_PATH?
 
+# this is to use libtooling for C:
+C_INCLUDE_PATH="$LLVM3_DIR/build/lib/clang/3.7.0/include:$C_INCLUDE_PATH"
+
 ulimit -s unlimited
 
 mkdir -p $ANGELIX_ROOT/build

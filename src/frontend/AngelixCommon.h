@@ -1,23 +1,3 @@
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <unordered_set>
-#include <unordered_map>
-#include <fstream>
-#include <cstdlib>
-#include <stdlib.h>
-
-#include "clang/AST/AST.h"
-#include "clang/AST/ASTConsumer.h"
-#include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/Frontend/ASTConsumers.h"
-#include "clang/Frontend/FrontendActions.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Tooling/CommonOptionsParser.h"
-#include "clang/Tooling/Tooling.h"
-#include "clang/Rewrite/Core/Rewriter.h"
-#include "llvm/Support/raw_ostream.h"
-
 std::string toString(const clang::Stmt* stmt) {
   clang::LangOptions LangOpts;
   clang::PrintingPolicy Policy(LangOpts);
@@ -29,3 +9,37 @@ std::string toString(const clang::Stmt* stmt) {
   std::string stmtStr = rso.str();
   return stmtStr;
 }
+
+
+StatementMatcher RepairableNode =
+  anyOf(unaryOperator(hasOperatorName("!")).bind("repairable"),
+        // TODO: for pointer type we only interested if they are equal to 0 or other pointers:
+        declRefExpr(to(varDecl(anyOf(hasType(isInteger()),
+                                     hasType(pointerType(pointee(isInteger()))))))).bind("repairable"),
+        integerLiteral().bind("repairable"),
+        characterLiteral().bind("repairable"),
+        binaryOperator(anyOf(hasOperatorName("=="),
+                             hasOperatorName("!="),
+                             hasOperatorName("<="),
+                             hasOperatorName(">="),
+                             hasOperatorName(">"),
+                             hasOperatorName("<"),
+                             hasOperatorName("+"),
+                             hasOperatorName("-"),
+                             hasOperatorName("*"),
+                             hasOperatorName("/"),
+                             hasOperatorName("||"),
+                             hasOperatorName("&&"))).bind("repairable"));
+
+
+StatementMatcher NonRepairableNode =
+  unless(RepairableNode);
+
+
+StatementMatcher RepairableExpression =
+  allOf(RepairableNode, unless(hasDescendant(expr(ignoringParenImpCasts(NonRepairableNode)))));
+
+
+StatementMatcher NonRepairableExpression =
+  anyOf(unless(RepairableNode), hasDescendant(expr(ignoringParenImpCasts(NonRepairableNode))));
+

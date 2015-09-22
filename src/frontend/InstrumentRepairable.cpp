@@ -1,13 +1,18 @@
 #include <iostream>
-// Declares clang::SyntaxOnlyAction.
+#include <sstream>
+
+#include "clang/AST/AST.h"
+#include "clang/AST/ASTConsumer.h"
+#include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/FrontendActions.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
-// Matchers.
+#include "clang/Rewrite/Core/Rewriter.h"
+#include "llvm/Support/raw_ostream.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
-
-#include "AngelixCommon.h"
 
 
 using namespace clang;
@@ -16,54 +21,23 @@ using namespace clang::tooling;
 using namespace llvm;
 
 
-StatementMatcher RepairableNode =
-  anyOf(unaryOperator(hasOperatorName("!")).bind("repairable"),
-        // TODO: for pointer type we only interested if they are equal to 0 or other pointers:
-        declRefExpr(to(varDecl(anyOf(hasType(isInteger()),
-                                     hasType(pointerType(pointee(isInteger()))))))).bind("repairable"),
-        integerLiteral(),
-        characterLiteral().bind("repairable"),
-        // We don't capture it, but it can be in the repairable expression:
-        implicitCastExpr().bind("repairable"),
-        binaryOperator(anyOf(hasOperatorName("=="),
-                             hasOperatorName("!="),
-                             hasOperatorName("<="),
-                             hasOperatorName(">="),
-                             hasOperatorName(">"),
-                             hasOperatorName("<"),
-                             hasOperatorName("+"),
-                             hasOperatorName("-"),
-                             hasOperatorName("*"),
-                             hasOperatorName("/"),
-                             hasOperatorName("||"),
-                             hasOperatorName("&&"))).bind("repairable"));
+#include "AngelixCommon.h"
 
 
-StatementMatcher NonRepairableNode = unless(RepairableNode);
+// if condition is not repairable, we select repairable disjucnts and conjunsts
 
-
-StatementMatcher RepairableExpression =
-  allOf(RepairableNode, unless(hasDescendant(expr(NonRepairableNode))));
-
-
-StatementMatcher NonRepairableExpression =
-  anyOf(unless(RepairableNode), hasDescendant(expr(NonRepairableNode)));
-
-
-StatementMatcher RepairableClauseNode =
-  binaryOperator(anyOf(hasOperatorName("||"), hasOperatorName("&&")),
-                 anyOf(allOf(hasLHS(ignoringParenImpCasts(RepairableExpression)),
-                             hasRHS(ignoringParenImpCasts(NonRepairableExpression))),
-                       allOf(hasLHS(ignoringParenImpCasts(NonRepairableExpression)),
-                             hasRHS(ignoringParenImpCasts(RepairableExpression)))));
-
-
-StatementMatcher RepairableClauses =
-  anyOf(RepairableClauseNode, forEachDescendant(RepairableClauseNode)); // currently this forEach does not work
+StatementMatcher Splittable =
+  anyOf(binaryOperator(anyOf(hasOperatorName("||"), hasOperatorName("&&")),
+                       hasLHS(ignoringParenImpCasts(RepairableExpression)),
+                       hasRHS(ignoringParenImpCasts(NonRepairableExpression))),
+        binaryOperator(anyOf(hasOperatorName("||"), hasOperatorName("&&")),
+                       hasLHS(ignoringParenImpCasts(NonRepairableExpression)),
+                       hasRHS(ignoringParenImpCasts(RepairableExpression))));
 
 
 StatementMatcher RepairableIfCondition =
-  ifStmt(anyOf(hasCondition(ignoringParenImpCasts(RepairableExpression)), hasCondition(ignoringParenImpCasts(RepairableClauses))));
+  ifStmt(anyOf(hasCondition(ignoringParenImpCasts(RepairableExpression)),
+               eachOf(hasCondition(Splittable), hasCondition(forEachDescendant(Splittable)))));
 
 
 class ConditionalHandler : public MatchFinder::MatchCallback {
@@ -93,10 +67,10 @@ public:
 
       std::cout << toString(expr) << std::endl;
 
-      unsigned startLine = srcMgr.getExpansionLineNumber(startLoc);
-      unsigned startColumn = srcMgr.getExpansionColumnNumber(startLoc);
-      unsigned endLine = srcMgr.getExpansionLineNumber(endLoc);
-      unsigned endColumn = srcMgr.getExpansionColumnNumber(endLoc);
+      unsigned startLine = srcMgr.getSpellingLineNumber(startLoc);
+      unsigned startColumn = srcMgr.getSpellingColumnNumber(startLoc);
+      unsigned endLine = srcMgr.getSpellingLineNumber(endLoc);
+      unsigned endColumn = srcMgr.getSpellingColumnNumber(endLoc);
 
       std::cout << startLine << " " << startColumn << " " << endLine << " " << endColumn << std::endl;
 
