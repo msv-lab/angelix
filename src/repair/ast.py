@@ -2,6 +2,16 @@ from collections import namedtuple
 from utils import IdGenerator, flatten, unique
 
 
+# NOTE:
+# 
+# Currently, it is not in use, but if I have time, I will implement CBS from stratch based on this AST
+# Particularly, I should do the following:
+# 1. Use new z3 optimizing solvers
+# 2. Don't use global components, because they slow down synthesis
+# 3. Don't use phantom components, use tests-like encoding for execution instances instead
+# 4. I can get python AST directly from frontend + eval
+
+
 # SMT expression:
 Application = namedtuple('Application', ['symbol', 'args'])
 Variable = namedtuple('Variable', ['symbol', 'type'])
