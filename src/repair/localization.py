@@ -1,0 +1,2 @@
+class Localizer:
+    pass

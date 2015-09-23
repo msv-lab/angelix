@@ -1,4 +1,8 @@
-class Transformer:
+class RepairableTransformer:
+    pass
 
-    def __init__(self, compilation_db):
-        self.compilation_db = compilation_db
+class SuspiciousTransformer:
+    pass
+
+class FixInjector:
+    pass
