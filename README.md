@@ -87,7 +87,7 @@ To abstract over test framework, we use the following format (tests JSON databas
         {
             "id": "test1",
             "executable": "tests/test1.exe",
-            "arguments": "-a 1 -b 2",
+            "arguments": ["-a", "1", "-b", "2"],
             "make": {                         # optional
                 "arguments": "test1",
                 "directory": "tests"
@@ -96,7 +96,7 @@ To abstract over test framework, we use the following format (tests JSON databas
         ...
     ]
 
-_oracle_ - an executable that takes test identifier as the only argument and terminates with `0` exit code if and only if the corresponding test passes.
+_oracle_ - an executable that takes test identifier as the only argument and terminates with `0` exit code if and only if the corresponding test passes. _oracle_ is run from the root of a copy of source code directory, therefore all paths used in _oracle_ must be relative to the root of the source tree. 
 
 Angelix dumps output values for each test case. Extracted information is stored in dump files:
 

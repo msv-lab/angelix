@@ -1,4 +1,5 @@
 import os
+from subprocess import Popen
 
 
 def format_time(seconds):
@@ -32,6 +33,79 @@ class IdGenerator:
     def next(self):
         self.next = self.next + 1
         return self.next - 1
+
+
+class Dump:
+
+    def __init__(self, working_dir, correct_dump):
+        self.dir = os.path.join(working_dir, 'dump')
+        os.mkdir(self.dir)
+        if correct_dump is not None:
+            shutil.copytree(correct_dump, self.dir)
+
+    def __iadd__(self, test_id):
+        dir = os.path.join(self.dir, test_id)
+        os.mkdir(dir)
+
+    def __getitem__(self, test_id):
+        dir = os.path.join(self.dir, test_id)
+        return dir
+        
+    def __contains__(self, test_id):
+        dir = os.path.join(self.dir, test_id)
+        if os.path.exists(dir):
+            return True
+        else:
+            return False
+
+
+class Trace:
+
+    def __init__(self, working_dir):
+        self.dir = os.path.join(working_dir, 'trace')
+        os.mkdir(self.dir)
+
+    def __iadd__(self, test_id):
+        dir = os.path.join(self.dir, test_id)
+        file = open(dir,'w')
+        file.close()
+
+    def __getitem__(self, test_id):
+        dir = os.path.join(self.dir, test_id)
+        pass
+        
+    def __contains__(self, test_id):
+        dir = os.path.join(self.dir, test_id)
+        if os.path.exists(dir):
+            return True
+        else:
+            return False
+
+    def parse(self, test):
+        # TODO
+        pass
+
+
+class Tester:
+
+    def __init__(self, config, oracle):
+        self.config = config
+        self.oracle = oracle
+
+    def __call__(project, test, dump=None, trace=None):
+        environment = dict(os.environ)
+        environment.update('ANGELIX_TEST', test)
+        if dump is not None:
+            environment.update('ANGELIX_DUMP', dump)
+        if trace is not None:
+            environment.update('ANGELIX_TRACE', trace)
+
+        with cd(project.dir):
+            proc =  Popen([self.oracle, test], env=environment)
+            code = proc.wait(timeout=self.config['testing']['TestTimeout'])
+
+        return code == 0
+
 
 
 def flatten(list):
