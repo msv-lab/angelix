@@ -31,18 +31,17 @@ Tested on Ubuntu 14.04 64-bit.
 
 ## Usage ##
 
-Angelix supports Makefile-based projects, and it assumes that (1) compiler is defined by the `CC` variable, (2) compilation and linking are done by separate compiler calls. Note that you need to configure your project to use static linking so that it can be executed by KLEE. Angelix copies all data to the `.angelix` directory and do not modify the original files. Run `angelix -h` to see the list of available options.
+Angelix supports Makefile-based projects and it assumes that (1) compiler is defined by the `CC` variable, (2) compilation and linking are done by separate compiler calls. Note that you need to configure your project to use static linking so that it can be executed by KLEE. Angelix copies all data to the `.angelix` directory and does not modify the original files. Run `angelix -h` to see the list of available options.
 
-There are four activities that are performed manually by the user:
+There are three activities that are performed manually by the user:
 
 1. Instrumenting output expressions
-2. Creating oracle script
-3. Extracting required information from the testing framework
-4. Correcting output values for failing test cases (if correct source code is not available)
+2. Extracting required information from the testing framework
+3. Specifying expected output values for failing test cases (if golden version is not available)
 
-### Instrumentation ###
+## Instrumentation ##
 
-Angelix requires specifying output values and suspicious location in the source code of the subject program. Consider a simple example:
+Angelix requires specifying output values in the source code of the subject program. Consider a simple example:
 
     #include <stdio.h>
 
@@ -51,11 +50,11 @@ Angelix requires specifying output values and suspicious location in the source 
         x = atoi(argv[1]);
         y = atoi(argv[2]);
         z = x + y;
-        printf("%d\n", z + 1);
+        printf("%d\n", z);
         return 0;
     }
 
-Output values are specified by wrapping them with `ANGELIX` macro:
+Output values are wrapped with `ANGELIX` macro specifying type and id of the expression. You also need to provide a default definition for this macro, so that the program remains compilable:
 
     #include <stdio.h>
 
@@ -68,24 +67,35 @@ Output values are specified by wrapping them with `ANGELIX` macro:
         x = atoi(argv[1]);
         y = atoi(argv[2]);
         z = x + y;
-        printf("%d\n", ANGELIX(int, "stdout", z + 1));
+        printf("%d\n", ANGELIX(int, "stdout", z));
         return 0;
     }
 
-The following types are supported for output expressions:
+The following types of output expressions are supported:
 
-    int
-    bool
-    char
-    str (null-terminated string)
+* int
+* bool
+* char
+* str (null-terminated string)
 
-### Test model ###
+## Test model ##
 
-To abstract over test framework, we use the following format (tests JSON database):
+To abstract over test framework, we use the following three objects:
 
-    [
-        {
-            "id": "test1",
+* Oracle executable
+* JSON test database
+* Correct outputs for failing test cases
+
+### Oracle ###
+
+Oracle is an executable that takes a test identifier as the only argument, runs the corresponding test and terminates with `0` exit code if and only if the test passes. Oracle is executed from the root of a copy of the source code directory, therefore all references to the source tree must be relative to the root of the source tree.
+
+### JSON test database ###
+
+JSON test database specifies test executables, their arguments and how to build them (if needed):
+
+    {
+        "test1": {
             "executable": "tests/test1.exe",
             "arguments": ["-a", "1", "-b", "2"],
             "make": {                         # optional
@@ -94,15 +104,20 @@ To abstract over test framework, we use the following format (tests JSON databas
             }
         },
         ...
-    ]
+    }
 
-_oracle_ - an executable that takes test identifier as the only argument and terminates with `0` exit code if and only if the corresponding test passes. _oracle_ is run from the root of a copy of source code directory, therefore all paths used in _oracle_ must be relative to the root of the source tree. 
+### Correct outputs ###
 
-Angelix dumps output values for each test case. Extracted information is stored in dump files:
+Angelix can extract correct outputs from a golden version (it must be instrumented accordingly). If golden version is not available, correct outputs are specified in JSON format:
 
-    dump/test1/x/2
+    {
+        "test1": {
+            "stdout": [1, 2 ,3]
+        },
+        ...
+    }
 
-where `x` is output id, `2` is its execution instance.
+Each output id corresponds to a list of values, since an expression can be evaluated multiple times during the test execution.
 
 ## Contributors ##
 

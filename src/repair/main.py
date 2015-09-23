@@ -1,3 +1,4 @@
+import signal
 import os
 import shutil
 import argparse
@@ -130,8 +131,7 @@ class Angelix:
                 pos, neg = evaluate(self.validation_src)
                 assert set(neg).isdisjoint(set(repair_suite)), "error: wrong fix generated"
                 positive, negative = pos, neg
-
-
+ 
         if len(negative) > 0:
             return None
         else:
@@ -172,7 +172,7 @@ if __name__ == "__main__":
                         help='synthesis timeout (default: %(default)s)')
     parser.add_argument('--synthesis-levels', metavar='LEVEL', nargs='*',
                         default=['alternative', 'integer', 'boolean', 'comparison'],
-                        help='component levels (default: alternative, integer, boolean, comparison)')
+                        help='component levels (default: alternative integer boolean comparison)')
 
     args = parser.parse_args()
 
@@ -181,10 +181,15 @@ if __name__ == "__main__":
         shutil.rmtree(working_dir)
         os.makedirs(working_dir)
 
-    tool = Angelix(working_dir, args.src, args.buggy, args.oracle, args.tests, args.golden, args.dump,
+    tool = Angelix(working_dir,
+                   src = args.src,
+                   buggy = args.buggy,
+                   oracle = args.oracle,
+                   tests = args.tests,
+                   golden = args.golden,
+                   dump = args.dump,
                    lines = args.lines,
-                   timeout = args.timeout,
-                   initial_tests = args.timeout,
+                   initial_tests = args.initial_tests,
                    conditions_only = args.conditions_only,
                    test_timeout = args.test_timeout,
                    suspicious = args.suspicious,
@@ -196,12 +201,19 @@ if __name__ == "__main__":
                    synthesis_timeout = args.synthesis_timeout,
                    synthesis_levels = args.synthesis_levels)
 
-    patch = tool.generate_patch()
+    start = time.time()
+    with time_limit(args.timeout ):
+        patch = tool.generate_patch()
+    except TimeoutException:
+        print("failed to generate patch (timeout)")
+        exit(1)
+    end = time.time()
+    elapsed = format_time(end - start)    
     
     if patch is None:
-        print("Failed to generate patch in {}".format(elapsed))
+        print("no patch is generated in {}".format(elapsed))
     else:
-        print("Patch is successfully generated in {} (see generated.diff)".format(elapsed))
+        print("patch is successfully generated in {} (see generated.diff)".format(elapsed))
         with open('generated.diff', 'w+') as file:
             for line in patch:
                 file.write(line)
