@@ -9,6 +9,79 @@
 #include "SMTLIB2.h"
 
 
+std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynTypedNode node, ASTContext* context) {
+  const FunctionDecl* fd;
+  if ((fd = node.get<FunctionDecl>()) != NULL) {
+    std::unordered_set<VarDecl*> set;
+    for (auto it = fd->param_begin(); it != fd->param_end(); ++it) {
+      auto vd = cast<VarDecl>(*it);
+      set.insert(vd);
+    }
+    return set;
+  } else {
+    ArrayRef<ast_type_traits::DynTypedNode> parents = context->getParents(node);
+    if (parents.size() > 0) {
+      const ast_type_traits::DynTypedNode parent = *(parents.begin()); // TODO: for now only first
+      return collectVarsFromScope(parent, context);
+    } else {
+      std::unordered_set<VarDecl*> set;
+      return set;
+    }
+  }
+}
+
+
+class CollectVariables : public StmtVisitor<CollectVariables> {
+  std::unordered_set<VarDecl*> *Set;
+  
+public:
+  CollectVariables(std::unordered_set<VarDecl*> *set): Set(set) {}
+
+  void Collect(Expr *E) {
+    if (E)
+      Visit(E);
+  }
+
+  void Visit(Stmt* S) {
+    StmtVisitor<CollectVariables>::Visit(S);
+  }
+
+  void VisitBinaryOperator(BinaryOperator *Node) {  
+    Collect(Node->getLHS());
+    Collect(Node->getRHS());
+  }
+
+  void VisitUnaryOperator(UnaryOperator *Node) {
+    Collect(Node->getSubExpr());
+  }
+
+  void VisitImplicitCastExpr(ImplicitCastExpr *Node) {
+    Collect(Node->getSubExpr());
+  }
+
+  void VisitIntegerLiteral(IntegerLiteral *Node) {
+  }
+
+  void VisitCharacterLiteral(CharacterLiteral *Node) {
+  }
+
+  void VisitDeclRefExpr(DeclRefExpr *Node) {
+    VarDecl* vd;
+    if ((vd = cast<VarDecl>(Node->getDecl())) != NULL) { // TODO: other kinds of declarations?
+      Set->insert(vd);
+    }
+  }
+
+};
+
+std::unordered_set<VarDecl*> collectVarsFromExpr(const Stmt* stmt) {
+  std::unordered_set<VarDecl*> set;
+  CollectVariables T(&set);
+  T.Visit(const_cast<Stmt*>(stmt));
+  return set;
+}
+
+
 class ConditionalHandler : public MatchFinder::MatchCallback {
 public:
   ConditionalHandler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
@@ -30,9 +103,26 @@ public:
       std::ofstream fs(extractedDir + "/" + exprId.str() + ".smt2");
       fs << "(assert " << toSMTLIB2(expr) << ")\n";
 
-      // std::string var_names;
-      // std::string vars;
-      // int num_of_vars = CollectVarsAndNames(TheType, vars, var_names, expr);
+      const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*expr);
+      std::unordered_set<VarDecl*> varsFromScope = collectVarsFromScope(node, Result.Context);
+      std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(expr);
+      std::unordered_set<VarDecl*> vars;
+      vars.insert(varsFromScope.begin(), varsFromScope.end());
+      vars.insert(varsFromExpr.begin(), varsFromExpr.end());
+      std::ostringstream varStream;
+      std::ostringstream varNameStream;
+      bool first = true;
+      for (auto it = vars.begin(); it != vars.end(); ++it) {
+        if (first) {
+          first = false;
+        } else {
+          varStream << ", ";
+          varNameStream << ", ";
+        }
+        VarDecl* var = *it;
+        varStream << var->getName().str();
+        varNameStream << "\"" << var->getName().str() << "\"";
+      }
 
       std::ostringstream stringStream;
       stringStream << "ANGELIX_SUSPICIOUS("
@@ -42,9 +132,9 @@ public:
                    << endLine << ", "
                    << endColumn << ", "
                    << toString(expr) << ", "
-                   // << "((char*[]){" << var_names << "}), "
-                   // << "((int[]){" << vars << "}), "
-                   // << num_of_vars
+                   << "((char*[]){" << varNameStream.str() << "}), "
+                   << "((int[]){" << varStream.str() << "}), "
+                   << vars.size()
                    << ")";
 
       std::string replacement = stringStream.str();

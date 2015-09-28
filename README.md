@@ -54,12 +54,12 @@ Angelix requires specifying output values in the source code of the subject prog
         return 0;
     }
 
-Output values are wrapped with `angelix_output` macro providing type and id of the expression. You also need to provide a default definition for this macro, so that the program remains compilable:
+Output values are wrapped with `ANGELIX_OUTPUT` macro providing type and id of the expression. You also need to provide a default definition for this macro, so that the program remains compilable:
 
     #include <stdio.h>
 
-    #ifndef angelix_output
-    #define angelix_output(expr, type, id) expr
+    #ifndef ANGELIX_OUTPUT
+    #define ANGELIX_OUTPUT(expr, type, id) expr
     #endif
 
     int main(int argc, char** argv) {
@@ -67,7 +67,7 @@ Output values are wrapped with `angelix_output` macro providing type and id of t
         x = atoi(argv[1]);
         y = atoi(argv[2]);
         z = x + y;
-        printf("%d\n", angelix_output(z + 1, int, "stdout"));
+        printf("%d\n", ANGELIX_OUTPUT(z + 1, int, "stdout"));
         return 0;
     }
 
