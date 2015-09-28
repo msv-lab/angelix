@@ -9,8 +9,8 @@ from utils import IdGenerator, flatten, unique
 # 1. Use new z3 optimizing solvers
 # 2. Don't use global components, because they slow down synthesis
 # 3. Don't use phantom components, use tests-like encoding for execution instances instead
-# 4. I can get python AST directly from frontend + eval
-
+# 4. Use arrays of bytes instead of int and bool
+# 5. I can get python AST directly from frontend + eval
 
 # SMT expression:
 Application = namedtuple('Application', ['symbol', 'args'])

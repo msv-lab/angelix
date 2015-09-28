@@ -50,6 +50,11 @@ dump-ast () {
     "$LLVM3_DIR/build/bin/clang" -Xclang -ast-dump -fsyntax-only "$1"
 }
 
-instrep () {
+instr-rep () {
     instrument-repairable "$1" -- "-I$LLVM3_DIR/build/lib/clang/3.7.0/include"
 }
+
+instr-sus () {
+    ANGELIX_EXTRACTED='./extracted' instrument-suspicious "$1" -- "-I$LLVM3_DIR/build/lib/clang/3.7.0/include"
+}
+

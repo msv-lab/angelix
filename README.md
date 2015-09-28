@@ -50,16 +50,16 @@ Angelix requires specifying output values in the source code of the subject prog
         x = atoi(argv[1]);
         y = atoi(argv[2]);
         z = x + y;
-        printf("%d\n", z);
+        printf("%d\n", z + 1);
         return 0;
     }
 
-Output values are wrapped with `ANGELIX` macro specifying type and id of the expression. You also need to provide a default definition for this macro, so that the program remains compilable:
+Output values are wrapped with `angelix_output` macro providing type and id of the expression. You also need to provide a default definition for this macro, so that the program remains compilable:
 
     #include <stdio.h>
 
-    #ifndef ANGELIX
-    #define ANGELIX(type, id, expr) expr
+    #ifndef angelix_output
+    #define angelix_output(expr, type, id) expr
     #endif
 
     int main(int argc, char** argv) {
@@ -67,7 +67,7 @@ Output values are wrapped with `ANGELIX` macro specifying type and id of the exp
         x = atoi(argv[1]);
         y = atoi(argv[2]);
         z = x + y;
-        printf("%d\n", ANGELIX(int, "stdout", z));
+        printf("%d\n", angelix_output(z + 1, int, "stdout"));
         return 0;
     }
 

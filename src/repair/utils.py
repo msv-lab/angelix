@@ -87,27 +87,6 @@ class Trace:
         pass
 
 
-class Tester:
-
-    def __init__(self, config, oracle):
-        self.config = config
-        self.oracle = oracle
-
-    def __call__(project, test, dump=None, trace=None):
-        environment = dict(os.environ)
-        environment.update('ANGELIX_TEST', test)
-        if dump is not None:
-            environment.update('ANGELIX_DUMP', dump)
-        if trace is not None:
-            environment.update('ANGELIX_TRACE', trace)
-
-        with cd(project.dir):
-            proc =  Popen([self.oracle, test], env=environment)
-            code = proc.wait(timeout=self.config['testing']['TestTimeout'])
-
-        return code == 0
-
-
 class TimeoutException(Exception): pass
 import signal
 
@@ -115,7 +94,7 @@ import signal
 @contextmanager
 def time_limit(seconds):
     def signal_handler(signum, frame):
-        raise TimeoutException, "Timed out!"
+        raise TimeoutException("Timed out!")
     signal.signal(signal.SIGALRM, signal_handler)
     signal.alarm(seconds)
     try:

@@ -1,4 +1,4 @@
-MODULES = llvm-gcc llvm2 minisat stp klee-uclibc klee z3 clang bear runtime rontend
+MODULES = llvm-gcc llvm2 minisat stp klee-uclibc klee z3 clang bear runtime frontend
 CLEAN_MODULES = $(addprefix clean-, $(MODULES))
 
 help:
@@ -184,6 +184,7 @@ frontend: $(LLVM3_DIR)/tools/clang/tools/angelix
 	cd "$(LLVM3_DIR)/build" && make
 	mkdir -p "$(LLVM3_DIR)/build/bin/angelix"
 	cp "$(LLVM3_DIR)/build/bin/instrument-repairable" "$(LLVM3_DIR)/build/bin/angelix"
+	cp "$(LLVM3_DIR)/build/bin/instrument-suspicious" "$(LLVM3_DIR)/build/bin/angelix"
 
 $(LLVM3_DIR)/tools/clang/tools/angelix:
 	ln -f -s "$(ANGELIX_ROOT)/src/frontend" "$(LLVM3_DIR)/tools/clang/tools/angelix"
