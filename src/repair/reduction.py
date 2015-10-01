@@ -4,7 +4,7 @@ from utils import cd
 
 class Reducer:
 
-    def __init__(self, config, oracle):
+    def __init__(self, config):
         self.config = config
 
     def __call__(positive, negative, expressions, number):

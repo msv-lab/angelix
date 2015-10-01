@@ -14,11 +14,16 @@ export CLANG_HEADERS="$LLVM3_DIR/tools/clang/lib/Headers/"
 export STP_DIR="$ANGELIX_ROOT/build/stp"
 export MINISAT_DIR="$ANGELIX_ROOT/build/minisat"
 export Z3_DIR="$ANGELIX_ROOT/build/z3"
+export Z3_JAR="$Z3_DIR/build/com.microsoft.z3.jar"
 export KLEE_DIR="$ANGELIX_ROOT/build/klee"
 export KLEE_INCLUDE_PATH="$KLEE_DIR/include"
 export KLEE_LIBRARY_PATH="$KLEE_DIR/Release+Asserts/lib"
 export KLEE_UCLIBC_DIR="$ANGELIX_ROOT/build/klee-uclibc"
 export BEAR_DIR="$ANGELIX_ROOT/build/Bear"
+export MAXSMT_DIR="$ANGELIX_ROOT/build/maxsmt-playground"
+export MAXSMT_JAR="$MAXSMT_DIR/target/scala-2.10/maxsmt-playground_2.10-1.1.jar"
+export SYNTHESIS_DIR="$ANGELIX_ROOT/src/synthesis"
+export SYNTHESIS_JAR="$SYNTHESIS_DIR/target/scala-2.10/repair-maxsat-assembly-1.0.jar"
 
 # envorinment for building and execution:
 

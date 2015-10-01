@@ -7,10 +7,9 @@ from utils import cd
 
 class Project:
 
-    def __init__(self, dir, buggy, make_args, tests_spec):
+    def __init__(self, dir, buggy, tests_spec):
         self.dir = dir
         self.buggy = buggy
-        self.make_args = make_args
         self.tests_spec = tests_spec
         self._buggy_backup = os.path.join(self.dir, self.buggy) + '.backup'
         shutil.copyfile(os.path.join(self.dir, self.buggy), self._buggy_backup)
@@ -36,7 +35,7 @@ class Validation(Project):
 
     def build_compilation_db(self):
         with cd(self.dir):
-            subprocess.check_output(['bear make' + ' ' + self.make_args], shell=True)
+            subprocess.check_output(['bear make'], shell=True)
 
 
 class Frontend(Project):

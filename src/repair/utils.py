@@ -38,11 +38,23 @@ class IdGenerator:
 
 class Dump:
 
-    def __init__(self, working_dir, correct_dump):
+    def _json_to_dump(self, json):
+        for test, data in json:
+            test_dir = os.path.join(self.dir, test)
+            os.mkdir(test_dir)
+            for variable, values in data:
+                variable_dir = os.path.join(self.dir, variable)
+                os.mkdir(variable_dir)
+                for i, v in enumerate(values):
+                    instance_file = os.path.join(self.dir, i)
+                    with open(instance_file) as file:
+                        file.write(v)
+
+    def __init__(self, working_dir, correct_output):
         self.dir = os.path.join(working_dir, 'dump')
         os.mkdir(self.dir)
-        if correct_dump is not None:
-            shutil.copytree(correct_dump, self.dir)
+        if correct_output is not None:
+            self._json_to_dump(correct_output)
 
     def __iadd__(self, test_id):
         dir = os.path.join(self.dir, test_id)

@@ -1,4 +1,4 @@
-MODULES = llvm-gcc llvm2 minisat stp klee-uclibc klee z3 clang bear runtime frontend
+MODULES = llvm-gcc llvm2 minisat stp klee-uclibc klee z3 clang bear runtime frontend maxsmt synthesis
 CLEAN_MODULES = $(addprefix clean-, $(MODULES))
 
 help:
@@ -41,6 +41,7 @@ Z3_URL="https://github.com/Z3Prover/z3.git"
 KLEE_URL="https://github.com/klee/klee.git"
 KLEE_UCLIBC_URL="https://github.com/klee/klee-uclibc.git"
 BEAR_URL="https://github.com/rizsotto/Bear.git"
+MAXSMT_URL="https://github.com/mechtaev/maxsmt-playground.git"
 
 # Testing #
 
@@ -134,13 +135,30 @@ clean-runtime:
 # Z3 #
 
 z3: $(Z3_DIR)
-	cd $(Z3_DIR) && python scripts/mk_make.py && cd build && make
+	cd $(Z3_DIR) && python scripts/mk_make.py --java && cd build && make
 
 $(Z3_DIR):
-	cd build && git clone --depth=1 $(Z3_URL) --branch unstable
+	cd build && git clone --depth=1 $(Z3_URL)
 
 clean-z3:
 	rm -rf $(Z3_DIR)/build
+
+# MAX-SAT #
+
+maxsmt: $(MAXSMT_DIR)
+	mkdir -p $(MAXSMT_DIR)/lib
+	cp $(Z3_JAR) $(MAXSMT_DIR)/lib/
+	mkdir -p $(MAXSMT_DIR)/log
+	cd $(MAXSMT_DIR) && sbt package
+
+$(MAXSMT_DIR):
+	cd build && git clone --depth=1 $(MAXSMT_URL)
+
+clean-maxsmt:
+	cd $(MAXSMT_DIR) && sbt clean
+
+distclean-maxsmt:
+	rm -rf $(MAXSMT_DIR)
 
 # Synthesis #
 
@@ -153,6 +171,8 @@ synthesis:
 
 clean-synthesis:
 	cd $(SYNTHESIS_DIR) && sbt clean
+
+distclean-synthesis: clean-synthesis
 
 # Clang #
 

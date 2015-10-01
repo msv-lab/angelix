@@ -1,8 +1,18 @@
 class RepairableTransformer:
-    pass
 
+    def __init__(self, config):
+        self.config = config
+
+        
 class SuspiciousTransformer:
-    pass
+
+    def __init__(self, config, extracted):
+        self.config = config
+        self.extracted = extracted
+
 
 class FixInjector:
-    pass
+
+    def __init__(self, config):
+        self.config = config
+

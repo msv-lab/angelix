@@ -6,8 +6,9 @@ import time
 import json
 
 from project import Validation, Frontend, Backend, Golden
-from utils import format_time, Dump, Trace, Tester
+from utils import format_time, time_limit, TimeoutException, Dump, Trace
 from transformation import RepairableTransformer, SuspiciousTransformer, FixInjector
+from testing import Tester
 from localization import Localizer
 from reduction import Reducer
 from inference import Inferrer
@@ -18,9 +19,9 @@ class Angelix:
 
     def __init__(self, working_dir, src, buggy, oracle, tests, golden, output, lines, config):
         self.config = config
-        self.test_suite = [t['id'] for t in tests]
+        self.test_suite = tests.keys()
         extracted = os.path.join(working_dir, 'extracted')
-        os.mkdir(self.dir)
+        os.mkdir(extracted)
 
         self.run_test = Tester(config, oracle)
         self.groups_of_suspicious = Localizer(config, lines)
@@ -29,7 +30,7 @@ class Angelix:
         self.synthesize_fix = Synthesizer(config, extracted)
         self.instrument_for_localization = RepairableTransformer(config)
         self.instrument_for_inference = SuspiciousTransformer(config, extracted)
-        self.apply_fix = FixInjector(config)
+        self.apply_patch = FixInjector(config)
 
         validation_dir = os.path.join(working_dir, "validation")
         shutil.copytree(src, validation_dir)
@@ -111,7 +112,7 @@ class Angelix:
             if initial_fix is None:
                 continue
             self.validation_src.restore_buggy()
-            self.apply_fix(self.validation_src, initial_fix)
+            self.apply_patch(self.validation_src, initial_fix)
             pos, neg = evaluate(self.validation_src)
             assert set(neg).isdisjoint(set(repair_suite)), "error: wrong fix generated"
             positive, negative = pos, neg
@@ -124,7 +125,7 @@ class Angelix:
                 if fix is None:
                     break
                 self.validation_src.restore_buggy()
-                self.apply_fix(self.validation_src, fix)
+                self.apply_patch(self.validation_src, fix)
                 pos, neg = evaluate(self.validation_src)
                 assert set(neg).isdisjoint(set(repair_suite)), "error: wrong fix generated"
                 positive, negative = pos, neg
@@ -176,30 +177,34 @@ if __name__ == "__main__":
     working_dir = os.path.join(os.getcwd(), ".angelix")
     if os.path.exists(working_dir):
         shutil.rmtree(working_dir)
-        os.makedirs(working_dir)
-    
+    os.mkdir(working_dir)
+
     with open(args.tests) as tests_file:
         tests = json.load(tests_file)
-    with open(args.output) as output_file:
-        output = json.load(output_file)
+
+    if args.output is not None:
+        with open(args.output) as output_file:
+            output = json.load(output_file)
+    else:
+        output = None
 
     config = dict()
-    config['initial_tests'] = args.initial_tests
-    config['conditions_only'] = args.conditions_only
-    config['test_timeout'] = args.test_timeout
-    config['suspicious'] = args.suspicious
-    config['iterations'] = args.iterations
-    config['localization'] = args.localization
-    config['klee_forks'] = args.klee_forks
-    config['klee_timeout'] = args.klee_timeout
+    config['initial_tests']       = args.initial_tests
+    config['conditions_only']     = args.conditions_only
+    config['test_timeout']        = args.test_timeout
+    config['suspicious']          = args.suspicious
+    config['iterations']          = args.iterations
+    config['localization']        = args.localization
+    config['klee_forks']          = args.klee_forks
+    config['klee_timeout']        = args.klee_timeout
     config['klee_solver_timeout'] = args.klee_solver_timeout
-    config['synthesis_timeout'] = args.synthesis_timeout
-    config['synthesis_levels'] = args.synthesis_levels
+    config['synthesis_timeout']   = args.synthesis_timeout
+    config['synthesis_levels']    = args.synthesis_levels
 
     tool = Angelix(working_dir,
                    src = args.src,
                    buggy = args.buggy,
-                   oracle = args.oracle,
+                   oracle = os.path.abspath(args.oracle),
                    tests = tests,
                    golden = args.golden,
                    output = output,
@@ -208,7 +213,7 @@ if __name__ == "__main__":
 
     start = time.time()
     try:
-        with time_limit(args.timeout ):
+        with time_limit(args.timeout):
             patch = tool.generate_patch()
     except TimeoutException:
         print("failed to generate patch (timeout)")
