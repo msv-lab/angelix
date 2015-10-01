@@ -1,7 +1,28 @@
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
 #include "../AngelixCommon.h"
+
+
+std::string isBuggy(int beginLine, int beginColumn, int endLine, int endColumn) {
+  std::string line;
+  std::string suspiciousFile(getenv("ANGELIX_PATCH"));
+  std::ifstream infile(suspiciousFile);
+  int curBeginLine, curBeginColumn, curEndLine, curEndColumn;
+  while (std::getline(infile, line)) {
+    std::istringstream iss(line);
+    iss >> curBeginLine >> curBeginColumn >> curEndLine >> curEndColumn;
+    std::getline(infile, line);
+    if (curBeginLine   == beginLine &&
+        curBeginColumn == beginColumn &&
+        curEndLine     == endLine &&
+        curEndColumn   == endColumn) {
+      return line;
+    }
+  }
+  return NULL;
+}
 
 
 class ConditionalHandler : public MatchFinder::MatchCallback {
@@ -19,19 +40,15 @@ public:
       unsigned endLine = srcMgr.getSpellingLineNumber(expandedLoc.getEnd());
       unsigned endColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getEnd());
 
-      std::cout << beginLine << " " << beginColumn << " " << endLine << " " << endColumn << "\n"
-                << toString(expr) << "\n";
+      std::string replacement = NULL;
 
-      std::ostringstream stringStream;
-      stringStream << "({ angelix_trace("
-                   << beginLine << ", "
-                   << beginColumn << ", "
-                   << endLine << ", "
-                   << endColumn
-                   << "); "
-                   << toString(expr)
-                   << "; })";
-      std::string replacement = stringStream.str();
+      if ((replacement = isBuggy(beginLine, beginColumn, endLine, endColumn)) == NULL) {
+        return;
+      }
+
+      std::cout << beginLine << " " << beginColumn << " " << endLine << " " << endColumn << "\n"
+                << "<   " << toString(expr) << "\n"
+                << ">   " << replacement << "\n";
 
       Rewrite.ReplaceText(expandedLoc, replacement);
     }
@@ -59,9 +76,9 @@ private:
 };
 
 
-class InstrumentRepairableAction : public ASTFrontendAction {
+class ApplyPatchAction : public ASTFrontendAction {
 public:
-  InstrumentRepairableAction() {}
+  ApplyPatchAction() {}
 
   void EndSourceFileAction() override {
     FileID ID = TheRewriter.getSourceMgr().getMainFileID();
@@ -94,5 +111,5 @@ int main(int argc, const char **argv) {
   // We hand the CompilationDatabase we created and the sources to run over into the tool constructor.
   ClangTool Tool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
 
-  return Tool.run(newFrontendActionFactory<InstrumentRepairableAction>().get());
+  return Tool.run(newFrontendActionFactory<ApplyPatchAction>().get());
 }

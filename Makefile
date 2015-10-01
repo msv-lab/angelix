@@ -185,6 +185,7 @@ frontend: $(LLVM3_DIR)/tools/clang/tools/angelix
 	mkdir -p "$(LLVM3_DIR)/build/bin/angelix"
 	cp "$(LLVM3_DIR)/build/bin/instrument-repairable" "$(LLVM3_DIR)/build/bin/angelix"
 	cp "$(LLVM3_DIR)/build/bin/instrument-suspicious" "$(LLVM3_DIR)/build/bin/angelix"
+	cp "$(LLVM3_DIR)/build/bin/apply-patch" "$(LLVM3_DIR)/build/bin/angelix"
 
 $(LLVM3_DIR)/tools/clang/tools/angelix:
 	ln -f -s "$(ANGELIX_ROOT)/src/frontend" "$(LLVM3_DIR)/tools/clang/tools/angelix"

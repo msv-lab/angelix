@@ -9,6 +9,7 @@
 #include "SMTLIB2.h"
 
 
+// TODO: currently
 std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynTypedNode node, ASTContext* context) {
   const FunctionDecl* fd;
   if ((fd = node.get<FunctionDecl>()) != NULL) {
@@ -82,6 +83,25 @@ std::unordered_set<VarDecl*> collectVarsFromExpr(const Stmt* stmt) {
 }
 
 
+bool isSuspicious(int beginLine, int beginColumn, int endLine, int endColumn) {
+  std::string line;
+  std::string suspiciousFile(getenv("ANGELIX_SUSPICIOUS"));
+  std::ifstream infile(suspiciousFile);
+  int curBeginLine, curBeginColumn, curEndLine, curEndColumn;
+  while (std::getline(infile, line)) {
+    std::istringstream iss(line);
+    iss >> curBeginLine >> curBeginColumn >> curEndLine >> curEndColumn;
+    if (curBeginLine   == beginLine &&
+        curBeginColumn == beginColumn &&
+        curEndLine     == endLine &&
+        curEndColumn   == endColumn) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
 class ConditionalHandler : public MatchFinder::MatchCallback {
 public:
   ConditionalHandler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
@@ -96,6 +116,13 @@ public:
       unsigned beginColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getBegin());
       unsigned endLine = srcMgr.getSpellingLineNumber(expandedLoc.getEnd());
       unsigned endColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getEnd());
+
+      if (! isSuspicious(beginLine, beginColumn, endLine, endColumn)) {
+        return;
+      }
+
+      std::cout << beginLine << " " << beginColumn << " " << endLine << " " << endColumn << "\n"
+                << toString(expr) << "\n";
 
       std::ostringstream exprId;
       exprId << beginLine << "-" << beginColumn << "-" << endLine << "-" << endColumn;
@@ -136,8 +163,8 @@ public:
                    << "((int[]){" << varStream.str() << "}), "
                    << vars.size()
                    << ")";
-
       std::string replacement = stringStream.str();
+
       Rewrite.ReplaceText(expandedLoc, replacement);
     }
   }
@@ -165,9 +192,9 @@ private:
 };
 
 
-class InstrumentRepairableAction : public ASTFrontendAction {
+class InstrumentSuspiciousAction : public ASTFrontendAction {
 public:
-  InstrumentRepairableAction() {}
+  InstrumentSuspiciousAction() {}
 
   void EndSourceFileAction() override {
     FileID ID = TheRewriter.getSourceMgr().getMainFileID();
@@ -200,5 +227,5 @@ int main(int argc, const char **argv) {
   // We hand the CompilationDatabase we created and the sources to run over into the tool constructor.
   ClangTool Tool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
 
-  return Tool.run(newFrontendActionFactory<InstrumentRepairableAction>().get());
+  return Tool.run(newFrontendActionFactory<InstrumentSuspiciousAction>().get());
 }
