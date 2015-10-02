@@ -35,24 +35,26 @@ class Angelix:
         validation_dir = os.path.join(working_dir, "validation")
         shutil.copytree(src, validation_dir)
         self.validation_src = Validation(validation_dir, buggy, tests)
-        self.validation_src.build_compilation_db()
-
-        def init_repair_src(src, dst):
-            shutil.copytree(src, dst)
-            shutil.copy(os.path.join(validation_dir, 'compile_commands.json'), dst)
+        compilation_db = self.validation_src.export_compilation_db()
+        self.validation_src.import_compilation_db(compilation_db)
 
         frontend_dir = os.path.join(working_dir, "frontend")
-        init_repair_src(src, frontend_dir)
+        shutil.copytree(src, frontend_dir)
         self.frontend_src = Frontend(frontend_dir, buggy, tests)
+        self.frontend_src.import_compilation_db(compilation_db)
         
         backend_dir = os.path.join(working_dir, "backend")
-        init_repair_src(src, backend_dir)
+        shutil.copytree(src, backend_dir)
         self.backend_src = Backend(backend_dir, buggy, tests)
+        self.backend_src.import_compilation_db(compilation_db)
         
         if golden is not None:
             golden_dir = os.path.join(working_dir, "golden")
-            init_repair_src(golden, golden_dir)
+            shutil.copytree(golden, golden_dir)
             self.golden_src = Golden(golden_dir, buggy, tests)
+            self.golden_src.import_compilation_db(compilation_db)
+        else:
+            self.golden_src = None
 
         self.dump = Dump(working_dir, output)
         self.trace = Trace(working_dir)
@@ -97,10 +99,12 @@ class Angelix:
                 self.golden_src.build_test(test)
                 self.dump += test
                 self.run_test(self.golden_src, test, dump=self.dump[test])
-        
-        suspicious = self.groups_of_suspicious(self.trace.parse())
 
-        while len(negative) > 0 and len(suspicous) > 0:
+        positive_traces = [self.trace.parse(test) for test in positive]
+        negative_traces = [self.trace.parse(test) for test in negative]
+        suspicious = self.groups_of_suspicious(positive_traces, negative_traces)
+
+        while len(negative) > 0 and len(suspicious) > 0:
             expressions = suspicious.pop()
             repair_suite = self.reduce(positive, negative, expressions, self.config['initial_tests'])
             self.backend_src.restore_buggy()

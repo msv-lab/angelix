@@ -1,7 +1,9 @@
+import copy
 import difflib
 import os
 import shutil
 import subprocess
+import json
 from utils import cd
 
 
@@ -23,25 +25,45 @@ class Project:
         with open(self._buggy_backup,'r') as backup:
             backup_lines = backup.readlines()
         return difflib.unified_diff(backup_lines, buggy_lines)
+
+    def import_compilation_db(self, compilation_db):
+        compilation_db = copy.deepcopy(compilation_db)
+        for item in compilation_db:
+            item['directory'] = os.path.join(self.dir, item['directory'])
+            item['file'] = os.path.join(self.dir, item['file'])
+            # TODO add clang headers to the command
+        compilation_db_file = os.path.join(self.dir, 'compile_commands.json')
+        with open(compilation_db_file, 'w') as file:
+            json.dump(compilation_db, file)
         
 
 class Validation(Project):
 
     def build(self):
-        pass
+        with cd(self.dir):
+            subprocess.check_output(['make'], shell=True)  # FIXME: do I need shell here?
 
     def build_test(self, test_case):
         pass
 
-    def build_compilation_db(self):
+    def export_compilation_db(self):
         with cd(self.dir):
             subprocess.check_output(['bear make'], shell=True)
+        compilation_db_file = os.path.join(self.dir, 'compile_commands.json')
+        with open(compilation_db_file) as file:
+            compilation_db = json.load(file)
+        # making paths relative:
+        for item in compilation_db:
+            item['directory'] = os.path.relpath(item['directory'], self.dir)
+            item['file'] = os.path.relpath(item['file'], self.dir)
+        return compilation_db
 
 
 class Frontend(Project):
 
     def build(self):
-        pass
+        with cd(self.dir):
+            subprocess.check_output(['make CC="angelix-compiler --test"'], shell=True)  # FIXME: do I need shell here?
 
     def build_test(self, test_case):
         pass
@@ -50,7 +72,8 @@ class Frontend(Project):
 class Backend(Project):
 
     def build(self):
-        pass
+        with cd(self.dir):
+            subprocess.check_output(['make CC="angelix-compiler --klee"'], shell=True)  # FIXME: do I nee
 
     def build_test(self, test_case):
         pass
@@ -59,7 +82,8 @@ class Backend(Project):
 class Golden(Project):
 
     def build(self):
-        pass
+        with cd(self.dir):
+            subprocess.check_output(['make CC="angelix-compiler --test"'], shell=True)  # FIXME: do I need shell here?
 
     def build_test(self, test_case):
         pass

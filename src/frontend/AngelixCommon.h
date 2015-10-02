@@ -21,7 +21,7 @@ using namespace clang::tooling;
 using namespace llvm;
 
 
-#define INPLACE_MODIFICATION 0
+#define INPLACE_MODIFICATION 1
 
 
 SourceRange getExpandedLoc(const clang::Stmt* expr, SourceManager &srcMgr) {

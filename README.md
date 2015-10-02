@@ -2,7 +2,7 @@
 
 Semantics-based automated program repair tool for C programs. Angelix fixes bugs manifested by failing test cases by modifying side-effect free program expressions. It searches for the minimal change in order to preserve the original source code. Powered by KLEE symbolic execution engine and Z3 SMT solver.
 
-## Prerequisites ##
+## Installation ##
 
 Install dependencies:
 
@@ -31,13 +31,21 @@ Tested on Ubuntu 14.04 64-bit.
 
 ## Usage ##
 
-Angelix supports Makefile-based projects and it assumes that (1) compiler is defined by the `CC` variable, (2) compilation and linking are done by separate compiler calls. Note that you need to configure your project to use static linking so that it can be executed by KLEE. Angelix copies all data to the `.angelix` directory and does not modify the original files. Run `angelix -h` to see the list of available options.
-
-There are three activities that are performed manually by the user:
+Prior to execution of Angelix, user needs to perform the following three activities:
 
 1. Instrumenting output expressions
 2. Extracting required information from the testing framework
 3. Specifying expected output values for failing test cases (if golden version is not available)
+
+Angelix supports Makefile-based projects. The following is required for successful execution:
+
+* Compiler used in the project's Makefiles can be substituted by redefining `CC` variable.
+* Compilation and linking are done by separate compiler calls.
+* Project is configured to use static linking.
+* All executables and object files are removed (run `make clean`).
+* Angelix environment, `C_INCLUDE_PATH` and `CPLUS_INCLUDE_PATH` are set as shown above.
+
+Angelix is hygienic, it does not modify original project files. All intermidiate data is stored in the `.angelix` directory. Run `angelix -h` to see the list of available options.
 
 ## Instrumentation ##
 
