@@ -43,10 +43,10 @@ class Dump:
             test_dir = os.path.join(self.dir, test)
             os.mkdir(test_dir)
             for variable, values in data.items():
-                variable_dir = os.path.join(self.dir, variable)
+                variable_dir = os.path.join(test_dir, variable)
                 os.mkdir(variable_dir)
                 for i, v in enumerate(values):
-                    instance_file = os.path.join(self.dir, str(i))
+                    instance_file = os.path.join(variable_dir, str(i))
                     with open(instance_file, 'w') as file:
                         file.write(str(v))
 

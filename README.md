@@ -127,6 +127,10 @@ Angelix can extract correct outputs from a golden version (it must be instrument
 
 Each output id corresponds to a list of values, since an expression can be evaluated multiple times during the test execution.
 
+## Known problems ##
+
+If you use multiarch, there can be a linking problem: https://stackoverflow.com/questions/6329887/compiling-problems-cannot-find-crt1-o
+
 ## Contributors ##
 
 Principal investigator:

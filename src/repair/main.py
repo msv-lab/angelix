@@ -4,6 +4,7 @@ import shutil
 import argparse
 import time
 import json
+import logging
 
 from project import Validation, Frontend, Backend, Golden
 from utils import format_time, time_limit, TimeoutException, Dump, Trace
@@ -13,6 +14,9 @@ from localization import Localizer
 from reduction import Reducer
 from inference import Inferrer
 from synthesis import Synthesizer
+
+
+logger = logging.getLogger(__name__)
 
 
 class Angelix:
@@ -74,12 +78,14 @@ class Angelix:
                
         self.validation_src.build()
         positive, negative = evaluate(self.validation_src)
-        
+
+        logger.info('instrumenting for localization')
         self.instrument_for_localization(self.frontend_src)
         self.frontend_src.build()
         for test in positive:
             self.frontend_src.build_test(test)
             self.trace += test
+            logger.info('running positive test {} for debugging'.format(test))
             if test not in self.dump:
                 self.dump += test
                 self.run_test(self.frontend_src, test, dump=self.dump[test], trace=self.trace[test])
@@ -92,12 +98,14 @@ class Angelix:
         for test in negative:
             self.frontend_src.build_test(test)
             self.trace += test
+            logger.info('running negative test {} for debugging'.format(test))
             self.run_test(self.frontend_src, test, trace=self.trace[test])
             if test not in self.dump:
                 if self.golden_src is None:
                     raise Exception("error: golden version or correct output is needed for test {}".format(test))
                 self.golden_src.build_test(test)
                 self.dump += test
+                logger.info('running golden version with test {}'.format(test))
                 self.run_test(self.golden_src, test, dump=self.dump[test])
 
         positive_traces = [self.trace.parse(test) for test in positive]
@@ -108,13 +116,17 @@ class Angelix:
             expressions = suspicious.pop()
             repair_suite = self.reduce(positive, negative, expressions, self.config['initial_tests'])
             self.backend_src.restore_buggy()
+            for e in expressions:
+                logger.info('instrumenting suspicious expression {}'.format(e))
             self.instrument_for_inference(self.backend_src, expressions)
             angelic_forest = dict()
             for test in repair_suite:
                 angelic_forest[test] = self.infer_spec(self.backend_src, test)
             initial_fix = self.synthesize_fix(angelic_forest)
             if initial_fix is None:
+                logger.info('cannot synthesize fix')
                 continue
+            logger.info('candidate fix is synthesized')
             self.validation_src.restore_buggy()
             self.apply_patch(self.validation_src, initial_fix)
             pos, neg = evaluate(self.validation_src)
@@ -123,11 +135,14 @@ class Angelix:
 
             while len(negative) > 0:
                 counterexample = negative.pop()
+                logger.info('counterexample test is {}'.format(counterexample))
                 repair_suite.append(counterexample)
                 angelic_forest[counterexample] = self.infer_spec(self.backend_src, counterexample)
                 fix = self.synthesize_fix(angelic_forest)
                 if fix is None:
+                    logger.info('cannot refine fix')
                     break
+                logger.info('refined fix is synthesized')
                 self.validation_src.restore_buggy()
                 self.apply_patch(self.validation_src, fix)
                 pos, neg = evaluate(self.validation_src)
@@ -177,6 +192,8 @@ if __name__ == "__main__":
                         help='component levels (default: alternative integer boolean comparison)')
 
     args = parser.parse_args()
+
+    logging.basicConfig(level=logging.INFO)
 
     working_dir = os.path.join(os.getcwd(), ".angelix")
     if os.path.exists(working_dir):

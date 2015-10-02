@@ -41,14 +41,14 @@ class Validation(Project):
 
     def build(self):
         with cd(self.dir):
-            subprocess.check_output(['make'], shell=True)  # FIXME: do I need shell here?
+            subprocess.check_output(['make'])
 
     def build_test(self, test_case):
         pass
 
     def export_compilation_db(self):
         with cd(self.dir):
-            subprocess.check_output(['bear make'], shell=True)
+            subprocess.check_output(['bear', 'make'])
         compilation_db_file = os.path.join(self.dir, 'compile_commands.json')
         with open(compilation_db_file) as file:
             compilation_db = json.load(file)
@@ -63,7 +63,7 @@ class Frontend(Project):
 
     def build(self):
         with cd(self.dir):
-            subprocess.check_output(['make CC="angelix-compiler --test"'], shell=True)  # FIXME: do I need shell here?
+            subprocess.check_output(['make', 'CC = angelix-compiler --test'])
 
     def build_test(self, test_case):
         pass
@@ -73,7 +73,7 @@ class Backend(Project):
 
     def build(self):
         with cd(self.dir):
-            subprocess.check_output(['make CC="angelix-compiler --klee"'], shell=True)  # FIXME: do I nee
+            subprocess.check_output(['make', 'CC = angelix-compiler --klee'])
 
     def build_test(self, test_case):
         pass
@@ -83,7 +83,7 @@ class Golden(Project):
 
     def build(self):
         with cd(self.dir):
-            subprocess.check_output(['make CC="angelix-compiler --test"'], shell=True)  # FIXME: do I need shell here?
+            subprocess.check_output(['make', 'CC = angelix-compiler --test'])
 
     def build_test(self, test_case):
         pass
