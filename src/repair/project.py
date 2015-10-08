@@ -5,6 +5,10 @@ import shutil
 import subprocess
 import json
 from utils import cd
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class Project:
@@ -40,6 +44,7 @@ class Project:
 class Validation(Project):
 
     def build(self):
+        logger.info('building validation source')
         with cd(self.dir):
             subprocess.check_output(['make'])
 
@@ -62,6 +67,7 @@ class Validation(Project):
 class Frontend(Project):
 
     def build(self):
+        logger.info('building frontend source')
         with cd(self.dir):
             subprocess.check_output(['make', 'CC = angelix-compiler --test'])
 
@@ -72,6 +78,7 @@ class Frontend(Project):
 class Backend(Project):
 
     def build(self):
+        logger.info('building backend source')
         with cd(self.dir):
             subprocess.check_output(['make', 'CC = angelix-compiler --klee'])
 
@@ -82,6 +89,7 @@ class Backend(Project):
 class Golden(Project):
 
     def build(self):
+        logger.info('building golden source')
         with cd(self.dir):
             subprocess.check_output(['make', 'CC = angelix-compiler --test'])
 

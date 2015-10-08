@@ -67,7 +67,7 @@ Output values are wrapped with `ANGELIX_OUTPUT` macro providing type and id of t
     #include <stdio.h>
 
     #ifndef ANGELIX_OUTPUT
-    #define ANGELIX_OUTPUT(expr, type, id) expr
+    #define ANGELIX_OUTPUT(type, expr, id) expr
     #endif
 
     int main(int argc, char** argv) {
@@ -75,7 +75,7 @@ Output values are wrapped with `ANGELIX_OUTPUT` macro providing type and id of t
         x = atoi(argv[1]);
         y = atoi(argv[2]);
         z = x + y;
-        printf("%d\n", ANGELIX_OUTPUT(z + 1, int, "stdout"));
+        printf("%d\n", ANGELIX_OUTPUT(int, z + 1, "stdout"));
         return 0;
     }
 

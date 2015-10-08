@@ -3,18 +3,22 @@
 #include <string.h>
 #include <limits.h>
 #include <time.h>
+#include <dirent.h>
 #include "klee/klee.h"
 #include "runtime.h"
 
-typedef char* str;
 
+typedef char* str;
 typedef int bool;
+
 #define true 1
 #define false 0
 
 /*
   Hashtable implementation (for positive integers)
  */
+
+#define NONE -1
 
 struct entry_s {
 	char *key;
@@ -150,7 +154,7 @@ int ht_get( hashtable_t *hashtable, char *key ) {
  
 	/* Did we actually find anything? */
 	if( pair == NULL || pair->key == NULL || strcmp( key, pair->key ) != 0 ) {
-		return -1; //FIXME: this is bad
+		return NONE;
  
 	} else {
 		return pair->value;
@@ -162,73 +166,22 @@ int ht_get( hashtable_t *hashtable, char *key ) {
   End of hashtable implementation
  */
 
-void log(char* message) {
-  time_t rawtime;
-  struct tm * timeinfo;
-  time ( &rawtime );
-  timeinfo = localtime ( &rawtime );
-  char* t = asctime (timeinfo);
-  char *pos;
-  if ((pos=strchr(t, '\n')) != NULL)
-    *pos = '\0';
-  FILE *fp = fopen("/tmp/af-runtime.log", "a");
-  if (fp != NULL) {
-    fprintf(fp, "[%s] %s\n", t, message);
-  }
-  fclose(fp);
-}
-
-#define MAX_NAME_LENGTH 100
-#define MAX_TEST_SUITE_SIZE 1000
 #define MAX_PATH_LENGTH 1000
-#define MAX_MESSAGE_LENGTH 2000
+#define MAX_NAME_LENGTH 1000
+#define INT_LENGTH 15
 
-int test_suite_size = -1;
-bool test_dump_initialized = false;
-char test_suite[MAX_TEST_SUITE_SIZE][MAX_NAME_LENGTH];
-char test_dump_dir[MAX_PATH_LENGTH];
-char current_test[MAX_NAME_LENGTH];
-
-char message[MAX_MESSAGE_LENGTH];
-
-// for counting instances
-hashtable_t *inputs;
 hashtable_t *outputs;
 hashtable_t *suspicious;
 
 void init_tables() {
-  inputs = ht_create(65536);
   outputs = ht_create(65536);
   suspicious = ht_create(65536);
 }
 
-void init_test_suite() {
-  test_suite_size = 0;
-  char* test_suite_str = getenv("AF_TEST_SUITE");
-  char* token = strtok(test_suite_str, " \n\t");
-  if (token == NULL) {
-    strcpy(test_suite[test_suite_size], test_suite_str);
-    test_suite_size = 1;
-  }
-  while (token != NULL) {
-    strcpy(test_suite[test_suite_size], token);
-    test_suite_size++;
-    token = strtok(NULL, " \n\t");
-  }
-}
+/*
+  Parsing and printing
+*/
 
-void init_test_dump() {
-  char* dump = getenv("AF_DUMP_DIR");
-  strcpy(test_dump_dir, dump);
-  test_dump_initialized = true;
-}
-
-void init_current_test() {
-  char* ct = getenv("AF_CURRENT_TEST");
-  strcpy(current_test, ct);
-}
-
-// parsing
 int parse_int(char* str) {
   return atoi(str);
 }
@@ -241,49 +194,92 @@ bool parse_bool(char* str) {
     return false;
   }
   fprintf(stderr, "[runtime] wrong boolean format: %s\n", str);
-  exit(1);
+  abort();
 }
 
 char parse_char(char* str) {
-  if (strlen(str) != 3 || str[0] != '\'' || str[2] != '\'') {
+  if (strlen(str) != 1) {
     fprintf(stderr, "[runtime] wrong character format: %s\n", str);
-    exit(1);
+    abort();
   }
-  return str[1];
+  return str[0];
+}
+
+char* print_int(int i) {
+  char* str = (char*) malloc(INT_LENGTH * sizeof(char));
+  sprintf(str, "%d", i);
+  return str;
+}
+
+char* print_bool(bool b) {
+  if (b) {
+    return "true";
+  } else {
+    return "false";
+  }
+}
+
+char* print_char(char c) {
+  char* str = (char*) malloc(2 * sizeof(char));
+  str[1] = '\0';
+  str[0] = c;
+  return str;
+}
+
+char* print_str(char* s) {
+  return s;
+}
+
+/* 
+   Loading and dumping
+*/
+
+char* load_instance(char* var, int instance) {
+  char *dir = getenv("ANGELIX_DUMP");
+  char file[MAX_PATH_LENGTH + 1];
+  sprintf(file, "%s/%s/%d", dir, var, instance);
+
+  FILE *fp = fopen(file, "r");
+  if (fp == NULL)
+    return NULL;
+  
+  fseek(fp, 0, SEEK_END);
+  long fsize = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+  
+  char *string = malloc(fsize + 1);
+  fread(string, fsize, 1, fp);
+  fclose(fp);
+ 
+  string[fsize] = 0;
+  return string;
+}
+
+void dump_instance(char* var, int instance, char* data) {
+  char *dir = getenv("ANGELIX_DUMP");
+  char vardir[MAX_PATH_LENGTH + 1];
+  sprintf(vardir, "%s/%s", dir, var, instance);
+
+  DIR* d = opendir(vardir);
+  if (d) {
+    closedir(d);
+  } else {
+    mkdir(vardir, 0777);
+  }
+
+  char file[MAX_PATH_LENGTH + 1];
+  sprintf(file, "%s/%d", vardir, instance);
+
+  FILE *fp = fopen(file, "a");
+  if (!fp)
+    abort();
+  fputs(data, fp);
+  fclose(fp);
 }
 
 /*
-  Supports both c='a' and c[0]='a' for the first element  
- */
-int parse_instance(char* str) {
-  if (str && strlen(str) == 0) return 0;
-  str++;
-  return atoi(str);
-}
-
-// printing
-void print_int(char* buffer, char* name, int inst, int i) {
-  sprintf(buffer, "%s^%d=%d", name, inst, i);
-}
-
-void print_bool(char* buffer, char* name, int inst, bool b) {
-  if (b) {
-    sprintf(buffer, "%s^%d=true", name, inst);
-  } else {
-    sprintf(buffer, "%s^%d=false", name, inst);
-  }
-}
-
-void print_char(char* buffer, char* name, int inst, char c) {
-  sprintf(buffer, "%s^%d='%c'", name, inst, c);
-}
-
-void print_str(char* buffer, char* name, int inst, str s) {
-  sprintf(buffer, "%s^%d=\"%s\"", name, inst, s);
-}
-
-
-// reading test data
+  Reading dumped data
+*/
 
 #define LOOKUP_RESULT_PROTO(type) \
   struct type##_lookup_result { bool succeed; type value; };
@@ -294,190 +290,58 @@ LOOKUP_RESULT_PROTO(char)
 
 #undef LOOKUP_RESULT_PROTO
 
-
-#define GET_FROM_FILE_PROTO(type)                                       \
-  struct type##_lookup_result get_##type##_from_file(char* name, int inst, char* test_file) { \
-    sprintf(message, "looking for %s value in %s", name, test_file);    \
-    log(message);                                                       \
-    struct type##_lookup_result result;                                 \
-    result.succeed = false;                                             \
-    result.value = 0;                                                   \
-                                                                        \
-    FILE* fp;                                                           \
-    char* line_ptr = NULL;                                              \
-    size_t len = 0;                                                     \
-    ssize_t read;                                                       \
-                                                                        \
-    fp = fopen(test_file, "r");                                         \
-    if (fp == NULL) {                                                   \
-      sprintf(message, "wrong test file %s", test_file);                \
-      log(message);                                                     \
-      exit(1);                                                          \
-    }                                                                   \
-                                                                        \
-    while ((read = getline(&line_ptr, &len, fp)) != -1) {               \
-      char line[MAX_NAME_LENGTH];                                       \
-      strcpy(line, line_ptr);                                           \
-      char* left = strtok(line, "=");                                   \
-      char* right = strtok(NULL, "=");                                  \
-      size_t name_len = strlen(name);                                   \
-      size_t left_len = strlen(left);                                   \
-      if (left_len < name_len) continue;                                \
-      if (strcmp(left, name) == 0) {                                    \
-        result.succeed = true;                                          \
-        result.value = parse_##type(right);                             \
-        break;                                                          \
-      } else {                                                          \
-        if (left_len == name_len ||                                     \
-            strncmp(left, name, name_len) != 0 ||                       \
-            left[name_len] != '^')                                      \
-          continue;                                                     \
-        left = left + name_len;                                         \
-        if (inst == parse_instance(left)) {                             \
-          result.succeed = true;                                        \
-          result.value = parse_##type(right);                           \
-          break;                                                        \
-        }                                                               \
-      }                                                                 \
-    }                                                                   \
-                                                                        \
-    fclose(fp);                                                         \
-                                                                        \
-    sprintf(message, "WARNING: value of %s is not found", name);        \
-    log(message);                                                       \
-                                                                        \
-    return result;                                                      \
-}
-
-GET_FROM_FILE_PROTO(int)
-GET_FROM_FILE_PROTO(bool)
-GET_FROM_FILE_PROTO(char)
-
-#undef GET_FROM_FILE_PROTO
-
-
-#define WRITE_TO_FILE_PROTO(type)                                       \
-  void write_##type##_to_file(type value, char* name, int inst, char* test_file) { \
-    sprintf(message, "writing %s value to %s", name, test_file);        \
-    log(message);                                                       \
-                                                                        \
-    FILE* fp;                                                           \
-                                                                        \
-    fp = fopen(test_file, "a");                                         \
-    if (fp == NULL) {                                                   \
-      sprintf(message, "ERROR: cannot open/create file %s", test_file); \
-      log(message);                                                     \
-      exit(1);                                                          \
-    }                                                                   \
-                                                                        \
-    char buffer[MAX_NAME_LENGTH];                                       \
-    print_##type(buffer, name, inst, value);                            \
-    fprintf(fp, "%s\n", buffer);                                        \
-                                                                        \
-    fclose(fp);                                                         \
+#define LOAD_PROTO(type)                                              \
+  struct type##_lookup_result load_##type(char* var, int instance) {  \
+    struct type##_lookup_result result;                               \
+    result.succeed = false;                                           \
+    result.value = 0;                                                 \
+                                                                      \
+    char* data = load_instance(var, instance);                        \
+                                                                      \
+    if (data != NULL) {                                               \
+      result.succeed = true;                                          \
+      result.value = parse_##type(data);                              \
+    }                                                                 \
+                                                                      \
+    return result;                                                    \
   }
 
-WRITE_TO_FILE_PROTO(int)
-WRITE_TO_FILE_PROTO(bool)
-WRITE_TO_FILE_PROTO(char)
-WRITE_TO_FILE_PROTO(str)
+LOAD_PROTO(int)
+LOAD_PROTO(bool)
+LOAD_PROTO(char)
+
+#undef LOAD_PROTO
+
+#define DUMP_PROTO(type)                                  \
+  void dump_##type(char* var, int instance, type value) { \
+    dump_instance(var, instance, print_##type(value));    \
+  }
+
+DUMP_PROTO(int)
+DUMP_PROTO(bool)
+DUMP_PROTO(char)
+DUMP_PROTO(str)
 
 #undef WRITE_TO_FILE_PROTO
 
-//TODO: for multiple instances we need to manage index manually
-#define SYMBOLIC_INPUT_PROTO(type, typestr)                             \
-  int af_symbolic_input_##type(char* id) {                              \
-    sprintf(message, "symbolic input %s", id);                          \
-    log(message);                                                       \
-    if (!test_dump_initialized) {                                       \
-      init_test_dump();                                                 \
-      init_test_suite();                                                \
-    }                                                                   \
-    if (!inputs) init_tables();                                         \
-    int prev = ht_get(inputs, id);                                      \
-    int inst;                                                           \
-    if (prev == -1) {                                                   \
-      inst = 0;                                                         \
-    } else {                                                            \
-      inst = prev + 1;                                                  \
-    }                                                                   \
-    ht_set(inputs, id, inst);                                           \
-    char name[MAX_NAME_LENGTH];                                         \
-    sprintf(name, "%s!input!%s!%d", typestr, id, inst);                 \
-    type s;                                                             \
-    klee_make_symbolic(&s, sizeof(s), name);                            \
-    bool assumption = false;                                            \
-    int i;                                                              \
-    for(i = 0; i < test_suite_size; i++) {                              \
-      char test_file[MAX_PATH_LENGTH];                                  \
-      sprintf(test_file, "%s/%s.in", test_dump_dir, test_suite[i]);     \
-      struct type##_lookup_result result = get_##type##_from_file(id, inst, test_file); \
-      if (result.succeed) {                                             \
-        assumption = (s == result.value) | assumption;                  \
-      }                                                                 \
-    }                                                                   \
-    klee_assume(assumption);                                            \
-    return s;                                                           \
-  }
-
-SYMBOLIC_INPUT_PROTO(int, "int")
-SYMBOLIC_INPUT_PROTO(bool, "bool")
-SYMBOLIC_INPUT_PROTO(char, "char")
-
-#undef SYMBOLIC_INPUT_PROTO
-
-
-#define DUMP_INPUT_PROTO(type)                                          \
-  int af_dump_input_##type(type expr, char* id) {                       \
-    if (getenv("AF_DUMP")) {                                            \
-      if (!test_dump_initialized) {                                     \
-        init_test_dump();                                               \
-        init_current_test();                                            \
-      }                                                                 \
-      if (!inputs) init_tables();                                       \
-      int prev = ht_get(inputs, id);                                    \
-      int inst;                                                         \
-      if (prev == -1) {                                                 \
-        inst = 0;                                                       \
-      } else {                                                          \
-        inst = prev + 1;                                                \
-      }                                                                 \
-      ht_set(inputs, id, inst);                                         \
-      char test_file[MAX_PATH_LENGTH];                                  \
-      sprintf(test_file, "%s/%s.in", test_dump_dir, current_test);      \
-      write_##type##_to_file(expr, id, inst, test_file);                \
-      return expr;                                                      \
-    } else {                                                            \
-      return expr;                                                      \
-    }                                                                   \
-  }
-
-DUMP_INPUT_PROTO(int)
-DUMP_INPUT_PROTO(bool)
-DUMP_INPUT_PROTO(char)
-DUMP_INPUT_PROTO(str)
-
-#undef DUMP_INPUT_PROTO
-
-#define SYMBOLIC_OUTPUT_PROTO(type, typestr)                            \
-  int af_symbolic_output_##type(type expr, char* id) {                  \
-    sprintf(message, "symbolic output %s", id);                         \
-    log(message);                                                       \
-    if (!inputs) init_tables();                                         \
-    int prev = ht_get(outputs, id);                                     \
-    int inst;                                                           \
-    if (prev == -1) {                                                   \
-      inst = 0;                                                         \
-    } else {                                                            \
-      inst = prev + 1;                                                  \
-    }                                                                   \
-    ht_set(outputs, id, inst);                                          \
-    char name[MAX_NAME_LENGTH];                                         \
-    sprintf(name, "%s!output!%s!%d", typestr, id, inst);                \
-    type s;                                                             \
-    klee_make_symbolic(&s, sizeof(s), name);                            \
-    klee_assume(s == expr);                                             \
-    return s;                                                           \
+#define SYMBOLIC_OUTPUT_PROTO(type, typestr)                  \
+  int angelix_symbolic_output_##type(type expr, char* id) {   \
+    if (!outputs)                                             \
+      init_tables();                                          \
+    int previous = ht_get(outputs, id);                       \
+    int instance;                                             \
+    if (previous == NONE) {                                   \
+      instance = 0;                                           \
+    } else {                                                  \
+      instance = previous + 1;                                \
+    }                                                         \
+    ht_set(outputs, id, instance);                            \
+    char name[MAX_NAME_LENGTH];                               \
+    sprintf(name, "%s!output!%s!%d", typestr, id, instance);  \
+    type s;                                                   \
+    klee_make_symbolic(&s, sizeof(s), name);                  \
+    klee_assume(s == expr);                                   \
+    return s;                                                 \
   }
 
 SYMBOLIC_OUTPUT_PROTO(int, "int")
@@ -487,71 +351,64 @@ SYMBOLIC_OUTPUT_PROTO(char, "char")
 #undef SYMBOLIC_OUTPUT_PROTO
 
 
-#define DUMP_OUTPUT_PROTO(type)                                     \
-  int af_dump_output_##type(type expr, char* id) {                  \
-    if (getenv("AF_DUMP")) {                                        \
-      if (!test_dump_initialized) {                                 \
-        init_test_dump();                                           \
-        init_current_test();                                        \
-      }                                                             \
-      if (!inputs) init_tables();                                   \
-      int prev = ht_get(outputs, id);                               \
-      int inst;                                                     \
-      if (prev == -1) {                                             \
-        inst = 0;                                                   \
-      } else {                                                      \
-        inst = prev + 1;                                            \
-      }                                                             \
-      ht_set(outputs, id, inst);                                    \
-      char test_file[MAX_PATH_LENGTH];                              \
-      sprintf(test_file, "%s/%s.out", test_dump_dir, current_test); \
-      write_##type##_to_file(expr, id, inst, test_file);            \
-      return expr;                                                  \
-    } else {                                                        \
-      return expr;                                                  \
-    }                                                               \
+#define DUMP_OUTPUT_PROTO(type)                         \
+  int angelix_dump_output_##type(type expr, char* id) { \
+    if (getenv("ANGELIX_DUMP")) {                       \
+      if (!outputs)                                     \
+        init_tables();                                  \
+      int previous = ht_get(outputs, id);               \
+      int instance;                                     \
+      if (previous == NONE) {                           \
+        instance = 0;                                   \
+      } else {                                          \
+        instance = previous + 1;                        \
+      }                                                 \
+      ht_set(outputs, id, instance);                    \
+      dump_##type(id, instance, expr);                  \
+      return expr;                                      \
+    } else {                                            \
+      return expr;                                      \
+    }                                                   \
   }
 
 DUMP_OUTPUT_PROTO(int)
 DUMP_OUTPUT_PROTO(bool)
 DUMP_OUTPUT_PROTO(char)
-DUMP_OUTPUT_PROTO(str)
 
 #undef DUMP_OUTPUT_PROTO
 
 
 #define SUSPICIOUS_PROTO(type, typestr)                                 \
-  int af_suspicious_##type(int expr, int id, char** env_ids, int* env_vals, int env_size) { \
-    sprintf(message, "suspicous %d", id);                               \
-    log(message);                                                       \
-    if (!inputs) init_tables();                                         \
-    char str_id[15];                                                    \
+  int angelix_suspicious_##type(int expr, int id, char** env_ids, int* env_vals, int env_size) { \
+    if (!suspicious)                                                    \
+      init_tables();                                                    \
+    char str_id[INT_LENGTH];                                            \
     sprintf(str_id, "%d", id);                                          \
-    int prev = ht_get(suspicious, str_id);                              \
-    int inst;                                                           \
-    if (prev == -1) {                                                   \
-      inst = 0;                                                         \
+    int previous = ht_get(suspicious, str_id);                          \
+    int instance;                                                       \
+    if (previous == NONE) {                                             \
+      instance = 0;                                                     \
     } else {                                                            \
-      inst = prev + 1;                                                  \
+      instance = previous + 1;                                          \
     }                                                                   \
-    ht_set(suspicious, str_id, inst);                                   \
+    ht_set(suspicious, str_id, instance);                               \
     int i;                                                              \
     for (i = 0; i < env_size; i++) {                                    \
       char name[MAX_NAME_LENGTH];                                       \
-      sprintf(name, "int!suspicious!%d!%d!env!%s", id, inst, env_ids[i]); \
+      sprintf(name, "int!suspicious!%d!%d!env!%s", id, instance, env_ids[i]); \
       int sv;                                                           \
       klee_make_symbolic(&sv, sizeof(sv), name);                        \
       klee_assume(sv == env_vals[i]);                                   \
     }                                                                   \
                                                                         \
     char name_original[MAX_NAME_LENGTH];                                \
-    sprintf(name_original, "%s!suspicious!%d!%d!original", typestr, id, inst); \
+    sprintf(name_original, "%s!suspicious!%d!%d!original", typestr, id, instance); \
     int so;                                                             \
     klee_make_symbolic(&so, sizeof(so), name_original);                 \
     klee_assume(so == expr);                                            \
                                                                         \
     char name[MAX_NAME_LENGTH];                                         \
-    sprintf(name, "%s!suspicious!%d!%d!angelic", typestr, id, inst);    \
+    sprintf(name, "%s!suspicious!%d!%d!angelic", typestr, id, instance); \
     int s;                                                              \
     klee_make_symbolic(&s, sizeof(s), name);                            \
                                                                         \
@@ -564,12 +421,12 @@ SUSPICIOUS_PROTO(bool, "bool")
 #undef SUSPICIOUS_PROTO
 
 
-void af_loc_printf(const char* loc_msg, const char* file_name) {
-  FILE *fp = fopen(file_name, "a");
-  if (fp == NULL) {
-    fprintf(stderr, "[runtime] Failed to open %s\n", file_name);
-    exit(1);
+void angelix_trace(int begin_line, int begin_column, int end_line, int end_column) {
+  if (getenv("ANGELIX_TRACE")) {
+    FILE *fp = fopen(getenv("ANGELIX_TRACE"), "a");
+    if (fp == NULL)
+      abort();
+    fprintf(fp, "%d %d %d %d\n", begin_line, begin_column, end_line, end_column);
+    fclose(fp);
   }
-  fprintf(fp, "%s\n", loc_msg);
-  fclose(fp);
 }

@@ -130,7 +130,7 @@ runtime:
 
 clean-runtime:
 	rm -rf $(ANGELIX_ROOT)/build/lib
-	cd src/angelix && make clean
+	cd src/runtime && make clean
 
 # Z3 #
 

@@ -79,13 +79,12 @@ class Angelix:
         self.validation_src.build()
         positive, negative = evaluate(self.validation_src)
 
-        logger.info('instrumenting for localization')
         self.instrument_for_localization(self.frontend_src)
         self.frontend_src.build()
+        logger.info('running positive tests for debugging')
         for test in positive:
             self.frontend_src.build_test(test)
             self.trace += test
-            logger.info('running positive test {} for debugging'.format(test))
             if test not in self.dump:
                 self.dump += test
                 self.run_test(self.frontend_src, test, dump=self.dump[test], trace=self.trace[test])
@@ -94,11 +93,11 @@ class Angelix:
 
         if self.golden_src is not None:
             self.golden_src.build()
-            
+
+        logger.info('running negative tests for debugging')
         for test in negative:
             self.frontend_src.build_test(test)
             self.trace += test
-            logger.info('running negative test {} for debugging'.format(test))
             self.run_test(self.frontend_src, test, trace=self.trace[test])
             if test not in self.dump:
                 if self.golden_src is None:
@@ -117,7 +116,7 @@ class Angelix:
             repair_suite = self.reduce(positive, negative, expressions, self.config['initial_tests'])
             self.backend_src.restore_buggy()
             for e in expressions:
-                logger.info('instrumenting suspicious expression {}'.format(e))
+                logger.info('considering suspicious expression {}'.format(e))
             self.instrument_for_inference(self.backend_src, expressions)
             angelic_forest = dict()
             for test in repair_suite:
@@ -176,8 +175,8 @@ if __name__ == "__main__":
     parser.add_argument('--suspicious', metavar='NUM', type=int, default=5,
                         help='number of suspicious repaired at ones (default: %(default)s)')
     parser.add_argument('--iterations', metavar='NUM', type=int, default=4,
-                        help='max number of iterations through suspicious (default: %(default)s)')
-    parser.add_argument('--localization', metavar='FORMULA', default='jaccard',
+                        help='number of iterations through suspicious (default: %(default)s)')
+    parser.add_argument('--localization', default='jaccard', choices=['jaccard', 'ochiai', 'tarantula'],
                         help='formula for localization algorithm (default: %(default)s)')
     parser.add_argument('--klee-forks', metavar='NUM', type=int, default=1000,
                         help='KLEE max number of forks (default: %(default)s)')
@@ -237,15 +236,16 @@ if __name__ == "__main__":
         with time_limit(args.timeout):
             patch = tool.generate_patch()
     except TimeoutException:
-        print("failed to generate patch (timeout)")
+        logger.info("failed to generate patch (timeout)")
         exit(1)
     end = time.time()
     elapsed = format_time(end - start)    
     
     if patch is None:
-        print("no patch is generated in {}".format(elapsed))
+        logger.info("no patch is generated in {}".format(elapsed))
     else:
-        print("patch is successfully generated in {} (see generated.diff)".format(elapsed))
+        logger.info("patch is successfully generated in {} (see generated.diff)".format(elapsed))
         with open('generated.diff', 'w+') as file:
             for line in patch:
                 file.write(line)
+                print(line)

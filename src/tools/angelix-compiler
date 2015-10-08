@@ -14,7 +14,7 @@ my $klee_libs = $ENV{'KLEE_LIBRARY_PATH'};
 
 
 sub debug {
-    print("[angelix-compiler] @_\n");
+    print STDERR "[angelix-compiler] @_\n";
 }
 
 
