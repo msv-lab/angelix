@@ -1,60 +1,55 @@
 import os
 from subprocess import Popen
 from utils import cd
+import logging
+import random
+
+
+logger = logging.getLogger(__name__)
+
 
 class Reducer:
 
     def __init__(self, config):
         self.config = config
 
-    def __call__(positive, negative, expressions, number):
+    def __call__(self, positive, negative, expressions, number):
+        '''
+        positive, negative: (test * trace) list
+        trace: expression list
+        '''
+        number_failing = 1
 
-        args = parser.parse_args()
-
-        tests = args.test_suite.split()
-        number = args.number
-        number_failing = args.failing
-        basepath = args.stat
-        source_dirs = [sd for sd in listdir(basepath) if os.path.isdir(os.path.join(basepath, sd))]
-
+        # this code was originally written for multiple files:
+        source_name = ''
+        source_dirs = [source_name]
+        
         # test id -> source name -> set of locations
         data = {}
 
-        passing_tests = set()
-        failing_tests = set()
-
-        # loading data from stat directory:
-        for source in source_dirs:
-            path = os.path.join(basepath, source)
-
-            for test in tests:
-                if not test in data:
-                    data[test] = {}
-
-                pass_file_path = os.path.join(path, "{}.pass.trace".format(test))
-                fail_file_path = os.path.join(path, "{}.fail.trace".format(test))
-                if os.path.isfile(pass_file_path):
-                    trace_file = pass_file_path
-                    passing_tests.add(test)
-                elif os.path.isfile(fail_file_path):
-                    trace_file = fail_file_path
-                    failing_tests.add(test)
-                else:
-                    data[test][source] = set()
-                    continue
-
-                with open(trace_file) as f:
-                    lines = set(f.readlines())
-                    coverage = map(lambda line: line.rstrip(), lines)
-                    data[test][source] = set(coverage)
+        passing_tests = []
+        failing_tests = []
 
         # selecting best tests:
+        relevant = set(expressions)
+
+        for test, trace in positive:
+            data[test] = dict()
+            data[test][source_name] = set(trace) & relevant
+            passing_tests.append(test)
+
+        for test, trace in negative:
+            data[test] = dict()
+            data[test][source_name] = set(trace) & relevant
+            failing_tests.append(test)
+
+        
         current_coverage = {}
         for source in source_dirs:
             current_coverage[source] = set()
 
         def select_best_tests(candidates, max_number):
-            selected = set()
+            selected = []
             for i in range(0, max_number):
                 if len(candidates) == 0:
                     break
@@ -63,7 +58,8 @@ class Reducer:
                     best_increment[source] = 0
 
                 best_increment_total = 0
-                best_test = random.sample(candidates, 1)[0]
+
+                best_test = candidates[0]
 
                 best_coverage = 0
                 best_coverage_test = best_test
@@ -85,12 +81,12 @@ class Reducer:
                         best_coverage_test = test
 
                 if best_increment_total > 0:
-                    selected.add(best_test)
+                    selected.append(best_test)
                     candidates.remove(best_test)
                     for source in source_dirs:
                         current_coverage[source] = current_coverage[source] | data[best_test][source]
                 elif best_coverage > 0:
-                    selected.add(best_coverage_test)
+                    selected.append(best_coverage_test)
                     candidates.remove(best_coverage_test)
                     for source in source_dirs:
                         current_coverage[source] = data[best_coverage_test][source]
@@ -107,12 +103,7 @@ class Reducer:
 
         total_selected = number_selected_passing + number_selected_failing
 
-        # print output and log
-        if os.environ.get('AF_DEBUG'):
-            print("[af-reduce] selected passing tests: ", selected_passing, file=sys.stderr)
-            print("[af-reduce] selected failing tests: ", selected_failing, file=sys.stderr)
-            print("[af-reduce] number of selected tests: ", total_selected, file=sys.stderr)
+        logger.info("selected passing tests: {}".format(selected_passing))
+        logger.info("selected failing tests: {}".format(selected_failing))
 
-        for test in selected_failing | selected_passing:
-            print(test)
-
+        return selected_failing + selected_passing

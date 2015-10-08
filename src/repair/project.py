@@ -20,7 +20,7 @@ class Project:
         self._buggy_backup = os.path.join(self.dir, self.buggy) + '.backup'
         shutil.copyfile(os.path.join(self.dir, self.buggy), self._buggy_backup)
 
-    def restore_buggy():
+    def restore_buggy(self):
         shutil.copyfile(self._buggy_backup, os.path.join(self.dir, self.buggy))
 
     def diff_buggy(self):

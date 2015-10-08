@@ -379,11 +379,11 @@ DUMP_OUTPUT_PROTO(char)
 
 
 #define SUSPICIOUS_PROTO(type, typestr)                                 \
-  int angelix_suspicious_##type(int expr, int id, char** env_ids, int* env_vals, int env_size) { \
+  int angelix_suspicious_##type(int expr, int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size) { \
     if (!suspicious)                                                    \
       init_tables();                                                    \
-    char str_id[INT_LENGTH];                                            \
-    sprintf(str_id, "%d", id);                                          \
+    char str_id[INT_LENGTH * 4 + 4];                                    \
+    sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);                     \
     int previous = ht_get(suspicious, str_id);                          \
     int instance;                                                       \
     if (previous == NONE) {                                             \
@@ -395,20 +395,20 @@ DUMP_OUTPUT_PROTO(char)
     int i;                                                              \
     for (i = 0; i < env_size; i++) {                                    \
       char name[MAX_NAME_LENGTH];                                       \
-      sprintf(name, "int!suspicious!%d!%d!env!%s", id, instance, env_ids[i]); \
+      sprintf(name, "int!suspicious!%d!%d!%d!%d!%d!env!%s", bl, bc, el, ec, instance, env_ids[i]); \
       int sv;                                                           \
       klee_make_symbolic(&sv, sizeof(sv), name);                        \
       klee_assume(sv == env_vals[i]);                                   \
     }                                                                   \
                                                                         \
     char name_original[MAX_NAME_LENGTH];                                \
-    sprintf(name_original, "%s!suspicious!%d!%d!original", typestr, id, instance); \
+    sprintf(name_original, "%s!suspicious!%d!%d!%d!%d%d!original", typestr, bl, bc, el, ec, instance); \
     int so;                                                             \
     klee_make_symbolic(&so, sizeof(so), name_original);                 \
     klee_assume(so == expr);                                            \
                                                                         \
     char name[MAX_NAME_LENGTH];                                         \
-    sprintf(name, "%s!suspicious!%d!%d!angelic", typestr, id, instance); \
+    sprintf(name, "%s!suspicious!%d!%d!%d!%d!%d!angelic", typestr, bl, bc, el, ec, instance); \
     int s;                                                              \
     klee_make_symbolic(&s, sizeof(s), name);                            \
                                                                         \

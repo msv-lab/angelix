@@ -107,13 +107,16 @@ class Angelix:
                 logger.info('running golden version with test {}'.format(test))
                 self.run_test(self.golden_src, test, dump=self.dump[test])
 
-        positive_traces = [self.trace.parse(test) for test in positive]
-        negative_traces = [self.trace.parse(test) for test in negative]
+        positive_traces = [(test, self.trace.parse(test)) for test in positive]
+        negative_traces = [(test, self.trace.parse(test)) for test in negative]
         suspicious = self.groups_of_suspicious(positive_traces, negative_traces)
 
         while len(negative) > 0 and len(suspicious) > 0:
             expressions = suspicious.pop()
-            repair_suite = self.reduce(positive, negative, expressions, self.config['initial_tests'])
+            repair_suite = self.reduce(positive_traces,
+                                       negative_traces,
+                                       expressions,
+                                       self.config['initial_tests'])
             self.backend_src.restore_buggy()
             for e in expressions:
                 logger.info('considering suspicious expression {}'.format(e))
@@ -243,6 +246,7 @@ if __name__ == "__main__":
     
     if patch is None:
         logger.info("no patch is generated in {}".format(elapsed))
+        exit(1)
     else:
         logger.info("patch is successfully generated in {} (see generated.diff)".format(elapsed))
         with open('generated.diff', 'w+') as file:

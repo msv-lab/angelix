@@ -5,4 +5,5 @@ class Localizer:
         self.config = config
 
     def __call__(self, positive_traces, negative_traces):
-        return negative_traces[0]  # TODO
+        test, trace = negative_traces[0]  # TODO
+        return [trace]
