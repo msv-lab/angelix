@@ -13,9 +13,10 @@ logger = logging.getLogger(__name__)
 
 class Project:
 
-    def __init__(self, dir, buggy, tests_spec):
+    def __init__(self, dir, buggy, build_cmd, tests_spec):
         self.dir = dir
         self.buggy = buggy
+        self.build_cmd = build_cmd
         self.tests_spec = tests_spec
         self._buggy_backup = os.path.join(self.dir, self.buggy) + '.backup'
         shutil.copyfile(os.path.join(self.dir, self.buggy), self._buggy_backup)
@@ -46,14 +47,14 @@ class Validation(Project):
     def build(self):
         logger.info('building validation source')
         with cd(self.dir):
-            subprocess.check_output(['make'])
+            subprocess.check_output(self.build_cmd, shell=True)
 
     def build_test(self, test_case):
         pass
 
     def export_compilation_db(self):
         with cd(self.dir):
-            subprocess.check_output(['bear', 'make'])
+            subprocess.check_output('bear ' + self.build_cmd, shell=True)
         compilation_db_file = os.path.join(self.dir, 'compile_commands.json')
         with open(compilation_db_file) as file:
             compilation_db = json.load(file)
@@ -68,8 +69,10 @@ class Frontend(Project):
 
     def build(self):
         logger.info('building frontend source')
+        environment = dict(os.environ)
+        environment['CC'] = 'angelix-compiler --test'
         with cd(self.dir):
-            subprocess.check_output(['make', 'CC = angelix-compiler --test'])
+            subprocess.check_output(self.build_cmd, env=environment, shell=True)
 
     def build_test(self, test_case):
         pass
@@ -79,8 +82,10 @@ class Backend(Project):
 
     def build(self):
         logger.info('building backend source')
+        environment = dict(os.environ)
+        environment['CC'] = 'angelix-compiler --klee'
         with cd(self.dir):
-            subprocess.check_output(['make', 'CC = angelix-compiler --klee'])
+            subprocess.check_output(self.build_cmd, env=environment, shell=True)
 
     def build_test(self, test_case):
         pass
@@ -90,8 +95,10 @@ class Golden(Project):
 
     def build(self):
         logger.info('building golden source')
+        environment = dict(os.environ)
+        environment['CC'] = 'angelix-compiler --test'
         with cd(self.dir):
-            subprocess.check_output(['make', 'CC = angelix-compiler --test'])
+            subprocess.check_output(self.build_cmd, env=environment, shell=True)
 
     def build_test(self, test_case):
         pass

@@ -4,6 +4,10 @@ Semantics-based automated program repair tool for C programs. Angelix fixes bugs
 
 ## Installation ##
 
+Clone repository recursively:
+
+    git clone --recursive https://github.com/mechtaev/angelix.git
+
 Install dependencies:
 
     sudo apt-get install g++ curl dejagnu subversion bison flex bc libcap-dev
@@ -33,19 +37,19 @@ Tested on Ubuntu 14.04 64-bit.
 
 Prior to execution of Angelix, user needs to perform the following three activities:
 
-1. Instrumenting output expressions
-2. Extracting required information from the testing framework
-3. Specifying expected output values for failing test cases (if golden version is not available)
+* Instrumenting output expressions
+* Extracting required information from the testing framework
+* Specifying expected output values for failing test cases (if golden version is not available)
 
-Angelix supports Makefile-based projects. The following is required for successful execution:
+The following is required for successful execution of Angelix:
 
-* Compiler used in the project's Makefiles can be substituted by redefining `CC` variable.
+* Compiler used by the build system can be substituted by redefining `CC` environment variable.
 * Compilation and linking are done by separate compiler calls.
 * Project is configured to use static linking.
-* All executables and object files are removed (run `make clean`).
+* All executables and object files are removed (e.g. run `make clean`).
 * Angelix environment, `C_INCLUDE_PATH` and `CPLUS_INCLUDE_PATH` are set as shown above.
 
-Angelix is hygienic, it does not modify original project files. All intermidiate data is stored in the `.angelix` directory. Run `angelix -h` to see the list of available options.
+Angelix is hygienic (it does not modify original project files), however, it also assumes that the source code only uses relative references to the source tree. All intermidiate data is stored in the `.angelix` directory. Run `angelix -h` to see the list of available options.
 
 ## Instrumentation ##
 
@@ -106,8 +110,8 @@ JSON test database specifies test executables, their arguments and how to build 
         "test1": {
             "executable": "tests/test1.exe",
             "arguments": ["-a", "1", "-b", "2"],
-            "make": {                         # optional
-                "arguments": "test1",
+            "build": {                         # optional
+                "command": "make test1",
                 "directory": "tests"
             }
         },
@@ -127,9 +131,9 @@ Angelix can extract correct outputs from a golden version (it must be instrument
 
 Each output id corresponds to a list of values, since an expression can be evaluated multiple times during the test execution.
 
-## Known problems ##
+## Known issues ##
 
-If you use multiarch, there can be a linking problem: https://stackoverflow.com/questions/6329887/compiling-problems-cannot-find-crt1-o
+* If you use multiarch, there can be a linking [problem](https://stackoverflow.com/questions/6329887/compiling-problems-cannot-find-crt1-o) when compiling with `llvm-gcc`
 
 ## Contributors ##
 

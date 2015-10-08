@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class Angelix:
 
-    def __init__(self, working_dir, src, buggy, oracle, tests, golden, output, lines, config):
+    def __init__(self, working_dir, src, buggy, oracle, tests, golden, output, lines, build, config):
         self.config = config
         self.test_suite = tests.keys()
         extracted = os.path.join(working_dir, 'extracted')
@@ -38,24 +38,24 @@ class Angelix:
 
         validation_dir = os.path.join(working_dir, "validation")
         shutil.copytree(src, validation_dir)
-        self.validation_src = Validation(validation_dir, buggy, tests)
+        self.validation_src = Validation(validation_dir, buggy, build, tests)
         compilation_db = self.validation_src.export_compilation_db()
         self.validation_src.import_compilation_db(compilation_db)
 
         frontend_dir = os.path.join(working_dir, "frontend")
         shutil.copytree(src, frontend_dir)
-        self.frontend_src = Frontend(frontend_dir, buggy, tests)
+        self.frontend_src = Frontend(frontend_dir, buggy, build, tests)
         self.frontend_src.import_compilation_db(compilation_db)
         
         backend_dir = os.path.join(working_dir, "backend")
         shutil.copytree(src, backend_dir)
-        self.backend_src = Backend(backend_dir, buggy, tests)
+        self.backend_src = Backend(backend_dir, buggy, build, tests)
         self.backend_src.import_compilation_db(compilation_db)
         
         if golden is not None:
             golden_dir = os.path.join(working_dir, "golden")
             shutil.copytree(golden, golden_dir)
-            self.golden_src = Golden(golden_dir, buggy, tests)
+            self.golden_src = Golden(golden_dir, buggy, build, tests)
             self.golden_src.import_compilation_db(compilation_db)
         else:
             self.golden_src = None
@@ -167,6 +167,8 @@ if __name__ == "__main__":
     parser.add_argument('--golden', metavar='DIR', help='golden source directory')
     parser.add_argument('--output', metavar='FILE', help='correct output for failing test cases')
     parser.add_argument('--lines', metavar='LINE', nargs='*', help='suspicious lines')
+    parser.add_argument('--build', metavar='CMD', default='make -e',
+                        help='build command in the form of simple shell command (default: %(default)s)')
     parser.add_argument('--timeout', metavar='MS', type=int, default=100000,
                         help='total repair timeout (default: %(default)s)')
     parser.add_argument('--initial-tests', metavar='NUM', type=int, default=3,
@@ -232,6 +234,7 @@ if __name__ == "__main__":
                    golden = args.golden,
                    output = output,
                    lines = args.lines,
+                   build = args.build,
                    config = config)
 
     start = time.time()
