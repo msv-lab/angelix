@@ -38,24 +38,24 @@ class Angelix:
 
         validation_dir = os.path.join(working_dir, "validation")
         shutil.copytree(src, validation_dir)
-        self.validation_src = Validation(validation_dir, buggy, build, tests)
+        self.validation_src = Validation(config, validation_dir, buggy, build, tests)
         compilation_db = self.validation_src.export_compilation_db()
         self.validation_src.import_compilation_db(compilation_db)
 
         frontend_dir = os.path.join(working_dir, "frontend")
         shutil.copytree(src, frontend_dir)
-        self.frontend_src = Frontend(frontend_dir, buggy, build, tests)
+        self.frontend_src = Frontend(config, frontend_dir, buggy, build, tests)
         self.frontend_src.import_compilation_db(compilation_db)
         
         backend_dir = os.path.join(working_dir, "backend")
         shutil.copytree(src, backend_dir)
-        self.backend_src = Backend(backend_dir, buggy, build, tests)
+        self.backend_src = Backend(config, backend_dir, buggy, build, tests)
         self.backend_src.import_compilation_db(compilation_db)
         
         if golden is not None:
             golden_dir = os.path.join(working_dir, "golden")
             shutil.copytree(golden, golden_dir)
-            self.golden_src = Golden(golden_dir, buggy, build, tests)
+            self.golden_src = Golden(config, golden_dir, buggy, build, tests)
             self.golden_src.import_compilation_db(compilation_db)
         else:
             self.golden_src = None
@@ -191,10 +191,17 @@ if __name__ == "__main__":
     parser.add_argument('--synthesis-levels', metavar='LEVEL', nargs='*',
                         default=['alternative', 'integer', 'boolean', 'comparison'],
                         help='component levels (default: alternative integer boolean comparison)')
+    parser.add_argument('--verbose', action='store_true',
+                        help='print compilation and KLEE logs (default: %(default)s)')
+    parser.add_argument('--quiet', action='store_true',
+                        help='print only errors (default: %(default)s)')
 
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO)
+    if args.quiet:
+        logging.basicConfig(level=logging.WARNING)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     working_dir = os.path.join(os.getcwd(), ".angelix")
     if os.path.exists(working_dir):
@@ -222,6 +229,7 @@ if __name__ == "__main__":
     config['klee_solver_timeout'] = args.klee_solver_timeout
     config['synthesis_timeout']   = args.synthesis_timeout
     config['synthesis_levels']    = args.synthesis_levels
+    config['verbose']             = args.verbose
 
     tool = Angelix(working_dir,
                    src = args.src,
@@ -240,16 +248,16 @@ if __name__ == "__main__":
             patch = tool.generate_patch()
     except TimeoutException:
         logger.info("failed to generate patch (timeout)")
-        exit(1)
+        print('TIMEOUT')
     end = time.time()
     elapsed = format_time(end - start)    
     
     if patch is None:
         logger.info("no patch is generated in {}".format(elapsed))
-        exit(1)
+        print('FAIL')
     else:
         logger.info("patch is successfully generated in {} (see generated.diff)".format(elapsed))
+        print('SUCCESS')
         with open('generated.diff', 'w+') as file:
             for line in patch:
                 file.write(line)
-                print(line)

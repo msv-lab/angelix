@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 
 class Project:
 
-    def __init__(self, dir, buggy, build_cmd, tests_spec):
+    def __init__(self, config, dir, buggy, build_cmd, tests_spec):
+        self.config = config
         self.dir = dir
         self.buggy = buggy
         self.build_cmd = build_cmd
@@ -46,15 +47,24 @@ class Validation(Project):
 
     def build(self):
         logger.info('building validation source')
+        if self.config['verbose']:
+            stderr = None
+        else:
+            stderr = subprocess.DEVNULL
+
         with cd(self.dir):
-            subprocess.check_output(self.build_cmd, shell=True)
+            subprocess.check_output(self.build_cmd, shell=True, stderr=stderr)
 
     def build_test(self, test_case):
         pass
 
     def export_compilation_db(self):
+        if self.config['verbose']:
+            stderr = None
+        else:
+            stderr = subprocess.DEVNULL
         with cd(self.dir):
-            subprocess.check_output('bear ' + self.build_cmd, shell=True)
+            subprocess.check_output('bear ' + self.build_cmd, shell=True, stderr=stderr)
         compilation_db_file = os.path.join(self.dir, 'compile_commands.json')
         with open(compilation_db_file) as file:
             compilation_db = json.load(file)
@@ -71,8 +81,13 @@ class Frontend(Project):
         logger.info('building frontend source')
         environment = dict(os.environ)
         environment['CC'] = 'angelix-compiler --test'
+        if self.config['verbose']:
+            stderr = None
+        else:
+            stderr = subprocess.DEVNULL
+
         with cd(self.dir):
-            subprocess.check_output(self.build_cmd, env=environment, shell=True)
+            subprocess.check_output(self.build_cmd, env=environment, shell=True, stderr=stderr)
 
     def build_test(self, test_case):
         pass
@@ -84,8 +99,13 @@ class Backend(Project):
         logger.info('building backend source')
         environment = dict(os.environ)
         environment['CC'] = 'angelix-compiler --klee'
+        if self.config['verbose']:
+            stderr = None
+        else:
+            stderr = subprocess.DEVNULL
+        
         with cd(self.dir):
-            subprocess.check_output(self.build_cmd, env=environment, shell=True)
+            subprocess.check_output(self.build_cmd, env=environment, shell=True, stderr=stderr)
 
     def build_test(self, test_case):
         pass
@@ -97,8 +117,13 @@ class Golden(Project):
         logger.info('building golden source')
         environment = dict(os.environ)
         environment['CC'] = 'angelix-compiler --test'
+        if self.config['verbose']:
+            stderr = None
+        else:
+            stderr = subprocess.DEVNULL
+        
         with cd(self.dir):
-            subprocess.check_output(self.build_cmd, env=environment, shell=True)
+            subprocess.check_output(self.build_cmd, env=environment, shell=True, stderr=stderr)
 
     def build_test(self, test_case):
         pass

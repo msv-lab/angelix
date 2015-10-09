@@ -21,13 +21,19 @@ class cd:
 script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
 
+def run_angelix(args, dir):
+  with cd(dir):
+    output = check_output(['angelix', '--quiet'] + args)
+  return str(output, 'UTF-8').strip(' \t\n\r')
+
+
 class TestAngelix(unittest.TestCase):
 
   def test_condition(self):
     test_dir = os.path.join(script_dir, 'condition')
-    cmd = ['angelix', 'src', 'test.c', 'oracle', 'tests.json', '--output', 'output.json']
-    with cd(test_dir):
-      check_output(cmd)
+    args = ['src', 'test.c', 'oracle', 'tests.json', '--output', 'output.json']
+    result = run_angelix(args, test_dir)
+    self.assertEqual(result, 'SUCCESS')
 
       
 if __name__ == '__main__':

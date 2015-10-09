@@ -1,6 +1,6 @@
 import os
 from utils import cd
-from subprocess import Popen
+import subprocess
 import logging
 
 
@@ -23,8 +23,13 @@ class Tester:
         if trace is not None:
             environment['ANGELIX_TRACE'] = trace
 
+        if self.config['verbose']:
+            stderr = None
+        else:
+            stderr = subprocess.DEVNULL
+
         with cd(project.dir):
-            proc = Popen([self.oracle, test], env=environment)
+            proc = subprocess.Popen([self.oracle, test], env=environment, stderr=stderr)
             code = proc.wait(timeout=self.config['test_timeout'])
 
         return code == 0                

@@ -3,6 +3,7 @@ import tempfile
 import subprocess
 from utils import cd
 import logging
+import shutil
 
 
 logger = logging.getLogger(__name__)
@@ -16,8 +17,12 @@ class RepairableTransformer:
     def __call__(self, project):
         src = os.path.basename(project.dir)
         logger.info('instrumenting repairable of {} source'.format(src))
+        if self.config['verbose']:
+            stderr = None
+        else:
+            stderr = subprocess.DEVNULL
         with cd(project.dir):
-            subprocess.check_output(['instrument-repairable', project.buggy])
+            subprocess.check_output(['instrument-repairable', project.buggy], stderr=stderr)
 
         
 class SuspiciousTransformer:
@@ -30,23 +35,26 @@ class SuspiciousTransformer:
         src = os.path.basename(project.dir)
         logger.info('instrumenting suspicious of {} source'.format(src))
         environment = dict(os.environ)
-        suspicious_file = tempfile.NamedTemporaryFile(delete=False)
-        for e in expressions:
-            data = '{} {} {} {}\n'.format(*e)
-            suspicious_file.write(bytes(data, 'UTF-8'))
-
-         # UNIX only because we don't close file before passing it to another application
-        suspicious_file.flush()
-        os.fsync(suspicious_file.fileno())
+        dirpath = tempfile.mkdtemp()
+        suspicious_file = os.path.join(dirpath, 'suspicious')
+        with open(suspicious_file, 'w') as file:
+            for e in expressions:
+                file.write('{} {} {} {}\n'.format(*e))
 
         environment['ANGELIX_EXTRACTED'] = self.extracted
-        environment['ANGELIX_SUSPICIOUS'] = suspicious_file.name
+        environment['ANGELIX_SUSPICIOUS'] = suspicious_file
+
+        if self.config['verbose']:
+            stderr = None
+        else:
+            stderr = subprocess.DEVNULL
 
         with cd(project.dir):
-            subprocess.check_output(['instrument-suspicious', project.buggy], env=environment)
+            subprocess.check_output(['instrument-suspicious', project.buggy],
+                                    env=environment,
+                                    stderr=stderr)
 
-        suspicious_file.close()
-        os.remove(suspicious_file.name)
+        shutil.rmtree(dirpath)
 
     
 class FixInjector:
