@@ -113,10 +113,10 @@ class Angelix:
 
         while len(negative) > 0 and len(suspicious) > 0:
             expressions = suspicious.pop()
-            repair_suite = self.reduce(positive_traces, negative_traces, expressions)
-            self.backend_src.restore_buggy()
             for e in expressions:
                 logger.info('considering suspicious expression {}'.format(e))
+            repair_suite = self.reduce(positive_traces, negative_traces, expressions)
+            self.backend_src.restore_buggy()
             self.instrument_for_inference(self.backend_src, expressions)
             angelic_forest = dict()
             for test in repair_suite:

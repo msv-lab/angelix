@@ -1,4 +1,8 @@
 from math import sqrt
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def ochiai(executed_passing, executed_failing, total_passing, total_failing):
@@ -79,16 +83,16 @@ class Localizer:
         top = ranking[:suspicious * iterations]
 
         sorted(top, key=lambda r: r[0][0])  # by beginning line
-        expressions = [expr for expr, rank in top]
 
         groups = []
         for i in range(0, iterations):
-            if len(expressions) == 0:
+            if len(top) == 0:
                 break
             groups.append([])
             for j in range(0, suspicious):
-                if len(expressions) == 0:
+                if len(top) == 0:
                     break
-                groups[i].append(expressions.pop())
-            
+                expr, score = top.pop()
+                groups[i].append(expr)
+                logger.info("selected expression {} with score {:.5} in group {}".format(expr, score, i))
         return groups
