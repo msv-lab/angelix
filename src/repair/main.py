@@ -101,7 +101,8 @@ class Angelix:
             self.run_test(self.frontend_src, test, trace=self.trace[test])
             if test not in self.dump:
                 if self.golden_src is None:
-                    raise Exception("error: golden version or correct output is needed for test {}".format(test))
+                    logger.error("golden version or correct output is needed for test {}".format(test))
+                    return None
                 self.golden_src.build_test(test)
                 self.dump += test
                 logger.info('running golden version with test {}'.format(test))
@@ -125,11 +126,13 @@ class Angelix:
             if initial_fix is None:
                 logger.info('cannot synthesize fix')
                 continue
-            logger.info('candidate fix is synthesized')
+            logger.info('candidate fix synthesized')
             self.validation_src.restore_buggy()
             self.apply_patch(self.validation_src, initial_fix)
             pos, neg = evaluate(self.validation_src)
-            assert set(neg).isdisjoint(set(repair_suite)), "error: wrong fix generated"
+            if set(neg).isdisjoint(set(repair_suite)):
+                not_repaired = list(set(repair_suite) & set(neg))
+                logger.error("generated invalid fix (tests {} not repaired)".format(not_repaired))
             positive, negative = pos, neg
 
             while len(negative) > 0:
@@ -253,10 +256,10 @@ if __name__ == "__main__":
     elapsed = format_time(end - start)    
     
     if patch is None:
-        logger.info("no patch is generated in {}".format(elapsed))
+        logger.info("no patch generated in {}".format(elapsed))
         print('FAIL')
     else:
-        logger.info("patch is successfully generated in {} (see generated.diff)".format(elapsed))
+        logger.info("patch successfully generated in {} (see generated.diff)".format(elapsed))
         print('SUCCESS')
         with open('generated.diff', 'w+') as file:
             for line in patch:
