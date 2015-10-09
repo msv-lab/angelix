@@ -111,7 +111,7 @@ JSON test database specifies test executables, their arguments and how to build 
             "executable": "tests/test1.exe",
             "arguments": ["-a", "1", "-b", "2"],
             "build": {                         # optional
-                "command": "make test1",
+                "command": "make -e test1",
                 "directory": "tests"
             }
         },

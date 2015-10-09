@@ -1,3 +1,7 @@
+class SynthesisTimeout(Exception):
+    pass
+
+
 class Synthesizer:
 
     def __init__(self, config, extracted):
@@ -5,4 +9,5 @@ class Synthesizer:
         self.extracted = extracted
 
     def __call__(self, angelic_forest):
+        raise SynthesisTimeout
         return None

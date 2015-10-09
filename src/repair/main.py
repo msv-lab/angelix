@@ -6,14 +6,14 @@ import time
 import json
 import logging
 
-from project import Validation, Frontend, Backend, Golden
+from project import Validation, Frontend, Backend, Golden, CompilationError
 from utils import format_time, time_limit, TimeoutException, Dump, Trace
 from transformation import RepairableTransformer, SuspiciousTransformer, FixInjector
 from testing import Tester
 from localization import Localizer
 from reduction import Reducer
 from inference import Inferrer
-from synthesis import Synthesizer
+from synthesis import Synthesizer, SynthesisTimeout
 
 
 logger = logging.getLogger(__name__)
@@ -101,7 +101,7 @@ class Angelix:
             self.run_test(self.frontend_src, test, trace=self.trace[test])
             if test not in self.dump:
                 if self.golden_src is None:
-                    logger.error("golden version or correct output is needed for test {}".format(test))
+                    logger.error("golden version or correct output needed for test {}".format(test))
                     return None
                 self.golden_src.build_test(test)
                 self.dump += test
@@ -119,36 +119,52 @@ class Angelix:
             repair_suite = self.reduce(positive_traces, negative_traces, expressions)
             self.backend_src.restore_buggy()
             self.instrument_for_inference(self.backend_src, expressions)
+            self.backend_src.build()
+            for test in repair_suite:
+                self.backend_src.build_test(test)
             angelic_forest = dict()
             for test in repair_suite:
                 angelic_forest[test] = self.infer_spec(self.backend_src, test)
-            initial_fix = self.synthesize_fix(angelic_forest)
+            try:
+                initial_fix = self.synthesize_fix(angelic_forest)
+            except SynthesisTimeout:
+                logger.warning('timeout when synthesizing fix')
+                continue
             if initial_fix is None:
                 logger.info('cannot synthesize fix')
                 continue
             logger.info('candidate fix synthesized')
             self.validation_src.restore_buggy()
             self.apply_patch(self.validation_src, initial_fix)
+            self.validation_src.build()
             pos, neg = evaluate(self.validation_src)
             if set(neg).isdisjoint(set(repair_suite)):
                 not_repaired = list(set(repair_suite) & set(neg))
-                logger.error("generated invalid fix (tests {} not repaired)".format(not_repaired))
+                logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
             positive, negative = pos, neg
 
             while len(negative) > 0:
                 counterexample = negative.pop()
                 logger.info('counterexample test is {}'.format(counterexample))
                 repair_suite.append(counterexample)
+                self.backend_src.build_test(counterexample)
                 angelic_forest[counterexample] = self.infer_spec(self.backend_src, counterexample)
-                fix = self.synthesize_fix(angelic_forest)
+                try:
+                    fix = self.synthesize_fix(angelic_forest)
+                except SynthesisTimeout:
+                    logger.warning('timeout when synthesizing fix')
+                    break
                 if fix is None:
                     logger.info('cannot refine fix')
                     break
                 logger.info('refined fix is synthesized')
                 self.validation_src.restore_buggy()
                 self.apply_patch(self.validation_src, fix)
+                self.validation_src.build()
                 pos, neg = evaluate(self.validation_src)
-                assert set(neg).isdisjoint(set(repair_suite)), "error: wrong fix generated"
+                if set(neg).isdisjoint(set(repair_suite)):
+                    not_repaired = list(set(repair_suite) & set(neg))
+                    logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
                 positive, negative = pos, neg
  
         if len(negative) > 0:
@@ -246,21 +262,30 @@ if __name__ == "__main__":
                    config = config)
 
     start = time.time()
+
     try:
         with time_limit(args.timeout):
             patch = tool.generate_patch()
     except TimeoutException:
         logger.info("failed to generate patch (timeout)")
         print('TIMEOUT')
+        exit(0)
+    except CompilationError:
+        logger.info("failed to generate patch")
+        print('FAIL')
+        exit(1)
+
     end = time.time()
     elapsed = format_time(end - start)    
     
     if patch is None:
         logger.info("no patch generated in {}".format(elapsed))
         print('FAIL')
+        exit(0)
     else:
         logger.info("patch successfully generated in {} (see generated.diff)".format(elapsed))
         print('SUCCESS')
         with open('generated.diff', 'w+') as file:
             for line in patch:
                 file.write(line)
+        exit(0)

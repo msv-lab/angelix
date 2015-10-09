@@ -4,7 +4,6 @@ class Inferrer:
         self.config = config
 
     def __call__(self, project, test):
-        angelic_forest = dict()
-        angelic_forest[test] = []  # TODO
-        return angelic_forest
+        angelic_paths = []
+        return angelic_paths
         

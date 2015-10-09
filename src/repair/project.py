@@ -6,9 +6,14 @@ import subprocess
 import json
 from utils import cd
 import logging
+import tempfile
 
 
 logger = logging.getLogger(__name__)
+
+
+class CompilationError(Exception):
+    pass
 
 
 class Project:
@@ -41,30 +46,59 @@ class Project:
         compilation_db_file = os.path.join(self.dir, 'compile_commands.json')
         with open(compilation_db_file, 'w') as file:
             json.dump(compilation_db, file)
-        
+
+
+def build_in_env(dir, cmd, verbose, env=os.environ):
+    dirpath = tempfile.mkdtemp()
+    messages = os.path.join(dirpath, 'messages')
+
+    environment = dict(env)
+    environment['ANGELIX_COMPILER_MESSAGES'] = messages
+
+    if verbose:
+        stderr = None
+    else:
+        stderr = subprocess.DEVNULL
+
+    try:
+        with cd(dir):
+            subprocess.check_output(cmd, env=environment, shell=True, stderr=stderr)
+    except subprocess.CalledProcessError:
+        logger.warning("compilation of {} returned non-zero code".format(dir)) 
+
+    if os.path.exists(messages):
+        with open(messages) as file:
+            logger.warning("failed to build {}".format(file.readline().strip()))
+
+
+def build_with_cc(dir, cmd, verbose, cc):
+    env = dict(os.environ)
+    env['CC'] = cc
+    build_in_env(dir, cmd, verbose, env)
+
 
 class Validation(Project):
 
     def build(self):
         logger.info('building validation source')
-        if self.config['verbose']:
-            stderr = None
-        else:
-            stderr = subprocess.DEVNULL
-
-        with cd(self.dir):
-            subprocess.check_output(self.build_cmd, shell=True, stderr=stderr)
-
+        build_in_env(self.dir, self.build_cmd, self.config['verbose'])
+        
     def build_test(self, test_case):
-        pass
+        if 'build' in self.tests_spec[test_case]:
+            cmd = self.tests_spec[test_case]['build']['command']
+            dir = os.path.join(self.dir, self.tests_spec[test_case]['build']['directory'])
+            build_in_env(dir, cmd, self.config['verbose'])
+        dependency = os.path.join(self.dir, self.tests_spec[test_case]['executable'])
+        if not os.path.exists(dependency):
+            logger.error("failed to build test {} dependency {}".format(test_case, dependency))
+            raise CompilationError()
+            
 
     def export_compilation_db(self):
-        if self.config['verbose']:
-            stderr = None
-        else:
-            stderr = subprocess.DEVNULL
-        with cd(self.dir):
-            subprocess.check_output('bear ' + self.build_cmd, shell=True, stderr=stderr)
+        logger.info('building json compilation database from validation source')
+
+        build_in_env(self.dir, 'bear ' + self.build_cmd, self.config['verbose'])
+
         compilation_db_file = os.path.join(self.dir, 'compile_commands.json')
         with open(compilation_db_file) as file:
             compilation_db = json.load(file)
@@ -79,51 +113,64 @@ class Frontend(Project):
 
     def build(self):
         logger.info('building frontend source')
-        environment = dict(os.environ)
-        environment['CC'] = 'angelix-compiler --test'
-        if self.config['verbose']:
-            stderr = None
-        else:
-            stderr = subprocess.DEVNULL
-
-        with cd(self.dir):
-            subprocess.check_output(self.build_cmd, env=environment, shell=True, stderr=stderr)
+        build_with_cc(self.dir, self.build_cmd, self.config['verbose'], 'angelix-compiler --test')
 
     def build_test(self, test_case):
-        pass
+        if 'build' in self.tests_spec[test_case]:
+            cmd = self.tests_spec[test_case]['build']['command']
+            dir = os.path.join(self.dir, self.tests_spec[test_case]['build']['directory'])
+            build_with_cc(dir, cmd, self.config['verbose'], 'angelix-compiler --test')
+        dependency = os.path.join(self.dir, self.tests_spec[test_case]['executable'])
+        if not os.path.exists(dependency):
+            logger.error("failed to build test {} dependency {}".format(test_case, dependency))
+            raise CompilationError()
+
 
 
 class Backend(Project):
 
     def build(self):
         logger.info('building backend source')
-        environment = dict(os.environ)
-        environment['CC'] = 'angelix-compiler --klee'
+        build_with_cc(self.dir, self.build_cmd, self.config['verbose'], 'angelix-compiler --klee')
+
+    def build_test(self, test_case):
+        if 'build' in self.tests_spec[test_case]:
+            cmd = self.tests_spec[test_case]['build']['command']
+            dir = os.path.join(self.dir, self.tests_spec[test_case]['build']['directory'])
+            build_with_cc(dir, cmd, self.config['verbose'], 'angelix-compiler --klee')
+        executable = os.path.join(self.dir, self.tests_spec[test_case]['executable'])
+        dependency = executable + '.bc'
+        if not os.path.exists(dependency):
+            logger.error("failed to build test {} dependency {}".format(test_case, dependency))
+            raise CompilationError()
+        patched_dependency = executable + '.patched.bc'
         if self.config['verbose']:
             stderr = None
         else:
             stderr = subprocess.DEVNULL
-        
-        with cd(self.dir):
-            subprocess.check_output(self.build_cmd, env=environment, shell=True, stderr=stderr)
 
-    def build_test(self, test_case):
-        pass
+        try:
+            subprocess.check_output(['angelix-patch-bitcode', dependency], stderr=stderr)
+        except subprocess.CalledProcessError:        
+            logger.warning("patching of {} returned non-zero code".format(dependency))
+
+        if not os.path.exists(patched_dependency):
+            logger.error("failed to build test {} dependency {}".format(test_case, patched_dependency))
+            raise CompilationError()
 
 
 class Golden(Project):
 
     def build(self):
         logger.info('building golden source')
-        environment = dict(os.environ)
-        environment['CC'] = 'angelix-compiler --test'
-        if self.config['verbose']:
-            stderr = None
-        else:
-            stderr = subprocess.DEVNULL
-        
-        with cd(self.dir):
-            subprocess.check_output(self.build_cmd, env=environment, shell=True, stderr=stderr)
+        build_with_cc(self.dir, self.build_cmd, self.config['verbose'], 'angelix-compiler --test')
 
     def build_test(self, test_case):
-        pass
+        if 'build' in self.tests_spec[test_case]:
+            cmd = self.tests_spec[test_case]['build']['command']
+            dir = os.path.join(self.dir, self.tests_spec[test_case]['build']['directory'])
+            build_with_cc(dir, cmd, self.config['verbose'], 'angelix-compiler --test')
+        dependency = os.path.join(self.dir, self.tests_spec[test_case]['executable'])
+        if not os.path.exists(dependency):
+            logger.error("failed to build test {} dependency {}".format(test_case, dependency))
+            raise CompilationError()

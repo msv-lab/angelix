@@ -24,7 +24,7 @@ script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 def run_angelix(args, dir):
   with cd(dir):
     output = check_output(['angelix', '--quiet'] + args)
-  return str(output, 'UTF-8').strip(' \t\n\r')
+  return str(output, 'UTF-8').strip()
 
 
 class TestAngelix(unittest.TestCase):
