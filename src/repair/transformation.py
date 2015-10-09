@@ -1,4 +1,5 @@
 import os
+from os.path import join, basename
 import tempfile
 import subprocess
 from utils import cd
@@ -15,7 +16,7 @@ class RepairableTransformer:
         self.config = config
 
     def __call__(self, project):
-        src = os.path.basename(project.dir)
+        src = basename(project.dir)
         logger.info('instrumenting repairable of {} source'.format(src))
         if self.config['verbose']:
             stderr = None
@@ -32,11 +33,11 @@ class SuspiciousTransformer:
         self.extracted = extracted
 
     def __call__(self, project, expressions):
-        src = os.path.basename(project.dir)
+        src = basename(project.dir)
         logger.info('instrumenting suspicious of {} source'.format(src))
         environment = dict(os.environ)
         dirpath = tempfile.mkdtemp()
-        suspicious_file = os.path.join(dirpath, 'suspicious')
+        suspicious_file = join(dirpath, 'suspicious')
         with open(suspicious_file, 'w') as file:
             for e in expressions:
                 file.write('{} {} {} {}\n'.format(*e))
@@ -63,7 +64,7 @@ class FixInjector:
         self.config = config
 
     def __call__(self, project):
-        src = os.path.basename(project.dir)
+        src = basename(project.dir)
         logger.info('applying patch to {} source'.format(src))
         pass
 

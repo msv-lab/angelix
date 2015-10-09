@@ -1,4 +1,5 @@
 import os
+from os.path import basename
 from utils import cd
 import subprocess
 import logging
@@ -14,10 +15,9 @@ class Tester:
         self.oracle = oracle
 
     def __call__(self, project, test, dump=None, trace=None):
-        src = os.path.basename(project.dir)
+        src = basename(project.dir)
         logger.info('running test {} of {} source'.format(test, src))
         environment = dict(os.environ)
-        environment['ANGELIX_TEST'] = test
         if dump is not None:
             environment['ANGELIX_DUMP'] = dump
         if trace is not None:

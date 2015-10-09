@@ -1,6 +1,7 @@
 import copy
 import difflib
 import os
+from os.path import join, exists, relpath
 import shutil
 import subprocess
 import json
@@ -24,14 +25,14 @@ class Project:
         self.buggy = buggy
         self.build_cmd = build_cmd
         self.tests_spec = tests_spec
-        self._buggy_backup = os.path.join(self.dir, self.buggy) + '.backup'
-        shutil.copyfile(os.path.join(self.dir, self.buggy), self._buggy_backup)
+        self._buggy_backup = join(self.dir, self.buggy) + '.backup'
+        shutil.copyfile(join(self.dir, self.buggy), self._buggy_backup)
 
     def restore_buggy(self):
-        shutil.copyfile(self._buggy_backup, os.path.join(self.dir, self.buggy))
+        shutil.copyfile(self._buggy_backup, join(self.dir, self.buggy))
 
     def diff_buggy(self):
-        with open(os.path.join(self.dir, self.buggy),'r') as buggy:
+        with open(join(self.dir, self.buggy),'r') as buggy:
             buggy_lines = buggy.readlines()
         with open(self._buggy_backup,'r') as backup:
             backup_lines = backup.readlines()
@@ -40,17 +41,17 @@ class Project:
     def import_compilation_db(self, compilation_db):
         compilation_db = copy.deepcopy(compilation_db)
         for item in compilation_db:
-            item['directory'] = os.path.join(self.dir, item['directory'])
-            item['file'] = os.path.join(self.dir, item['file'])
+            item['directory'] = join(self.dir, item['directory'])
+            item['file'] = join(self.dir, item['file'])
             # TODO add clang headers to the command
-        compilation_db_file = os.path.join(self.dir, 'compile_commands.json')
+        compilation_db_file = join(self.dir, 'compile_commands.json')
         with open(compilation_db_file, 'w') as file:
             json.dump(compilation_db, file)
 
 
 def build_in_env(dir, cmd, verbose, env=os.environ):
     dirpath = tempfile.mkdtemp()
-    messages = os.path.join(dirpath, 'messages')
+    messages = join(dirpath, 'messages')
 
     environment = dict(env)
     environment['ANGELIX_COMPILER_MESSAGES'] = messages
@@ -64,11 +65,11 @@ def build_in_env(dir, cmd, verbose, env=os.environ):
         with cd(dir):
             subprocess.check_output(cmd, env=environment, shell=True, stderr=stderr)
     except subprocess.CalledProcessError:
-        logger.warning("compilation of {} returned non-zero code".format(dir)) 
+        logger.warning("compilation of {} returned non-zero code".format(relpath(dir))) 
 
-    if os.path.exists(messages):
+    if exists(messages):
         with open(messages) as file:
-            logger.warning("failed to build {}".format(file.readline().strip()))
+            logger.warning("failed to build {}".format(relpath(file.readline().strip())))
 
 
 def build_with_cc(dir, cmd, verbose, cc):
@@ -86,11 +87,11 @@ class Validation(Project):
     def build_test(self, test_case):
         if 'build' in self.tests_spec[test_case]:
             cmd = self.tests_spec[test_case]['build']['command']
-            dir = os.path.join(self.dir, self.tests_spec[test_case]['build']['directory'])
+            dir = join(self.dir, self.tests_spec[test_case]['build']['directory'])
             build_in_env(dir, cmd, self.config['verbose'])
-        dependency = os.path.join(self.dir, self.tests_spec[test_case]['executable'])
-        if not os.path.exists(dependency):
-            logger.error("failed to build test {} dependency {}".format(test_case, dependency))
+        dependency = join(self.dir, self.tests_spec[test_case]['executable'])
+        if not exists(dependency):
+            logger.error("failed to build test {} dependency {}".format(test_case, relpath(dependency)))
             raise CompilationError()
             
 
@@ -99,13 +100,13 @@ class Validation(Project):
 
         build_in_env(self.dir, 'bear ' + self.build_cmd, self.config['verbose'])
 
-        compilation_db_file = os.path.join(self.dir, 'compile_commands.json')
+        compilation_db_file = join(self.dir, 'compile_commands.json')
         with open(compilation_db_file) as file:
             compilation_db = json.load(file)
         # making paths relative:
         for item in compilation_db:
-            item['directory'] = os.path.relpath(item['directory'], self.dir)
-            item['file'] = os.path.relpath(item['file'], self.dir)
+            item['directory'] = relpath(item['directory'], self.dir)
+            item['file'] = relpath(item['file'], self.dir)
         return compilation_db
 
 
@@ -118,11 +119,11 @@ class Frontend(Project):
     def build_test(self, test_case):
         if 'build' in self.tests_spec[test_case]:
             cmd = self.tests_spec[test_case]['build']['command']
-            dir = os.path.join(self.dir, self.tests_spec[test_case]['build']['directory'])
+            dir = join(self.dir, self.tests_spec[test_case]['build']['directory'])
             build_with_cc(dir, cmd, self.config['verbose'], 'angelix-compiler --test')
-        dependency = os.path.join(self.dir, self.tests_spec[test_case]['executable'])
-        if not os.path.exists(dependency):
-            logger.error("failed to build test {} dependency {}".format(test_case, dependency))
+        dependency = join(self.dir, self.tests_spec[test_case]['executable'])
+        if not exists(dependency):
+            logger.error("failed to build test {} dependency {}".format(test_case, relpath(dependency)))
             raise CompilationError()
 
 
@@ -136,12 +137,12 @@ class Backend(Project):
     def build_test(self, test_case):
         if 'build' in self.tests_spec[test_case]:
             cmd = self.tests_spec[test_case]['build']['command']
-            dir = os.path.join(self.dir, self.tests_spec[test_case]['build']['directory'])
+            dir = join(self.dir, self.tests_spec[test_case]['build']['directory'])
             build_with_cc(dir, cmd, self.config['verbose'], 'angelix-compiler --klee')
-        executable = os.path.join(self.dir, self.tests_spec[test_case]['executable'])
+        executable = join(self.dir, self.tests_spec[test_case]['executable'])
         dependency = executable + '.bc'
-        if not os.path.exists(dependency):
-            logger.error("failed to build test {} dependency {}".format(test_case, dependency))
+        if not exists(dependency):
+            logger.error("failed to build test {} dependency {}".format(test_case, relpath(dependency)))
             raise CompilationError()
         patched_dependency = executable + '.patched.bc'
         if self.config['verbose']:
@@ -152,10 +153,10 @@ class Backend(Project):
         try:
             subprocess.check_output(['angelix-patch-bitcode', dependency], stderr=stderr)
         except subprocess.CalledProcessError:        
-            logger.warning("patching of {} returned non-zero code".format(dependency))
+            logger.warning("patching of {} returned non-zero code".format(relpath(dependency)))
 
-        if not os.path.exists(patched_dependency):
-            logger.error("failed to build test {} dependency {}".format(test_case, patched_dependency))
+        if not exists(patched_dependency):
+            logger.error("failed to build test {} dependency {}".format(test_case, relpath(patched_dependency)))
             raise CompilationError()
 
 
@@ -168,9 +169,9 @@ class Golden(Project):
     def build_test(self, test_case):
         if 'build' in self.tests_spec[test_case]:
             cmd = self.tests_spec[test_case]['build']['command']
-            dir = os.path.join(self.dir, self.tests_spec[test_case]['build']['directory'])
+            dir = join(self.dir, self.tests_spec[test_case]['build']['directory'])
             build_with_cc(dir, cmd, self.config['verbose'], 'angelix-compiler --test')
-        dependency = os.path.join(self.dir, self.tests_spec[test_case]['executable'])
-        if not os.path.exists(dependency):
-            logger.error("failed to build test {} dependency {}".format(test_case, dependency))
+        dependency = join(self.dir, self.tests_spec[test_case]['executable'])
+        if not exists(dependency):
+            logger.error("failed to build test {} dependency {}".format(test_case, relpath(dependency)))
             raise CompilationError()

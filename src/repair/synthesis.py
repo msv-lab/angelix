@@ -1,3 +1,9 @@
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+
 class SynthesisTimeout(Exception):
     pass
 
@@ -9,5 +15,5 @@ class Synthesizer:
         self.extracted = extracted
 
     def __call__(self, angelic_forest):
-        raise SynthesisTimeout
+        logger.warning('timeout when synthesizing fix')
         return None

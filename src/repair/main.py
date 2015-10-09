@@ -1,5 +1,6 @@
 import signal
 import os
+from os.path import join, exists, abspath
 import shutil
 import argparse
 import time
@@ -12,8 +13,8 @@ from transformation import RepairableTransformer, SuspiciousTransformer, FixInje
 from testing import Tester
 from localization import Localizer
 from reduction import Reducer
-from inference import Inferrer
-from synthesis import Synthesizer, SynthesisTimeout
+from inference import Inferrer, InferenceError
+from synthesis import Synthesizer
 
 
 logger = logging.getLogger(__name__)
@@ -24,36 +25,36 @@ class Angelix:
     def __init__(self, working_dir, src, buggy, oracle, tests, golden, output, lines, build, config):
         self.config = config
         self.test_suite = tests.keys()
-        extracted = os.path.join(working_dir, 'extracted')
+        extracted = join(working_dir, 'extracted')
         os.mkdir(extracted)
 
         self.run_test = Tester(config, oracle)
         self.groups_of_suspicious = Localizer(config, lines)
         self.reduce = Reducer(config)
-        self.infer_spec = Inferrer(config)
+        self.infer_spec = Inferrer(config, tests)
         self.synthesize_fix = Synthesizer(config, extracted)
         self.instrument_for_localization = RepairableTransformer(config)
         self.instrument_for_inference = SuspiciousTransformer(config, extracted)
         self.apply_patch = FixInjector(config)
 
-        validation_dir = os.path.join(working_dir, "validation")
+        validation_dir = join(working_dir, "validation")
         shutil.copytree(src, validation_dir)
         self.validation_src = Validation(config, validation_dir, buggy, build, tests)
         compilation_db = self.validation_src.export_compilation_db()
         self.validation_src.import_compilation_db(compilation_db)
 
-        frontend_dir = os.path.join(working_dir, "frontend")
+        frontend_dir = join(working_dir, "frontend")
         shutil.copytree(src, frontend_dir)
         self.frontend_src = Frontend(config, frontend_dir, buggy, build, tests)
         self.frontend_src.import_compilation_db(compilation_db)
         
-        backend_dir = os.path.join(working_dir, "backend")
+        backend_dir = join(working_dir, "backend")
         shutil.copytree(src, backend_dir)
         self.backend_src = Backend(config, backend_dir, buggy, build, tests)
         self.backend_src.import_compilation_db(compilation_db)
         
         if golden is not None:
-            golden_dir = os.path.join(working_dir, "golden")
+            golden_dir = join(working_dir, "golden")
             shutil.copytree(golden, golden_dir)
             self.golden_src = Golden(config, golden_dir, buggy, build, tests)
             self.golden_src.import_compilation_db(compilation_db)
@@ -124,12 +125,8 @@ class Angelix:
                 self.backend_src.build_test(test)
             angelic_forest = dict()
             for test in repair_suite:
-                angelic_forest[test] = self.infer_spec(self.backend_src, test)
-            try:
-                initial_fix = self.synthesize_fix(angelic_forest)
-            except SynthesisTimeout:
-                logger.warning('timeout when synthesizing fix')
-                continue
+                angelic_forest[test] = self.infer_spec(self.backend_src, test, self.dump[test])
+            initial_fix = self.synthesize_fix(angelic_forest)
             if initial_fix is None:
                 logger.info('cannot synthesize fix')
                 continue
@@ -149,11 +146,7 @@ class Angelix:
                 repair_suite.append(counterexample)
                 self.backend_src.build_test(counterexample)
                 angelic_forest[counterexample] = self.infer_spec(self.backend_src, counterexample)
-                try:
-                    fix = self.synthesize_fix(angelic_forest)
-                except SynthesisTimeout:
-                    logger.warning('timeout when synthesizing fix')
-                    break
+                fix = self.synthesize_fix(angelic_forest)
                 if fix is None:
                     logger.info('cannot refine fix')
                     break
@@ -222,8 +215,8 @@ if __name__ == "__main__":
     else:
         logging.basicConfig(level=logging.INFO)
 
-    working_dir = os.path.join(os.getcwd(), ".angelix")
-    if os.path.exists(working_dir):
+    working_dir = join(os.getcwd(), ".angelix")
+    if exists(working_dir):
         shutil.rmtree(working_dir)
     os.mkdir(working_dir)
 
@@ -253,7 +246,7 @@ if __name__ == "__main__":
     tool = Angelix(working_dir,
                    src = args.src,
                    buggy = args.buggy,
-                   oracle = os.path.abspath(args.oracle),
+                   oracle = abspath(args.oracle),
                    tests = tests,
                    golden = args.golden,
                    output = output,
@@ -270,7 +263,7 @@ if __name__ == "__main__":
         logger.info("failed to generate patch (timeout)")
         print('TIMEOUT')
         exit(0)
-    except CompilationError:
+    except (CompilationError, InferenceError):
         logger.info("failed to generate patch")
         print('FAIL')
         exit(1)
