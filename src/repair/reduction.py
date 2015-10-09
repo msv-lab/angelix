@@ -13,11 +13,14 @@ class Reducer:
     def __init__(self, config):
         self.config = config
 
-    def __call__(self, positive, negative, expressions, number):
+    def __call__(self, positive, negative, expressions):
         '''
         positive, negative: (test * trace) list
         trace: expression list
+
+        computes config['initial_tests'] tests that maximally cover given expressions
         '''
+        number = self.config['initial_tests']
         number_failing = 1
 
         # this code was originally written for multiple files:

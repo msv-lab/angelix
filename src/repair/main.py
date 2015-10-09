@@ -113,10 +113,7 @@ class Angelix:
 
         while len(negative) > 0 and len(suspicious) > 0:
             expressions = suspicious.pop()
-            repair_suite = self.reduce(positive_traces,
-                                       negative_traces,
-                                       expressions,
-                                       self.config['initial_tests'])
+            repair_suite = self.reduce(positive_traces, negative_traces, expressions)
             self.backend_src.restore_buggy()
             for e in expressions:
                 logger.info('considering suspicious expression {}'.format(e))
