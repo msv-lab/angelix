@@ -281,9 +281,9 @@ class Inferrer:
                 s = pattern.format(type, expr[0], expr[1], expr[2], expr[3], instance)
                 return Array(s, BitVecSort(32), BitVecSort(8))
 
-            def env_variable(type, expr, instance, name):
-                pattern = '{}!suspicious!{}!{}!{}!{}!{}!env!{}'
-                s = pattern.format(type, expr[0], expr[1], expr[2], expr[3], instance, name)
+            def env_variable(expr, instance, name):
+                pattern = 'int!suspicious!{}!{}!{}!{}!{}!env!{}'
+                s = pattern.format(expr[0], expr[1], expr[2], expr[3], instance, name)
                 return Array(s, BitVecSort(32), BitVecSort(8))
 
             def output_variable(type, name, instance):
@@ -322,7 +322,7 @@ class Inferrer:
 
                     for name in env:
                         selector = env_selector(expr, instance, name)
-                        array = env_variable(type, expr, instance, name)
+                        array = env_variable(expr, instance, name)
                         solver.add(selector == array_to_bv32(array))
                         
             
@@ -348,15 +348,15 @@ class Inferrer:
                     bv_original = model[original_selector(expr, instance)]
                     original = from_bv32_converter_by_type[type](bv_original)
                     logger.info('expression {}[{}]: angelic = {}, original = {}'.format(expr, instance, angelic, original))
-                    env = []
+                    env_values = []
                     for name in env:
                         bv_env = model[env_selector(expr, instance, name)]
-                        env_value = from_bv32_converter_by_type['int'](bv_env)  # Note that here is int
-                        env.append((name, env_value))
+                        value = from_bv32_converter_by_type['int'](bv_env)  # Note that here is int
+                        env_values.append((name, value))
 
                     angelic_path_entry['values'].append({'angelic': angelic,
                                                          'original': original,
-                                                         'environment': env})
+                                                         'environment': env_values})
 
                     angelic_path.append(angelic_path_entry)
 

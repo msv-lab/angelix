@@ -37,9 +37,9 @@ Tested on Ubuntu 14.04 64-bit.
 
 Prior to execution of Angelix, user needs to perform the following three activities:
 
-* Instrumenting output expressions
-* Extracting required information from the testing framework
-* Specifying expected output values for failing test cases (if golden version is not available)
+* Instrument output expressions
+* Extract required information from the testing framework
+* Specify expected output values for failing test cases (if golden version is not available)
 
 The following is required for successful execution of Angelix:
 
@@ -49,7 +49,9 @@ The following is required for successful execution of Angelix:
 * All executables and object files are removed (e.g. run `make clean`).
 * Angelix environment, `C_INCLUDE_PATH` and `CPLUS_INCLUDE_PATH` are set as shown above.
 
-Angelix is hygienic (it does not modify original project files), however, it also assumes that the source code only uses relative references to the source tree. All intermidiate data is stored in the `.angelix` directory. Run `angelix -h` to see the list of available options.
+Angelix is hygienic (it does not modify original project files), however, it also assumes that the source code only uses relative references to the source tree. All intermediate data is stored in the `.angelix` directory.
+
+Run `angelix -h` to see the list of available options.
 
 ## Instrumentation ##
 
@@ -92,7 +94,7 @@ The following types of output expressions are supported:
 
 ## Test model ##
 
-To abstract over test framework, we use the following three objects:
+To abstract over test framework, Angelix uses the following three objects:
 
 * Oracle executable
 * JSON test database
