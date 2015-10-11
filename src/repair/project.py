@@ -32,9 +32,9 @@ class Project:
         shutil.copyfile(self._buggy_backup, join(self.dir, self.buggy))
 
     def diff_buggy(self):
-        with open(join(self.dir, self.buggy),'r') as buggy:
+        with open(join(self.dir, self.buggy)) as buggy:
             buggy_lines = buggy.readlines()
-        with open(self._buggy_backup,'r') as backup:
+        with open(self._buggy_backup) as backup:
             backup_lines = backup.readlines()
         return difflib.unified_diff(backup_lines, buggy_lines)
 
@@ -46,7 +46,7 @@ class Project:
             # TODO add clang headers to the command
         compilation_db_file = join(self.dir, 'compile_commands.json')
         with open(compilation_db_file, 'w') as file:
-            json.dump(compilation_db, file)
+            json.dump(compilation_db, file, indent=2)
 
 
 def build_in_env(dir, cmd, verbose, env=os.environ):
@@ -65,7 +65,7 @@ def build_in_env(dir, cmd, verbose, env=os.environ):
         with cd(dir):
             subprocess.check_output(cmd, env=environment, shell=True, stderr=stderr)
     except subprocess.CalledProcessError:
-        logger.warning("compilation of {} returned non-zero code".format(relpath(dir))) 
+        logger.warning("compilation of {} returned non-zero code".format(relpath(dir)))
 
     if exists(messages):
         with open(messages) as file:
@@ -82,23 +82,26 @@ class Validation(Project):
 
     def build(self):
         logger.info('building validation source')
-        build_in_env(self.dir, self.build_cmd, self.config['verbose'])
-        
+        build_in_env(self.dir,
+                     self.build_cmd,
+                     self.config['verbose'])
+
     def build_test(self, test_case):
         if 'build' in self.tests_spec[test_case]:
-            cmd = self.tests_spec[test_case]['build']['command']
-            dir = join(self.dir, self.tests_spec[test_case]['build']['directory'])
-            build_in_env(dir, cmd, self.config['verbose'])
+            build_in_env(join(self.dir, self.tests_spec[test_case]['build']['directory']),
+                         self.tests_spec[test_case]['build']['command'],
+                         self.config['verbose'])
         dependency = join(self.dir, self.tests_spec[test_case]['executable'])
         if not exists(dependency):
             logger.error("failed to build test {} dependency {}".format(test_case, relpath(dependency)))
             raise CompilationError()
-            
 
     def export_compilation_db(self):
         logger.info('building json compilation database from validation source')
 
-        build_in_env(self.dir, 'bear ' + self.build_cmd, self.config['verbose'])
+        build_in_env(self.dir,
+                     'bear ' + self.build_cmd,
+                     self.config['verbose'])
 
         compilation_db_file = join(self.dir, 'compile_commands.json')
         with open(compilation_db_file) as file:
@@ -114,35 +117,44 @@ class Frontend(Project):
 
     def build(self):
         logger.info('building frontend source')
-        build_with_cc(self.dir, self.build_cmd, self.config['verbose'], 'angelix-compiler --test')
+        build_with_cc(self.dir,
+                      self.build_cmd,
+                      self.config['verbose'],
+                      'angelix-compiler --test')
 
     def build_test(self, test_case):
         if 'build' in self.tests_spec[test_case]:
-            cmd = self.tests_spec[test_case]['build']['command']
-            dir = join(self.dir, self.tests_spec[test_case]['build']['directory'])
-            build_with_cc(dir, cmd, self.config['verbose'], 'angelix-compiler --test')
+            build_with_cc(join(self.dir, self.tests_spec[test_case]['build']['directory']),
+                          self.tests_spec[test_case]['build']['command'],
+                          self.config['verbose'],
+                          'angelix-compiler --test')
         dependency = join(self.dir, self.tests_spec[test_case]['executable'])
         if not exists(dependency):
-            logger.error("failed to build test {} dependency {}".format(test_case, relpath(dependency)))
+            logger.error("failed to build test {} dependency {}".format(test_case,
+                                                                        relpath(dependency)))
             raise CompilationError()
-
 
 
 class Backend(Project):
 
     def build(self):
         logger.info('building backend source')
-        build_with_cc(self.dir, self.build_cmd, self.config['verbose'], 'angelix-compiler --klee')
+        build_with_cc(self.dir,
+                      self.build_cmd,
+                      self.config['verbose'],
+                      'angelix-compiler --klee')
 
     def build_test(self, test_case):
         if 'build' in self.tests_spec[test_case]:
-            cmd = self.tests_spec[test_case]['build']['command']
-            dir = join(self.dir, self.tests_spec[test_case]['build']['directory'])
-            build_with_cc(dir, cmd, self.config['verbose'], 'angelix-compiler --klee')
+            build_with_cc(join(self.dir, self.tests_spec[test_case]['build']['directory']),
+                          self.tests_spec[test_case]['build']['command'],
+                          self.config['verbose'],
+                          'angelix-compiler --klee')
         executable = join(self.dir, self.tests_spec[test_case]['executable'])
         dependency = executable + '.bc'
         if not exists(dependency):
-            logger.error("failed to build test {} dependency {}".format(test_case, relpath(dependency)))
+            logger.error("failed to build test {} dependency {}".format(test_case,
+                                                                        relpath(dependency)))
             raise CompilationError()
         patched_dependency = executable + '.patched.bc'
         if self.config['verbose']:
@@ -156,7 +168,8 @@ class Backend(Project):
             logger.warning("patching of {} returned non-zero code".format(relpath(dependency)))
 
         if not exists(patched_dependency):
-            logger.error("failed to build test {} dependency {}".format(test_case, relpath(patched_dependency)))
+            logger.error("failed to build test {} dependency {}".format(test_case,
+                                                                        relpath(patched_dependency)))
             raise CompilationError()
 
 
@@ -164,14 +177,19 @@ class Golden(Project):
 
     def build(self):
         logger.info('building golden source')
-        build_with_cc(self.dir, self.build_cmd, self.config['verbose'], 'angelix-compiler --test')
+        build_with_cc(self.dir,
+                      self.build_cmd,
+                      self.config['verbose'],
+                      'angelix-compiler --test')
 
     def build_test(self, test_case):
         if 'build' in self.tests_spec[test_case]:
-            cmd = self.tests_spec[test_case]['build']['command']
-            dir = join(self.dir, self.tests_spec[test_case]['build']['directory'])
-            build_with_cc(dir, cmd, self.config['verbose'], 'angelix-compiler --test')
+            build_with_cc(join(self.dir, self.tests_spec[test_case]['build']['directory']),
+                          self.tests_spec[test_case]['build']['command'],
+                          self.config['verbose'],
+                          'angelix-compiler --test')
         dependency = join(self.dir, self.tests_spec[test_case]['executable'])
         if not exists(dependency):
-            logger.error("failed to build test {} dependency {}".format(test_case, relpath(dependency)))
+            logger.error("failed to build test {} dependency {}".format(test_case,
+                                                                        relpath(dependency)))
             raise CompilationError()

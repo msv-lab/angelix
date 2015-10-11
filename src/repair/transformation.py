@@ -25,7 +25,7 @@ class RepairableTransformer:
         with cd(project.dir):
             subprocess.check_output(['instrument-repairable', project.buggy], stderr=stderr)
 
-        
+
 class SuspiciousTransformer:
 
     def __init__(self, config, extracted):
@@ -57,7 +57,7 @@ class SuspiciousTransformer:
 
         shutil.rmtree(dirpath)
 
-    
+
 class FixInjector:
 
     def __init__(self, config):
@@ -67,5 +67,3 @@ class FixInjector:
         src = basename(project.dir)
         logger.info('applying patch to {} source'.format(src))
         pass
-
-

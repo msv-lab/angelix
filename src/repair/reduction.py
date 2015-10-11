@@ -1,8 +1,4 @@
-import os
-from subprocess import Popen
-from utils import cd
 import logging
-import random
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +22,7 @@ class Reducer:
         # this code was originally written for multiple files:
         source_name = ''
         source_dirs = [source_name]
-        
+
         # test id -> source name -> set of locations
         data = {}
 
@@ -46,7 +42,6 @@ class Reducer:
             data[test][source_name] = set(trace) & relevant
             failing_tests.append(test)
 
-        
         current_coverage = {}
         for source in source_dirs:
             current_coverage[source] = set()
@@ -106,6 +101,7 @@ class Reducer:
 
         total_selected = number_selected_passing + number_selected_failing
 
+        logger.info("selected {} tests".format(total_selected))
         logger.info("selected passing tests: {}".format(selected_passing))
         logger.info("selected failing tests: {}".format(selected_failing))
 

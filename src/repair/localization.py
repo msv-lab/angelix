@@ -17,7 +17,7 @@ def jaccard(executed_passing, executed_failing, total_passing, total_failing):
     return executed_failing / (total_failing + executed_passing)
 
 
-def trantula(executed_passing, executed_failing, total_passing, total_failing):
+def tarantula(executed_passing, executed_failing, total_passing, total_failing):
     assert total_passing > 0 and total_failing > 0
     if executed_failing + executed_passing == 0:
         return 0
@@ -36,7 +36,7 @@ class Localizer:
         positive, negative: (test * trace) list
         trace: expression list
 
-        computes config['iterations'] groups 
+        computes config['iterations'] groups
         each consisting of config['suspicious'] suspicious
         '''
 
@@ -74,11 +74,11 @@ class Localizer:
                     executed_negative[e] = 1
 
         ranking = []
-        
+
         for e in all:
             score = formula(executed_positive[e], executed_negative[e], len(positive), len(negative))
             ranking.append((e, score))
-        
+
         sorted(ranking, key=lambda r: r[1], reverse=True)
         top = ranking[:suspicious * iterations]
 

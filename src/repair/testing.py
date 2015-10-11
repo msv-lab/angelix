@@ -32,6 +32,4 @@ class Tester:
             proc = subprocess.Popen([self.oracle, test], env=environment, stderr=stderr)
             code = proc.wait(timeout=self.config['test_timeout'])
 
-        return code == 0                
-            
-                
+        return code == 0

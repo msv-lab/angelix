@@ -154,11 +154,11 @@ public:
       std::ostringstream stringStream;
       stringStream << "ANGELIX_SUSPICIOUS("
                    << "bool" << ", "
+                   << toString(expr) << ", "
                    << beginLine << ", "
                    << beginColumn << ", "
                    << endLine << ", "
                    << endColumn << ", "
-                   << toString(expr) << ", "
                    << "((char*[]){" << varNameStream.str() << "}), "
                    << "((int[]){" << varStream.str() << "}), "
                    << vars.size()

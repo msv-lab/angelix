@@ -1,4 +1,3 @@
-import signal
 import os
 from os.path import join, exists, abspath
 import shutil
@@ -28,6 +27,8 @@ class Angelix:
         extracted = join(working_dir, 'extracted')
         os.mkdir(extracted)
 
+        self.angelic_forest_file = join(working_dir, 'last-angelic-forest.json')
+
         self.run_test = Tester(config, oracle)
         self.groups_of_suspicious = Localizer(config, lines)
         self.reduce = Reducer(config)
@@ -47,12 +48,12 @@ class Angelix:
         shutil.copytree(src, frontend_dir)
         self.frontend_src = Frontend(config, frontend_dir, buggy, build, tests)
         self.frontend_src.import_compilation_db(compilation_db)
-        
+
         backend_dir = join(working_dir, "backend")
         shutil.copytree(src, backend_dir)
         self.backend_src = Backend(config, backend_dir, buggy, build, tests)
         self.backend_src.import_compilation_db(compilation_db)
-        
+
         if golden is not None:
             golden_dir = join(working_dir, "golden")
             shutil.copytree(golden, golden_dir)
@@ -76,7 +77,7 @@ class Angelix:
                 else:
                     negative.append(test)
             return positive, negative
-               
+
         self.validation_src.build()
         positive, negative = evaluate(self.validation_src)
 
@@ -124,8 +125,16 @@ class Angelix:
             for test in repair_suite:
                 self.backend_src.build_test(test)
             angelic_forest = dict()
+            inference_failed = False
             for test in repair_suite:
                 angelic_forest[test] = self.infer_spec(self.backend_src, test, self.dump[test])
+                if len(angelic_forest[test]) == 0:
+                    inference_failed = True
+                    break
+            if inference_failed:
+                continue
+            with open(self.angelic_forest_file, 'w') as file:
+                json.dump(angelic_forest, file, indent=2)    
             initial_fix = self.synthesize_fix(angelic_forest)
             if initial_fix is None:
                 logger.info('cannot synthesize fix')
@@ -145,7 +154,13 @@ class Angelix:
                 logger.info('counterexample test is {}'.format(counterexample))
                 repair_suite.append(counterexample)
                 self.backend_src.build_test(counterexample)
-                angelic_forest[counterexample] = self.infer_spec(self.backend_src, counterexample)
+                angelic_forest[counterexample] = self.infer_spec(self.backend_src,
+                                                                 counterexample,
+                                                                 self.dump[counterexample])
+                if len(angelic_forest[counterexample]) == 0:
+                    break
+                with open(self.angelic_forest_file, 'w') as file:
+                    json.dump(angelic_forest, file, indent=2)    
                 fix = self.synthesize_fix(angelic_forest)
                 if fix is None:
                     logger.info('cannot refine fix')
@@ -159,7 +174,7 @@ class Angelix:
                     not_repaired = list(set(repair_suite) & set(neg))
                     logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
                 positive, negative = pos, neg
- 
+
         if len(negative) > 0:
             return None
         else:
@@ -175,15 +190,16 @@ if __name__ == "__main__":
     parser.add_argument('tests', help='tests JSON database')
     parser.add_argument('--golden', metavar='DIR', help='golden source directory')
     parser.add_argument('--output', metavar='FILE', help='correct output for failing test cases')
-    parser.add_argument('--lines', metavar='LINE', nargs='*', help='suspicious lines')
+    parser.add_argument('--defect', metavar='CLASS', nargs='*',
+                        default=['condition', 'assignment'],
+                        help='defect classes (default: condition assignment)')
+    parser.add_argument('--lines', metavar='LINE', nargs='*', help='suspicious lines (default: all)')
     parser.add_argument('--build', metavar='CMD', default='make -e',
                         help='build command in the form of simple shell command (default: %(default)s)')
     parser.add_argument('--timeout', metavar='MS', type=int, default=100000,
                         help='total repair timeout (default: %(default)s)')
     parser.add_argument('--initial-tests', metavar='NUM', type=int, default=3,
                         help='initial repair test suite size (default: %(default)s)')
-    parser.add_argument('--conditions-only', action='store_true',
-                        help='repair only conditions (default: %(default)s)')
     parser.add_argument('--test-timeout', metavar='MS', type=int, default=10000,
                         help='test case timeout (default: %(default)s)')
     parser.add_argument('--suspicious', metavar='NUM', type=int, default=5,
@@ -204,7 +220,7 @@ if __name__ == "__main__":
                         default=['alternative', 'integer', 'boolean', 'comparison'],
                         help='component levels (default: alternative integer boolean comparison)')
     parser.add_argument('--verbose', action='store_true',
-                        help='print compilation and KLEE logs (default: %(default)s)')
+                        help='print compilation and KLEE messages (default: %(default)s)')
     parser.add_argument('--quiet', action='store_true',
                         help='print only errors (default: %(default)s)')
 
@@ -231,7 +247,7 @@ if __name__ == "__main__":
 
     config = dict()
     config['initial_tests']       = args.initial_tests
-    config['conditions_only']     = args.conditions_only
+    config['defect']              = args.defect
     config['test_timeout']        = args.test_timeout
     config['suspicious']          = args.suspicious
     config['iterations']          = args.iterations
@@ -244,15 +260,15 @@ if __name__ == "__main__":
     config['verbose']             = args.verbose
 
     tool = Angelix(working_dir,
-                   src = args.src,
-                   buggy = args.buggy,
-                   oracle = abspath(args.oracle),
-                   tests = tests,
-                   golden = args.golden,
-                   output = output,
-                   lines = args.lines,
-                   build = args.build,
-                   config = config)
+                   src=args.src,
+                   buggy=args.buggy,
+                   oracle=abspath(args.oracle),
+                   tests=tests,
+                   golden=args.golden,
+                   output=output,
+                   lines=args.lines,
+                   build=args.build,
+                   config=config)
 
     start = time.time()
 
@@ -269,8 +285,8 @@ if __name__ == "__main__":
         exit(1)
 
     end = time.time()
-    elapsed = format_time(end - start)    
-    
+    elapsed = format_time(end - start)
+
     if patch is None:
         logger.info("no patch generated in {}".format(elapsed))
         print('FAIL')

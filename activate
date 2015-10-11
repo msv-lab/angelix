@@ -42,8 +42,10 @@ export ANGELIX_RUNTIME_H="$ANGELIX_ROOT/src/runtime/runtime.h"
 export LD_LIBRARY_PATH="$KLEE_LIBRARY_PATH:$LD_LIBRARY_PATH"
 # because I didn't manage to build stp statically:
 export LD_LIBRARY_PATH="$STP_DIR/build/lib:$LD_LIBRARY_PATH"
+
 # for Z3 bindings:
 export LD_LIBRARY_PATH="$Z3_DIR/build/:$LD_LIBRARY_PATH"
+export PYTHONPATH="$Z3_DIR/build/:$PYTHONPATH"
 
 ulimit -s unlimited
 

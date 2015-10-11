@@ -14,7 +14,7 @@
 #define ANGELIX_OUTPUT(type, expr, name) \
   angelix_dump_output_##type(expr, name)
 
-#define ANGELIX_SUSPICIOUS(type, expr, id, env_ids, env_vals, env_size) \
+#define ANGELIX_SUSPICIOUS(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
   expr
 
 #endif // ANGELIX_SYMBOLIC_RUNTIME
@@ -33,6 +33,6 @@ int angelix_suspicious_int(int expr, int bl, int bc, int el, int ec, char** env_
 int angelix_suspicious_bool(int expr, int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size);
 
 // For fault localization
-void angelix_trace(int begin_line, int begin_column, int end_line, int end_column);
+void angelix_trace(int bl, int bc, int el, int ec);
 
 #endif
