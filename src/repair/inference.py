@@ -335,7 +335,7 @@ class Inferrer:
             # "expression" -> expr id
             # "values" -> [ "angelic" -> angelic value,
             #               "original" -> original value
-            #               "environment" -> (name * value) list ]
+            #               "environment" -> (name > value) ]
             angelic_path = []
 
             for (expr, item) in suspicious.items():
@@ -348,11 +348,11 @@ class Inferrer:
                     bv_original = model[original_selector(expr, instance)]
                     original = from_bv32_converter_by_type[type](bv_original)
                     logger.info('expression {}[{}]: angelic = {}, original = {}'.format(expr, instance, angelic, original))
-                    env_values = []
+                    env_values = dict()
                     for name in env:
                         bv_env = model[env_selector(expr, instance, name)]
                         value = from_bv32_converter_by_type['int'](bv_env)  # Note that here is int
-                        env_values.append((name, value))
+                        env_values[name] = value
 
                     angelic_path_entry['values'].append({'angelic': angelic,
                                                          'original': original,
