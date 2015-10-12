@@ -63,7 +63,30 @@ class FixInjector:
     def __init__(self, config):
         self.config = config
 
-    def __call__(self, project):
+    def __call__(self, project, patch):
         src = basename(project.dir)
         logger.info('applying patch to {} source'.format(src))
+
+        environment = dict(os.environ)
+        dirpath = tempfile.mkdtemp()
+        patch_file = join(dirpath, 'patch')
+        with open(patch_file, 'w') as file:
+            for e, p in patch.items():
+                file.write('{} {} {} {}'.format(*e))
+                file.write(p)
+
+        environment['ANGELIX_PATCH'] = patch_file
+
+        if self.config['verbose']:
+            stderr = None
+        else:
+            stderr = subprocess.DEVNULL
+
+        with cd(project.dir):
+            subprocess.check_output(['apply-patch', project.buggy],
+                                    env=environment,
+                                    stderr=stderr)
+
+        shutil.rmtree(dirpath)
+
         pass

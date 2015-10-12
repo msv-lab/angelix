@@ -21,7 +21,7 @@ std::string isBuggy(int beginLine, int beginColumn, int endLine, int endColumn) 
       return line;
     }
   }
-  return NULL;
+  return "";
 }
 
 
@@ -40,9 +40,9 @@ public:
       unsigned endLine = srcMgr.getSpellingLineNumber(expandedLoc.getEnd());
       unsigned endColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getEnd());
 
-      std::string replacement = NULL;
+      std::string replacement = isBuggy(beginLine, beginColumn, endLine, endColumn);
 
-      if ((replacement = isBuggy(beginLine, beginColumn, endLine, endColumn)) == NULL) {
+      if (replacement == "") {
         return;
       }
 

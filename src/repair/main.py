@@ -27,13 +27,13 @@ class Angelix:
         extracted = join(working_dir, 'extracted')
         os.mkdir(extracted)
 
-        self.angelic_forest_file = join(working_dir, 'last-angelic-forest.json')
+        angelic_forest_file = join(working_dir, 'last-angelic-forest.json')
 
         self.run_test = Tester(config, oracle)
         self.groups_of_suspicious = Localizer(config, lines)
         self.reduce = Reducer(config)
         self.infer_spec = Inferrer(config, tests)
-        self.synthesize_fix = Synthesizer(config, extracted)
+        self.synthesize_fix = Synthesizer(config, extracted, angelic_forest_file)
         self.instrument_for_localization = RepairableTransformer(config)
         self.instrument_for_inference = SuspiciousTransformer(config, extracted)
         self.apply_patch = FixInjector(config)
@@ -133,8 +133,6 @@ class Angelix:
                     break
             if inference_failed:
                 continue
-            with open(self.angelic_forest_file, 'w') as file:
-                json.dump(angelic_forest, file, indent=2)    
             initial_fix = self.synthesize_fix(angelic_forest)
             if initial_fix is None:
                 logger.info('cannot synthesize fix')
@@ -159,8 +157,6 @@ class Angelix:
                                                                  self.dump[counterexample])
                 if len(angelic_forest[counterexample]) == 0:
                     break
-                with open(self.angelic_forest_file, 'w') as file:
-                    json.dump(angelic_forest, file, indent=2)    
                 fix = self.synthesize_fix(angelic_forest)
                 if fix is None:
                     logger.info('cannot refine fix')
@@ -191,7 +187,7 @@ if __name__ == "__main__":
     parser.add_argument('--golden', metavar='DIR', help='golden source directory')
     parser.add_argument('--output', metavar='FILE', help='correct output for failing test cases')
     parser.add_argument('--defect', metavar='CLASS', nargs='*',
-                        default=['condition', 'assignment'],
+                        default=['conditions', 'assignments'],
                         help='defect classes (default: condition assignment)')
     parser.add_argument('--lines', metavar='LINE', nargs='*', help='suspicious lines (default: all)')
     parser.add_argument('--build', metavar='CMD', default='make -e',
@@ -217,7 +213,7 @@ if __name__ == "__main__":
     parser.add_argument('--synthesis-timeout', metavar='MS', type=int, default=10000,
                         help='synthesis timeout (default: %(default)s)')
     parser.add_argument('--synthesis-levels', metavar='LEVEL', nargs='*',
-                        default=['alternative', 'integer', 'boolean', 'comparison'],
+                        default=['alternatives', 'integers', 'booleans', 'comparison'],
                         help='component levels (default: alternative integer boolean comparison)')
     parser.add_argument('--verbose', action='store_true',
                         help='print compilation and KLEE messages (default: %(default)s)')
