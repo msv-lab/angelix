@@ -227,7 +227,10 @@ class Inferrer:
                 return bv.as_long() != 0
 
             def bv32_to_int(bv):
-                return bv.as_long()
+                l = bv.as_long()
+                if l >> 31 == 1:  # negative
+                    l -= 4294967296
+                return l
 
             from_bv32_converter_by_type = dict()
             from_bv32_converter_by_type['bool'] = bv32_to_bool
@@ -236,9 +239,7 @@ class Inferrer:
             matching_path = True
             for expected_variable, expected_values in oracle.items():
                 if expected_variable not in outputs.keys():
-                    logger.info('unconstraint variable {}'.format(expected_variable))
-                    matching_path = False
-                    break
+                    outputs[expected_variable] = (None, 0)  # unconstraint does not mean wrong
                 required_executions = len(expected_values)
                 actual_executions = outputs[expected_variable][1]
                 if required_executions != actual_executions:

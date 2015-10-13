@@ -107,9 +107,10 @@ class Synthesizer:
                     line = content.pop(0)
                     if len(line) == 0:
                         continue
-                    expr = tuple(line.split('-'))
+                    expr = tuple(line.strip().split('-'))
                     original = content.pop(0).strip()
                     fixed = content.pop(0).strip()
+                    logger.info('fixing expression {}: {} ---> {}'.format(expr, original, fixed))
                     patch[expr] = fixed
                 return patch
             else:

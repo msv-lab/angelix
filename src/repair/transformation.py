@@ -72,8 +72,8 @@ class FixInjector:
         patch_file = join(dirpath, 'patch')
         with open(patch_file, 'w') as file:
             for e, p in patch.items():
-                file.write('{} {} {} {}'.format(*e))
-                file.write(p)
+                file.write('{} {} {} {}\n'.format(*e))
+                file.write(p + "\n")
 
         environment['ANGELIX_PATCH'] = patch_file
 

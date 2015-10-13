@@ -1,0 +1,5 @@
+* Inject only modified expressions
+* Assignments defect class
+* For loops
+* More optimized testing and compilation (for large test suites)
+* Strings as outputs

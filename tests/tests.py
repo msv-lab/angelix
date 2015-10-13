@@ -41,6 +41,12 @@ class TestAngelix(unittest.TestCase):
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 
+    def test_multiline(self):
+        test_dir = os.path.join(script_dir, 'multiline')
+        args = ['src', 'test.c', 'oracle', 'tests.json', '--output', 'output.json']
+        result = run_angelix(args, test_dir)
+        self.assertEqual(result, 'SUCCESS')
+
       
 if __name__ == '__main__':
     unittest.main()
