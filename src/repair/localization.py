@@ -51,27 +51,29 @@ class Localizer:
             formula = tarantula
 
         all = set()
+
+        for _, trace in positive:
+            all |= set(trace)
+
+        for _, trace in negative:
+            all |= set(trace)
+
         executed_positive = dict()
         executed_negative = dict()
 
+        for e in all:
+            executed_positive[e] = 0
+            executed_negative[e] = 0
+
         for _, trace in positive:
             executed = set(trace)
-            all |= executed
             for e in executed:
-                if e in executed_positive:
-                    executed_positive[e] += 1
-                else:
-                    executed_positive[e] = 1
-
+                executed_positive[e] += 1
 
         for _, trace in negative:
             executed = set(trace)
-            all |= executed
             for e in executed:
-                if e in executed_negative:
-                    executed_negative[e] += 1
-                else:
-                    executed_negative[e] = 1
+                executed_negative[e] += 1
 
         ranking = []
 

@@ -105,7 +105,9 @@ StatementMatcher Splittable =
 
 
 StatementMatcher RepairableIfCondition =
-  ifStmt(anyOf(hasCondition(ignoringParenImpCasts(RepairableExpression)),
-               eachOf(hasCondition(Splittable), hasCondition(forEachDescendant(Splittable)))));
+  anyOf(ifStmt(anyOf(hasCondition(ignoringParenImpCasts(RepairableExpression)),
+                     eachOf(hasCondition(Splittable), hasCondition(forEachDescendant(Splittable))))),
+        whileStmt(anyOf(hasCondition(ignoringParenImpCasts(RepairableExpression)),
+                     eachOf(hasCondition(Splittable), hasCondition(forEachDescendant(Splittable))))));
 
 #endif // ANGELIX_COMMON_H

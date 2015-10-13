@@ -135,7 +135,7 @@ class Inferrer:
                        '-smtlib-human-readable',
                        '--libc=uclibc',
                        '--posix-runtime',
-                       '-max-forks={}'.format(self.config['klee_forks']),
+                       '-max-forks={}'.format(self.config['klee_max_forks']),
                        '-max-time={}'.format(self.config['klee_timeout']),
                        '-max-solver-time={}'.format(self.config['klee_solver_timeout']),
                        '-allow-external-sym-calls']

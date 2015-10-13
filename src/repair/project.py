@@ -36,13 +36,16 @@ class Project:
             buggy_lines = buggy.readlines()
         with open(self._buggy_backup) as backup:
             backup_lines = backup.readlines()
-        return difflib.unified_diff(backup_lines, buggy_lines)
+        return difflib.unified_diff(backup_lines, buggy_lines,
+                                    fromfile=join('a', self.buggy),
+                                    tofile=join('b', self.buggy))
 
     def import_compilation_db(self, compilation_db):
         compilation_db = copy.deepcopy(compilation_db)
         for item in compilation_db:
             item['directory'] = join(self.dir, item['directory'])
             item['file'] = join(self.dir, item['file'])
+            item['command'] = item['command'] + ' -I' + os.environ['LLVM3_INCLUDE_PATH']
             # TODO add clang headers to the command
         compilation_db_file = join(self.dir, 'compile_commands.json')
         with open(compilation_db_file, 'w') as file:
