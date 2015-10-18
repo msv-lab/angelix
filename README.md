@@ -14,13 +14,8 @@ Install dependencies:
     sudo apt-get install cmake libncurses5-dev libboost-all-dev
     sudo apt-get install default-jdk sbt
 
-Set environment variables:
+Set Angelix environment:
 
-    # for Ubuntu 64-bit (put to .bashrc):
-    export C_INCLUDE_PATH=/usr/include/x86_64-linux-gnu
-    export CPLUS_INCLUDE_PATH=/usr/include/x86_64-linux-gnu
-
-    # Angelix environment:
     . activate
 
 Download and build required modules:
@@ -98,7 +93,7 @@ To abstract over test framework, Angelix uses the following three objects:
 
 * Oracle executable
 * JSON test database
-* Correct outputs for failing test cases
+* Assert file
 
 ### Oracle ###
 
@@ -120,9 +115,9 @@ JSON test database specifies test executables, their arguments and how to build 
         ...
     }
 
-### Correct outputs ###
+### Assert file ###
 
-Angelix can extract correct outputs from a golden version (it must be instrumented accordingly). If golden version is not available, correct outputs are specified in JSON format:
+Assert file is used to specify expected output values. Outputs are specified in JSON format:
 
     {
         "test1": {
@@ -132,6 +127,8 @@ Angelix can extract correct outputs from a golden version (it must be instrument
     }
 
 Each output id corresponds to a list of values, since an expression can be evaluated multiple times during the test execution.
+
+If expected outputs for a passing test case are not given, they are extracted automatically from the test executions. Expected outputs for failing test cases can be obtained from a golden version (it must be instrumented accordingly).
 
 ## Known issues ##
 

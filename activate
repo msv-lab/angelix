@@ -3,6 +3,14 @@ if [[ `uname -m` != "x86_64" ]]; then
     exit 1
 fi
 
+if [[ "$(lsb_release -si)" == "Ubuntu" ]]; then
+    export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+    export C_INCLUDE_PATH=/usr/include/x86_64-linux-gnu
+    export CPLUS_INCLUDE_PATH=/usr/include/x86_64-linux-gnu
+else
+    echo "WARNING: add your system libraries to C_INCLUDE_PATH, CPLUS_INCLUDE_PATH and LD_LIBRARY_PATH"
+fi
+
 export ANGELIX_ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 # locations of submodules:
@@ -56,7 +64,7 @@ mkdir -p $ANGELIX_ROOT/build
 # utilities for testing:
 
 dump-ast () {
-    "$LLVM3_DIR/build/bin/clang" -Xclang -ast-dump -fsyntax-only "$1"
+    "$LLVM3_DIR/build/bin/clang" -Xclang -ast-dump -fdiagnostics-color=never -fsyntax-only "$1"
 }
 
 instr-rep () {

@@ -77,6 +77,13 @@ class Localizer:
 
         ranking = []
 
+        def is_selected(expr):
+            return expr[0] in self.lines
+
+        if self.lines is not None:
+            filtered = filter(is_selected, all)
+            all = filtered
+
         for e in all:
             score = formula(executed_positive[e], executed_negative[e], len(positive), len(negative))
             ranking.append((e, score))

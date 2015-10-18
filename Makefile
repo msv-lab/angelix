@@ -215,8 +215,8 @@ clean-frontend:
 # Bear #
 
 bear: $(BEAR_DIR)
-	cd $(BEAR_DIR) && mkdir -p build && cd build && cmake ../ && make all
-	mkdir -p "$(ANGELIX_ROOT)/build/tools"
+	cd "$(BEAR_DIR)" && mkdir -p build && cd build && cmake ../ && make all
+	sed -i 's/exit_code = subprocess.call(args.build, env=environment)/exit_code = subprocess.call(args.build, env=environment, shell=True)/' "$(BEAR_DIR)/build/bear/bear"
 
 $(BEAR_DIR):
 	cd build && git clone --depth=1 $(BEAR_URL)

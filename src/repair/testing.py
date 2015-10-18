@@ -29,7 +29,7 @@ class Tester:
             stderr = subprocess.DEVNULL
 
         with cd(project.dir):
-            proc = subprocess.Popen([self.oracle, test], env=environment, stderr=stderr)
+            proc = subprocess.Popen(self.oracle + " " + test, env=environment, stderr=stderr, shell=True)
             code = proc.wait(timeout=self.config['test_timeout'])
 
         return code == 0

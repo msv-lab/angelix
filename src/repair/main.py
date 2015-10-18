@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class Angelix:
 
-    def __init__(self, working_dir, src, buggy, oracle, tests, golden, output, lines, build, config):
+    def __init__(self, working_dir, src, buggy, oracle, tests, golden, asserts, lines, build, configure, config):
         self.config = config
         self.test_suite = tests.keys()
         extracted = join(working_dir, 'extracted')
@@ -40,29 +40,30 @@ class Angelix:
 
         validation_dir = join(working_dir, "validation")
         shutil.copytree(src, validation_dir)
-        self.validation_src = Validation(config, validation_dir, buggy, build, tests)
+        self.validation_src = Validation(config, validation_dir, buggy, build, configure, tests)
+        self.validation_src.configure()
         compilation_db = self.validation_src.export_compilation_db()
         self.validation_src.import_compilation_db(compilation_db)
 
         frontend_dir = join(working_dir, "frontend")
         shutil.copytree(src, frontend_dir)
-        self.frontend_src = Frontend(config, frontend_dir, buggy, build, tests)
+        self.frontend_src = Frontend(config, frontend_dir, buggy, build, configure, tests)
         self.frontend_src.import_compilation_db(compilation_db)
 
         backend_dir = join(working_dir, "backend")
         shutil.copytree(src, backend_dir)
-        self.backend_src = Backend(config, backend_dir, buggy, build, tests)
+        self.backend_src = Backend(config, backend_dir, buggy, build, configure, tests)
         self.backend_src.import_compilation_db(compilation_db)
 
         if golden is not None:
             golden_dir = join(working_dir, "golden")
             shutil.copytree(golden, golden_dir)
-            self.golden_src = Golden(config, golden_dir, buggy, build, tests)
+            self.golden_src = Golden(config, golden_dir, buggy, build, configure, tests)
             self.golden_src.import_compilation_db(compilation_db)
         else:
             self.golden_src = None
 
-        self.dump = Dump(working_dir, output)
+        self.dump = Dump(working_dir, asserts)
         self.trace = Trace(working_dir)
 
     def generate_patch(self):
@@ -78,9 +79,9 @@ class Angelix:
                     negative.append(test)
             return positive, negative
 
-        self.validation_src.build()
         positive, negative = evaluate(self.validation_src)
 
+        self.frontend_src.configure()
         self.instrument_for_localization(self.frontend_src)
         self.frontend_src.build()
         logger.info('running positive tests for debugging')
@@ -94,6 +95,7 @@ class Angelix:
                 self.run_test(self.frontend_src, test, trace=self.trace[test])
 
         if self.golden_src is not None:
+            self.golden_src.configure()
             self.golden_src.build()
 
         logger.info('running negative tests for debugging')
@@ -103,7 +105,7 @@ class Angelix:
             self.run_test(self.frontend_src, test, trace=self.trace[test])
             if test not in self.dump:
                 if self.golden_src is None:
-                    logger.error("golden version or correct output needed for test {}".format(test))
+                    logger.error("golden version or assert file needed for test {}".format(test))
                     return None
                 self.golden_src.build_test(test)
                 self.dump += test
@@ -113,13 +115,16 @@ class Angelix:
         positive_traces = [(test, self.trace.parse(test)) for test in positive]
         negative_traces = [(test, self.trace.parse(test)) for test in negative]
         suspicious = self.groups_of_suspicious(positive_traces, negative_traces)
+        if len(suspicious) == 0:
+            logger.warning('no suspicious expression localized')
 
         while len(negative) > 0 and len(suspicious) > 0:
-            expressions = suspicious.pop()
+            expressions = suspicious.pop(0)
             for e in expressions:
                 logger.info('considering suspicious expression {}'.format(e))
             repair_suite = self.reduce(positive_traces, negative_traces, expressions)
             self.backend_src.restore_buggy()
+            self.backend_src.configure()
             self.instrument_for_inference(self.backend_src, expressions)
             self.backend_src.build()
             for test in repair_suite:
@@ -148,7 +153,7 @@ class Angelix:
             positive, negative = pos, neg
 
             while len(negative) > 0:
-                counterexample = negative.pop()
+                counterexample = negative.pop(0)
                 logger.info('counterexample test is {}'.format(counterexample))
                 repair_suite.append(counterexample)
                 self.backend_src.build_test(counterexample)
@@ -185,11 +190,13 @@ if __name__ == "__main__":
     parser.add_argument('oracle', help='oracle script')
     parser.add_argument('tests', help='tests JSON database')
     parser.add_argument('--golden', metavar='DIR', help='golden source directory')
-    parser.add_argument('--output', metavar='FILE', help='correct output for failing test cases')
+    parser.add_argument('--assert', metavar='FILE', help='assert expected outputs')
     parser.add_argument('--defect', metavar='CLASS', nargs='*',
                         default=['conditions', 'assignments'],
                         help='defect classes (default: condition assignment)')
-    parser.add_argument('--lines', metavar='LINE', nargs='*', help='suspicious lines (default: all)')
+    parser.add_argument('--lines', metavar='LINE', type=int, nargs='*', help='suspicious lines (default: all)')
+    parser.add_argument('--configure', metavar='ARGS', default=None,
+                        help='configure command in the form of simple shell command (default: %(default)s)')
     parser.add_argument('--build', metavar='CMD', default='make -e',
                         help='build command in the form of simple shell command (default: %(default)s)')
     parser.add_argument('--timeout', metavar='MS', type=int, default=100000,
@@ -235,11 +242,11 @@ if __name__ == "__main__":
     with open(args.tests) as tests_file:
         tests = json.load(tests_file)
 
-    if args.output is not None:
-        with open(args.output) as output_file:
-            output = json.load(output_file)
+    if vars(args)['assert'] is not None:
+        with open(vars(args)['assert']) as output_file:
+            asserts = json.load(output_file)
     else:
-        output = None
+        asserts = None
 
     config = dict()
     config['initial_tests']       = args.initial_tests
@@ -261,9 +268,10 @@ if __name__ == "__main__":
                    oracle=abspath(args.oracle),
                    tests=tests,
                    golden=args.golden,
-                   output=output,
+                   asserts=asserts,
                    lines=args.lines,
                    build=args.build,
+                   configure=args.configure,
                    config=config)
 
     start = time.time()
