@@ -1,5 +1,5 @@
 import os
-from os.path import join, exists, abspath, dirname
+from os.path import join, exists, abspath, basename
 import shutil
 import argparse
 import time
@@ -297,7 +297,7 @@ if __name__ == "__main__":
         print('FAIL')
         exit(0)
     else:
-        patch_file = dirname(args.src) + '-' + time.strftime("%Y-%b%d-%H%M%S") + '.patch'
+        patch_file = basename(abspath(args.src)) + '-' + time.strftime("%Y-%b%d-%H%M%S") + '.patch'
         logger.info("patch successfully generated in {} (see {})".format(elapsed, patch_file))
         print('SUCCESS')
         with open(patch_file, 'w+') as file:
