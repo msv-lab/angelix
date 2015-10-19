@@ -1,10 +1,11 @@
 import os
-from os.path import join, exists, abspath
+from os.path import join, exists, abspath, dirname
 import shutil
 import argparse
 import time
 import json
 import logging
+import time
 
 from project import Validation, Frontend, Backend, Golden, CompilationError
 from utils import format_time, time_limit, TimeoutException, Dump, Trace
@@ -296,9 +297,10 @@ if __name__ == "__main__":
         print('FAIL')
         exit(0)
     else:
-        logger.info("patch successfully generated in {} (see generated.diff)".format(elapsed))
+        patch_file = dirname(args.src) + '-' + time.strftime("%Y-%b%d-%H%M%S") + '.patch'
+        logger.info("patch successfully generated in {} (see {})".format(elapsed, patch_file))
         print('SUCCESS')
-        with open('generated.diff', 'w+') as file:
+        with open(patch_file, 'w+') as file:
             for line in patch:
                 file.write(line)
         exit(0)
