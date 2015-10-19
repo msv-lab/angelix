@@ -65,10 +65,13 @@ std::string toString(const clang::Stmt* stmt) {
 StatementMatcher RepairableNode =
   anyOf(unaryOperator(hasOperatorName("!")).bind("repairable"),
         // TODO: for pointer type we only interested if they are equal to 0 or other pointers:
+        // pointers of various types are used in x->y expressions
         declRefExpr(to(varDecl(anyOf(hasType(isInteger()),
-                                     hasType(pointerType(pointee(isInteger()))))))).bind("repairable"),
+                                     hasType(pointerType()))))).bind("repairable"),
         integerLiteral().bind("repairable"),
         characterLiteral().bind("repairable"),
+        // TODO: need to make sure that base is a variable, otherwise it cannot be represented in smt
+        memberExpr().bind("repairable"), 
         binaryOperator(anyOf(hasOperatorName("=="),
                              hasOperatorName("!="),
                              hasOperatorName("<="),

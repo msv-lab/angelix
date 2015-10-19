@@ -96,6 +96,30 @@ public:
     PrintExpr(Node->getSubExpr());
   }
 
+  void VisitMemberExpr(MemberExpr *Node) {
+    // this is copied from somewhere
+    PrintExpr(Node->getBase());
+
+    MemberExpr *ParentMember = dyn_cast<MemberExpr>(Node->getBase());
+    FieldDecl  *ParentDecl   = ParentMember
+      ? dyn_cast<FieldDecl>(ParentMember->getMemberDecl()) : nullptr;
+
+    if (!ParentDecl || !ParentDecl->isAnonymousStructOrUnion())
+      OS << (Node->isArrow() ? "->" : ".");
+
+    if (FieldDecl *FD = dyn_cast<FieldDecl>(Node->getMemberDecl()))
+      if (FD->isAnonymousStructOrUnion())
+        return;
+
+    if (NestedNameSpecifier *Qualifier = Node->getQualifier())
+      Qualifier->print(OS, Policy);
+    if (Node->hasTemplateKeyword())
+      OS << "template ";
+    OS << Node->getMemberNameInfo();
+    if (Node->hasExplicitTemplateArgs())
+      TemplateSpecializationType::PrintTemplateArgumentList(OS, Node->getTemplateArgs(), Node->getNumTemplateArgs(), Policy);
+  }
+
   void VisitIntegerLiteral(IntegerLiteral *Node) {
     bool isSigned = Node->getType()->isSignedIntegerType();
     OS << Node->getValue().toString(10, isSigned);

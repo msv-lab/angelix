@@ -33,10 +33,11 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
 
 
 class CollectVariables : public StmtVisitor<CollectVariables> {
-  std::unordered_set<VarDecl*> *Set;
+  std::unordered_set<VarDecl*> *VSet;
+  std::unordered_set<MemberExpr*> *MSet;
   
 public:
-  CollectVariables(std::unordered_set<VarDecl*> *set): Set(set) {}
+  CollectVariables(std::unordered_set<VarDecl*> *vset, std::unordered_set<MemberExpr*> *mset): VSet(vset), MSet(mset) {}
 
   void Collect(Expr *E) {
     if (E)
@@ -66,10 +67,18 @@ public:
   void VisitCharacterLiteral(CharacterLiteral *Node) {
   }
 
+  void VisitMemberExpr(MemberExpr *Node) {
+    if (MSet) {
+      MSet->insert(Node);
+    }
+  }
+
   void VisitDeclRefExpr(DeclRefExpr *Node) {
-    VarDecl* vd;
-    if ((vd = cast<VarDecl>(Node->getDecl())) != NULL) { // TODO: other kinds of declarations?
-      Set->insert(vd);
+    if (VSet) {
+      VarDecl* vd;
+      if ((vd = cast<VarDecl>(Node->getDecl())) != NULL) { // TODO: other kinds of declarations?
+        VSet->insert(vd);
+      }
     }
   }
 
@@ -77,11 +86,17 @@ public:
 
 std::unordered_set<VarDecl*> collectVarsFromExpr(const Stmt* stmt) {
   std::unordered_set<VarDecl*> set;
-  CollectVariables T(&set);
+  CollectVariables T(&set, NULL);
   T.Visit(const_cast<Stmt*>(stmt));
   return set;
 }
 
+std::unordered_set<MemberExpr*> collectMemberExprFromExpr(const Stmt* stmt) {
+  std::unordered_set<MemberExpr*> set;
+  CollectVariables T(NULL, &set);
+  T.Visit(const_cast<Stmt*>(stmt));
+  return set;
+}
 
 bool isSuspicious(int beginLine, int beginColumn, int endLine, int endColumn) {
   std::string line;
@@ -133,23 +148,37 @@ public:
       const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*expr);
       std::unordered_set<VarDecl*> varsFromScope = collectVarsFromScope(node, Result.Context);
       std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(expr);
+      std::unordered_set<MemberExpr*> memberFromExpr = collectMemberExprFromExpr(expr);
       std::unordered_set<VarDecl*> vars;
       vars.insert(varsFromScope.begin(), varsFromScope.end());
       vars.insert(varsFromExpr.begin(), varsFromExpr.end());
-      std::ostringstream varStream;
-      std::ostringstream varNameStream;
+      std::ostringstream exprStream;
+      std::ostringstream nameStream;
       bool first = true;
       for (auto it = vars.begin(); it != vars.end(); ++it) {
         if (first) {
           first = false;
         } else {
-          varStream << ", ";
-          varNameStream << ", ";
+          exprStream << ", ";
+          nameStream << ", ";
         }
         VarDecl* var = *it;
-        varStream << var->getName().str();
-        varNameStream << "\"" << var->getName().str() << "\"";
+        exprStream << var->getName().str();
+        nameStream << "\"" << var->getName().str() << "\"";
       }
+      for (auto it = memberFromExpr.begin(); it != memberFromExpr.end(); ++it) {
+        if (first) {
+          first = false;
+        } else {
+          exprStream << ", ";
+          nameStream << ", ";
+        }
+        MemberExpr* me = *it;
+        exprStream << toString(me);
+        nameStream << "\"" << toString(me) << "\"";
+      }
+
+      int size = vars.size() + memberFromExpr.size();
 
       std::ostringstream stringStream;
       stringStream << "ANGELIX_SUSPICIOUS("
@@ -159,9 +188,9 @@ public:
                    << beginColumn << ", "
                    << endLine << ", "
                    << endColumn << ", "
-                   << "((char*[]){" << varNameStream.str() << "}), "
-                   << "((int[]){" << varStream.str() << "}), "
-                   << vars.size()
+                   << "((char*[]){" << nameStream.str() << "}), "
+                   << "((int[]){" << exprStream.str() << "}), "
+                   << size
                    << ")";
       std::string replacement = stringStream.str();
 
