@@ -128,10 +128,11 @@ class Inferrer:
         environment['ANGELIX_KLEE_MAX_FORKS'] = str(self.config['klee_max_forks'])
         environment['ANGELIX_KLEE_MAX_TIME'] = str(self.config['klee_timeout'])
         environment['ANGELIX_KLEE_MAX_SOLVER_TIME'] = str(self.config['klee_solver_timeout'])
+        environment['ANGELIX_KLEE_WORKDIR'] = project.dir
 
         self.run_test(project, test, klee=True, env=environment)
 
-        smt_glob = join(project.dir, 'klee-last', '*.smt2')
+        smt_glob = join(project.dir, 'klee-out-0', '*.smt2')
         smt_files = glob(smt_glob)
 
         # loading dump

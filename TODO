@@ -1,4 +1,4 @@
-* Support non-trivial test scripts
+* Visualize difference between dumps for failing tests
 * Inject only modified expressions
 * Assignments defect class
 * For loops

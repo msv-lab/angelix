@@ -94,9 +94,7 @@ class Angelix:
             else:
                 self.run_test(self.frontend_src, test, trace=self.trace[test])
 
-        if self.golden_src is not None:
-            self.golden_src.configure()
-            self.golden_src.build()
+        golden_is_built = False
 
         logger.info('running negative tests for debugging')
         for test in negative:
@@ -106,6 +104,10 @@ class Angelix:
                 if self.golden_src is None:
                     logger.error("golden version or assert file needed for test {}".format(test))
                     return None
+                if not golden_is_built:
+                    self.golden_src.configure()
+                    self.golden_src.build()
+                    golden_is_built = True
                 self.dump += test
                 logger.info('running golden version with test {}'.format(test))
                 self.run_test(self.golden_src, test, dump=self.dump[test])

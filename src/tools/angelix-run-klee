@@ -3,7 +3,8 @@
 exe="$1"
 shift
 
-rm -rf klee-*
+rm -rf "$ANGELIX_KLEE_WORKDIR"/klee-out-*
+rm -rf "$(dirname "$exe")"/klee-out-*
 
 klee -write-smt2s \
      -smtlib-human-readable \
@@ -16,4 +17,4 @@ klee -write-smt2s \
      "${exe}.patched.bc" \
      "$@"
 
-mv $(dirname "$exe")/klee-* .
+mv "$(dirname "$exe")"/klee-out-* "$ANGELIX_KLEE_WORKDIR"

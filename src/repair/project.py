@@ -96,11 +96,11 @@ def build_with_cc(dir, cmd, stderr, cc):
 class Validation(Project):
 
     def build(self):
-        logger.info('building validation source')
+        logger.info('building {} source'.format(basename(self.dir)))
         build_in_env(self.dir, self.build_cmd, self.stderr)
 
     def export_compilation_db(self):
-        logger.info('building json compilation database from validation source')
+        logger.info('building json compilation database from {} source'.format(basename(self.dir)))
 
         build_in_env(self.dir,
                      'bear ' + self.build_cmd,
@@ -119,7 +119,7 @@ class Validation(Project):
 class Frontend(Project):
 
     def build(self):
-        logger.info('building frontend source')
+        logger.info('building {} source'.format(basename(self.dir)))
         build_with_cc(self.dir,
                       self.build_cmd,
                       self.stderr,
@@ -129,7 +129,7 @@ class Frontend(Project):
 class Backend(Project):
 
     def build(self):
-        logger.info('building backend source')
+        logger.info('building {} source'.format(basename(self.dir)))
         build_with_cc(self.dir,
                       self.build_cmd,
                       self.stderr,
