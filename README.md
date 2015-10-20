@@ -42,7 +42,7 @@ The following is required for successful execution of Angelix:
 * Compilation and linking are done by separate compiler calls.
 * Project is configured to use static linking.
 * All executables and object files are removed (e.g. run `make clean`).
-* Angelix environment, `C_INCLUDE_PATH` and `CPLUS_INCLUDE_PATH` are set as shown above.
+* Angelix environment is set as shown above.
 
 Angelix is hygienic (it does not modify original project files), however, it also assumes that the source code only uses relative references to the source tree. All intermediate data is stored in the `.angelix` directory.
 
@@ -99,7 +99,7 @@ To abstract over test framework, Angelix uses the following three objects:
 
 Oracle is an executable that takes a test identifier as the only argument, runs the corresponding test and terminates with `0` exit code if and only if the test passes. 
 
-Oracle executes buggy binary using angelix run command stored in `ANGELIX_RUN` environment variable, if it is defined. Each test must include at most one execution of angelix run command.
+Oracle executes buggy binary using _angelix run command_ stored in `ANGELIX_RUN` environment variable, if it is defined. Each test must include at most one execution of angelix run command. This is an example of oracle:
 
     #!/bin/bash
 

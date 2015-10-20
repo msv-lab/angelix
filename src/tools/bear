@@ -5,4 +5,4 @@ if [ -z "$ANGELIX_ROOT" ]; then
     exit 1
 fi  
 
-python "$BEAR_DIR/build/bear/bear" -l "$BEAR_DIR/build/libear/libear.so" $@
+python "$BEAR_DIR/build/bear/bear" -l "$BEAR_DIR/build/libear/libear.so" "$@"
