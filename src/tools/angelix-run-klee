@@ -3,6 +3,8 @@
 exe="$1"
 shift
 
+rm -rf klee-*
+
 klee -write-smt2s \
      -smtlib-human-readable \
      --libc=uclibc \
@@ -13,3 +15,5 @@ klee -write-smt2s \
      -max-solver-time=$ANGELIX_KLEE_MAX_SOLVER_TIME \
      "${exe}.patched.bc" \
      "$@"
+
+mv $(dirname "$exe")/klee-* .

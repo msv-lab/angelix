@@ -117,10 +117,9 @@ def parse_variables(vars):
 
 class Inferrer:
 
-    def __init__(self, config, tests_spec, tester):
+    def __init__(self, config, tester):
         self.config = config
         self.run_test = tester
-        self.tests_spec = tests_spec
 
     def __call__(self, project, test, dump):
         logger.info('infering specification for test \'{}\''.format(test))
@@ -132,9 +131,7 @@ class Inferrer:
 
         self.run_test(project, test, klee=True, env=environment)
 
-        exe = self.tests_spec[test]['executable']
-
-        smt_glob = join(dirname(join(project.dir, exe)), 'klee-last', '*.smt2')
+        smt_glob = join(project.dir, 'klee-last', '*.smt2')
         smt_files = glob(smt_glob)
 
         # loading dump

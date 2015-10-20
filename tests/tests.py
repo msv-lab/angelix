@@ -31,31 +31,31 @@ class TestAngelix(unittest.TestCase):
 
     def test_condition(self):
         test_dir = os.path.join(script_dir, 'condition')
-        args = ['src', 'test.c', 'oracle', 'tests.json', '--assert', 'assert.json']
+        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json']
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 
     def test_loop_condition(self):
         test_dir = os.path.join(script_dir, 'loop-condition')
-        args = ['src', 'test.c', 'oracle', 'tests.json', '--assert', 'assert.json', '--klee-max-forks', '5']
+        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--klee-max-forks', '5']
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 
     def test_multiline(self):
         test_dir = os.path.join(script_dir, 'multiline')
-        args = ['src', 'test.c', 'oracle', 'tests.json', '--assert', 'assert.json']
+        args = ['src', 'test.c', 'oracle', '0', '1', '2', '3', '4', '--assert', 'assert.json']
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 
     def test_memberexpr(self):
         test_dir = os.path.join(script_dir, 'memberexpr')
-        args = ['src', 'test.c', 'oracle', 'tests.json', '--assert', 'assert.json']
+        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json']
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 
     def test_golden(self):
         test_dir = os.path.join(script_dir, 'golden')
-        args = ['src', 'test.c', 'oracle', 'tests.json', '--golden', 'golden']
+        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--golden', 'golden']
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 

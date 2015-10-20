@@ -33,8 +33,8 @@ Tested on Ubuntu 14.04 64-bit.
 Prior to execution of Angelix, user needs to perform the following three activities:
 
 * Instrument output expressions
-* Extract required information from the testing framework
-* Specify expected output values for failing test cases (if golden version is not available)
+* Modify test running configuration
+* Specify expected output values
 
 The following is required for successful execution of Angelix:
 
@@ -89,17 +89,16 @@ The following types of output expressions are supported:
 
 ## Test model ##
 
-To abstract over test framework, Angelix uses the following three objects:
+To abstract over test framework, Angelix uses the following objects:
 
 * Oracle executable
-* JSON test database
 * Assert file
 
 ### Oracle ###
 
 Oracle is an executable that takes a test identifier as the only argument, runs the corresponding test and terminates with `0` exit code if and only if the test passes. 
 
-Oracle executes buggy binary using _angelix run command_ stored in `ANGELIX_RUN` environment variable, if it is defined. Each test must include at most one execution of angelix run command. This is an example of oracle:
+Oracle executes buggy binary using _angelix run command_ stored in `ANGELIX_RUN` environment variable, if it is defined. Each test must include at most one execution of angelix run command. This is an example of oracle script:
 
     #!/bin/bash
 
@@ -110,21 +109,6 @@ Oracle executes buggy binary using _angelix run command_ stored in `ANGELIX_RUN`
     ...
 
 Oracle is executed from the root of a copy of the source code directory, therefore all references to the source tree must be relative to the root of the source tree.
-
-### JSON test database ###
-
-JSON test database specifies test executables and how to build them (if needed):
-
-    {
-        "test1": {
-            "executable": "tests/test1.exe",
-            "build": {                         # optional
-                "command": "make -e test1",
-                "directory": "tests"
-            }
-        },
-        ...
-    }
 
 ### Assert file ###
 
@@ -139,7 +123,7 @@ Assert file is used to specify expected output values. Outputs are specified in 
 
 Each output id corresponds to a list of values, since an expression can be evaluated multiple times during the test execution.
 
-If expected outputs for a passing test case are not given, they are extracted automatically from the test executions. Expected outputs for failing test cases can be obtained from a golden version (it must be instrumented accordingly).
+If expected outputs for a passing test case are not given, they are extracted automatically from the test executions. Expected outputs for failing test cases can be extracted from a golden version (it must be instrumented accordingly).
 
 ## Known issues ##
 

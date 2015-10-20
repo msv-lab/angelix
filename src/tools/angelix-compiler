@@ -162,6 +162,8 @@ if ($compilation_mode eq "test") {
         debug($call_llvm_ld);
         system($call_llvm_ld);
 
+        system("angelix-patch-bitcode ${target}.bc");
+
         my $return_code = $?;
         if ($return_code != 0 && $target) {
             message($target);

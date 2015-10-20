@@ -7,7 +7,7 @@ import json
 import logging
 import time
 
-from project import Validation, Frontend, Backend, Golden, CompilationError
+from project import Validation, Frontend, Backend, CompilationError
 from utils import format_time, time_limit, TimeoutException, Dump, Trace
 from transformation import RepairableTransformer, SuspiciousTransformer, FixInjector
 from testing import Tester
@@ -24,7 +24,7 @@ class Angelix:
 
     def __init__(self, working_dir, src, buggy, oracle, tests, golden, asserts, lines, build, configure, config):
         self.config = config
-        self.test_suite = tests.keys()
+        self.test_suite = tests
         extracted = join(working_dir, 'extracted')
         os.mkdir(extracted)
 
@@ -34,7 +34,7 @@ class Angelix:
         self.run_test = tester
         self.groups_of_suspicious = Localizer(config, lines)
         self.reduce = Reducer(config)
-        self.infer_spec = Inferrer(config, tests, tester)
+        self.infer_spec = Inferrer(config, tester)
         self.synthesize_fix = Synthesizer(config, extracted, angelic_forest_file)
         self.instrument_for_localization = RepairableTransformer(config)
         self.instrument_for_inference = SuspiciousTransformer(config, extracted)
@@ -42,25 +42,25 @@ class Angelix:
 
         validation_dir = join(working_dir, "validation")
         shutil.copytree(src, validation_dir)
-        self.validation_src = Validation(config, validation_dir, buggy, build, configure, tests)
+        self.validation_src = Validation(config, validation_dir, buggy, build, configure)
         self.validation_src.configure()
         compilation_db = self.validation_src.export_compilation_db()
         self.validation_src.import_compilation_db(compilation_db)
 
         frontend_dir = join(working_dir, "frontend")
         shutil.copytree(src, frontend_dir)
-        self.frontend_src = Frontend(config, frontend_dir, buggy, build, configure, tests)
+        self.frontend_src = Frontend(config, frontend_dir, buggy, build, configure)
         self.frontend_src.import_compilation_db(compilation_db)
 
         backend_dir = join(working_dir, "backend")
         shutil.copytree(src, backend_dir)
-        self.backend_src = Backend(config, backend_dir, buggy, build, configure, tests)
+        self.backend_src = Backend(config, backend_dir, buggy, build, configure)
         self.backend_src.import_compilation_db(compilation_db)
 
         if golden is not None:
             golden_dir = join(working_dir, "golden")
             shutil.copytree(golden, golden_dir)
-            self.golden_src = Golden(config, golden_dir, buggy, build, configure, tests)
+            self.golden_src = Frontend(config, golden_dir, buggy, build, configure)
             self.golden_src.import_compilation_db(compilation_db)
         else:
             self.golden_src = None
@@ -74,7 +74,6 @@ class Angelix:
             positive = []
             negative = []
             for test in self.test_suite:
-                src.build_test(test)
                 if self.run_test(src, test):
                     positive.append(test)
                 else:
@@ -88,7 +87,6 @@ class Angelix:
         self.frontend_src.build()
         logger.info('running positive tests for debugging')
         for test in positive:
-            self.frontend_src.build_test(test)
             self.trace += test
             if test not in self.dump:
                 self.dump += test
@@ -102,14 +100,12 @@ class Angelix:
 
         logger.info('running negative tests for debugging')
         for test in negative:
-            self.frontend_src.build_test(test)
             self.trace += test
             self.run_test(self.frontend_src, test, trace=self.trace[test])
             if test not in self.dump:
                 if self.golden_src is None:
                     logger.error("golden version or assert file needed for test {}".format(test))
                     return None
-                self.golden_src.build_test(test)
                 self.dump += test
                 logger.info('running golden version with test {}'.format(test))
                 self.run_test(self.golden_src, test, dump=self.dump[test])
@@ -129,8 +125,6 @@ class Angelix:
             self.backend_src.configure()
             self.instrument_for_inference(self.backend_src, expressions)
             self.backend_src.build()
-            for test in repair_suite:
-                self.backend_src.build_test(test)
             angelic_forest = dict()
             inference_failed = False
             for test in repair_suite:
@@ -158,7 +152,6 @@ class Angelix:
                 counterexample = negative.pop(0)
                 logger.info('counterexample test is {}'.format(counterexample))
                 repair_suite.append(counterexample)
-                self.backend_src.build_test(counterexample)
                 angelic_forest[counterexample] = self.infer_spec(self.backend_src,
                                                                  counterexample,
                                                                  self.dump[counterexample])
@@ -187,18 +180,18 @@ class Angelix:
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser('angelix')
-    parser.add_argument('src', help='source directory')
-    parser.add_argument('buggy', help='relative path to buggy file')
-    parser.add_argument('oracle', help='oracle script')
-    parser.add_argument('tests', help='tests JSON database')
+    parser.add_argument('src', metavar='SOURCE', help='source directory')
+    parser.add_argument('buggy', metavar='BUGGY', help='relative path to buggy file')
+    parser.add_argument('oracle', metavar='ORACLE', help='oracle script')
+    parser.add_argument('tests', metavar='TEST', nargs='+', help='test case')
     parser.add_argument('--golden', metavar='DIR', help='golden source directory')
     parser.add_argument('--assert', metavar='FILE', help='assert expected outputs')
-    parser.add_argument('--defect', metavar='CLASS', nargs='*',
+    parser.add_argument('--defect', metavar='CLASS', nargs='+',
                         default=['conditions', 'assignments'],
-                        help='defect classes (default: condition assignment)')
-    parser.add_argument('--lines', metavar='LINE', type=int, nargs='*', help='suspicious lines (default: all)')
+                        help='defect classes (default: conditions assignments)')
+    parser.add_argument('--lines', metavar='LINE', type=int, nargs='+', help='suspicious lines (default: all)')
     parser.add_argument('--configure', metavar='ARGS', default=None,
-                        help='configure command in the form of simple shell command (default: %(default)s)')
+                        help='configure command in the form of shell command (default: %(default)s)')
     parser.add_argument('--build', metavar='CMD', default='make -e',
                         help='build command in the form of simple shell command (default: %(default)s)')
     parser.add_argument('--timeout', metavar='MS', type=int, default=100000,
@@ -221,9 +214,9 @@ if __name__ == "__main__":
                         help='KLEE solver timeout (default: %(default)s)')
     parser.add_argument('--synthesis-timeout', metavar='MS', type=int, default=10000,
                         help='synthesis timeout (default: %(default)s)')
-    parser.add_argument('--synthesis-levels', metavar='LEVEL', nargs='*',
+    parser.add_argument('--synthesis-levels', metavar='LEVEL', nargs='+',
                         default=['alternatives', 'integers', 'booleans', 'comparison'],
-                        help='component levels (default: alternative integer boolean comparison)')
+                        help='component levels (default: alternatives integers booleans comparison)')
     parser.add_argument('--verbose', action='store_true',
                         help='print compilation and KLEE messages (default: %(default)s)')
     parser.add_argument('--quiet', action='store_true',
@@ -240,9 +233,6 @@ if __name__ == "__main__":
     if exists(working_dir):
         shutil.rmtree(working_dir)
     os.mkdir(working_dir)
-
-    with open(args.tests) as tests_file:
-        tests = json.load(tests_file)
 
     if vars(args)['assert'] is not None:
         with open(vars(args)['assert']) as output_file:
@@ -268,7 +258,7 @@ if __name__ == "__main__":
                    src=args.src,
                    buggy=args.buggy,
                    oracle=abspath(args.oracle),
-                   tests=tests,
+                   tests=args.tests,
                    golden=args.golden,
                    asserts=asserts,
                    lines=args.lines,
