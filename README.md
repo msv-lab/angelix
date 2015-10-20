@@ -97,16 +97,27 @@ To abstract over test framework, Angelix uses the following three objects:
 
 ### Oracle ###
 
-Oracle is an executable that takes a test identifier as the only argument, runs the corresponding test and terminates with `0` exit code if and only if the test passes. Oracle is executed from the root of a copy of the source code directory, therefore all references to the source tree must be relative to the root of the source tree.
+Oracle is an executable that takes a test identifier as the only argument, runs the corresponding test and terminates with `0` exit code if and only if the test passes. 
+
+Oracle executes buggy binary using angelix run command stored in `ANGELIX_RUN` environment variable, if it is defined. Each test must include at most one execution of angelix run command.
+
+    #!/bin/bash
+
+    case "$1" in
+        test1)
+            "${ANGELIX_RUN:-eval}" ./test 1 2
+            ;;
+    ...
+
+Oracle is executed from the root of a copy of the source code directory, therefore all references to the source tree must be relative to the root of the source tree.
 
 ### JSON test database ###
 
-JSON test database specifies test executables, their arguments and how to build them (if needed):
+JSON test database specifies test executables and how to build them (if needed):
 
     {
         "test1": {
             "executable": "tests/test1.exe",
-            "arguments": ["-a", "1", "-b", "2"],
             "build": {                         # optional
                 "command": "make -e test1",
                 "directory": "tests"

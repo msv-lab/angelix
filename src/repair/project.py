@@ -177,8 +177,8 @@ class Backend(Project):
             logger.warning("patching of {} returned non-zero code".format(relpath(dependency)))
 
         if not exists(patched_dependency):
-            logger.error("failed to build test {} dependency {}".format(test_case,
-                                                                        relpath(patched_dependency)))
+            logger.error("failed to build test \'{}\' dependency {}".format(test_case,
+                                                                                relpath(patched_dependency)))
             raise CompilationError()
 
 

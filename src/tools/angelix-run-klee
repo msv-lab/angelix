@@ -1,0 +1,15 @@
+#!/bin/bash
+
+exe="$1"
+shift
+
+klee -write-smt2s \
+     -smtlib-human-readable \
+     --libc=uclibc \
+     --posix-runtime \
+     -allow-external-sym-calls \
+     -max-forks=$ANGELIX_KLEE_MAX_FORKS \
+     -max-time=$ANGELIX_KLEE_MAX_TIME \
+     -max-solver-time=$ANGELIX_KLEE_MAX_SOLVER_TIME \
+     "${exe}.patched.bc" \
+     "$@"

@@ -3,7 +3,7 @@ from utils import cd
 import subprocess
 import logging
 from glob import glob
-from os import listdir
+import os
 from pprint import pprint
 
 import z3
@@ -117,34 +117,22 @@ def parse_variables(vars):
 
 class Inferrer:
 
-    def __init__(self, config, tests_spec):
+    def __init__(self, config, tests_spec, tester):
         self.config = config
+        self.run_test = tester
         self.tests_spec = tests_spec
 
     def __call__(self, project, test, dump):
-        logger.info('executing KLEE on test {}'.format(test))
+        logger.info('infering specification for test \'{}\''.format(test))
 
-        if self.config['verbose']:
-            stderr = None
-        else:
-            stderr = subprocess.DEVNULL
+        environment = dict(os.environ)
+        environment['ANGELIX_KLEE_MAX_FORKS'] = str(self.config['klee_max_forks'])
+        environment['ANGELIX_KLEE_MAX_TIME'] = str(self.config['klee_timeout'])
+        environment['ANGELIX_KLEE_MAX_SOLVER_TIME'] = str(self.config['klee_solver_timeout'])
 
-        exe = self.tests_spec[test]['executable'] + '.patched.bc'
-        args = self.tests_spec[test]['arguments']
-        klee_config = ['-write-smt2s',
-                       '-smtlib-human-readable',
-                       '--libc=uclibc',
-                       '--posix-runtime',
-                       '-max-forks={}'.format(self.config['klee_max_forks']),
-                       '-max-time={}'.format(self.config['klee_timeout']),
-                       '-max-solver-time={}'.format(self.config['klee_solver_timeout']),
-                       '-allow-external-sym-calls']
+        self.run_test(project, test, klee=True, env=environment)
 
-        try:
-            with cd(project.dir):
-                subprocess.check_output(['klee'] + klee_config + [exe] + args, stderr=stderr)
-        except subprocess.CalledProcessError:        
-            logger.warning("KLEE returned non-zero code")
+        exe = self.tests_spec[test]['executable']
 
         smt_glob = join(dirname(join(project.dir, exe)), 'klee-last', '*.smt2')
         smt_files = glob(smt_glob)
@@ -154,12 +142,12 @@ class Inferrer:
         # name -> value list
         oracle = dict()
 
-        vars = listdir(dump)
+        vars = os.listdir(dump)
         for var in vars:
-            instances = listdir(join(dump, var))
+            instances = os.listdir(join(dump, var))
             for i in range(0, len(instances)):
                 if str(i) not in instances:
-                    logger.error('corrupted dump for test {}'.format(test))
+                    logger.error('corrupted dump for test \'{}\''.format(test))
                     raise InferenceError()
             oracle[var] = []
             for i in range(0, len(instances)):
@@ -188,7 +176,6 @@ class Inferrer:
 
             # name -> value list (parsed)
             oracle_constraints = dict()
-
 
             def str_to_int(s):
                 return int(s)
@@ -243,7 +230,7 @@ class Inferrer:
                 required_executions = len(expected_values)
                 actual_executions = outputs[expected_variable][1]
                 if required_executions != actual_executions:
-                    logger.info('value {} executed {} times while {} required'.format(
+                    logger.info('value \'{}\' executed {} times while {} required'.format(
                         expected_variable,
                         actual_executions,
                         required_executions))
@@ -255,8 +242,8 @@ class Inferrer:
                     try:
                         value = dump_parser_by_type[type](expected_values[i])
                     except:
-                        logger.error('variable {} has incompatible type {}'.format(expected_variable,
-                                                                                   type))
+                        logger.error('variable \'{}\' has incompatible type {}'.format(expected_variable,
+                                                                                       type))
                         raise InferenceError()
                     oracle_constraints[expected_variable].append(value)
 
@@ -354,5 +341,5 @@ class Inferrer:
 
             angelic_paths.append(angelic_path)
 
-        logger.info('found {} angelic paths for test {}'.format(len(angelic_paths), test))
+        logger.info('found {} angelic paths for test \'{}\''.format(len(angelic_paths), test))
         return angelic_paths

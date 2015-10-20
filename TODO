@@ -1,3 +1,4 @@
+* Support non-trivial test scripts
 * Inject only modified expressions
 * Assignments defect class
 * For loops

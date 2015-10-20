@@ -1,30 +1,23 @@
-#!/usr/bin/env python3
+#!/bin/bash
 
-import os
-import json
-import sys
-from subprocess import check_output
+assert-equal () {
+    diff -q <("${ANGELIX_RUN:-eval}" $1) <(echo -ne "$2") > /dev/null
+}
 
-script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
-tests_file = os.path.join(script_dir, 'tests.json')
-
-with open(tests_file) as file:    
-    tests = json.load(file)
-
-id = sys.argv[1]
-
-output = check_output(['./' + tests[id]['executable']] + tests[id]['arguments'])
-
-actual = [int(s) for s in output.split()]
-
-expected = dict()
-expected['0'] = []
-expected['1'] = [0]
-expected['2'] = [1]
-expected['3'] = [10, 10]
-expected['4'] = [11, 11]
-
-if expected[id] == actual:
-    exit(0)
-else:
-    exit(1)
+case "$1" in
+    0)
+        assert-equal "./test -1" ''
+        ;;
+    1)
+        assert-equal "./test 0" '0\n'
+        ;;
+    2)
+        assert-equal "./test 1" '1\n'
+        ;;
+    3)
+        assert-equal "./test 10" '10\n10\n'
+        ;;
+    4)
+        assert-equal "./test 11" '11\n11\n'
+        ;;
+esac

@@ -1,27 +1,17 @@
-#!/usr/bin/env python3
+#!/bin/bash
 
-import os
-import json
-import sys
-from subprocess import Popen
+assert-equal () {
+    diff -q <("${ANGELIX_RUN:-eval}" $1) <(echo -ne "$2") > /dev/null
+}
 
-script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
-tests_file = os.path.join(script_dir, 'tests.json')
-
-with open(tests_file) as file:    
-    tests = json.load(file)
-
-id = sys.argv[1]
-
-p = Popen(['./' + tests[id]['executable']] + tests[id]['arguments'])
-p.wait()
-
-expected = dict()
-expected['1'] = 1
-expected['2'] = 0
-expected['3'] = 0
-
-if p.returncode == expected[id]:
-    exit(0)
-else:
-    exit(1)
+case "$1" in
+    1)
+        assert-equal "./test 1 2" '1\n'
+        ;;
+    2)
+        assert-equal "./test 2 2" '0\n'
+        ;;
+    3)
+        assert-equal "./test 2 1" '0\n'
+        ;;
+esac

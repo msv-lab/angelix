@@ -60,7 +60,7 @@ class Synthesizer:
 
         for level in self.config['synthesis_levels']:
 
-            logger.info('synthesizing patch with component level {}'.format(level))
+            logger.info('synthesizing patch with component level \'{}\''.format(level))
 
             config = {
                 "encodingConfig": {
@@ -107,7 +107,7 @@ class Synthesizer:
                     line = content.pop(0)
                     if len(line) == 0:
                         continue
-                    expr = tuple(line.strip().split('-'))
+                    expr = tuple(map(int, line.strip().split('-')))
                     original = content.pop(0).strip()
                     fixed = content.pop(0).strip()
                     logger.info('fixing expression {}: {} ---> {}'.format(expr, original, fixed))

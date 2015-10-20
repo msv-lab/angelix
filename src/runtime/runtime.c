@@ -270,7 +270,7 @@ void dump_instance(char* var, int instance, char* data) {
   char file[MAX_PATH_LENGTH + 1];
   sprintf(file, "%s/%d", vardir, instance);
 
-  FILE *fp = fopen(file, "a");
+  FILE *fp = fopen(file, "w");
   if (!fp)
     abort();
   fputs(data, fp);

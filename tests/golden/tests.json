@@ -1,14 +1,11 @@
 {
     "1": {
-        "executable": "test",
-        "arguments": ["1", "2"]
+        "executable": "test"
     },
     "2": {
-        "executable": "test",
-        "arguments": ["2", "2"]
+        "executable": "test"
     },
     "3": {
-        "executable": "test",
-        "arguments": ["2", "1"]
+        "executable": "test"
     }
 }

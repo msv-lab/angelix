@@ -30,10 +30,11 @@ class Angelix:
 
         angelic_forest_file = join(working_dir, 'last-angelic-forest.json')
 
-        self.run_test = Tester(config, oracle)
+        tester = Tester(config, oracle)
+        self.run_test = tester
         self.groups_of_suspicious = Localizer(config, lines)
         self.reduce = Reducer(config)
-        self.infer_spec = Inferrer(config, tests)
+        self.infer_spec = Inferrer(config, tests, tester)
         self.synthesize_fix = Synthesizer(config, extracted, angelic_forest_file)
         self.instrument_for_localization = RepairableTransformer(config)
         self.instrument_for_inference = SuspiciousTransformer(config, extracted)
@@ -117,7 +118,7 @@ class Angelix:
         negative_traces = [(test, self.trace.parse(test)) for test in negative]
         suspicious = self.groups_of_suspicious(positive_traces, negative_traces)
         if len(suspicious) == 0:
-            logger.warning('no suspicious expression localized')
+            logger.warning('no suspicious expressions localized')
 
         while len(negative) > 0 and len(suspicious) > 0:
             expressions = suspicious.pop(0)
