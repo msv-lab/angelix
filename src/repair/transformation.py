@@ -18,12 +18,20 @@ class RepairableTransformer:
     def __call__(self, project):
         src = basename(project.dir)
         logger.info('instrumenting repairable of {} source'.format(src))
+        environment = dict(os.environ)
+        if 'conditions' in self.config['defect']:
+            environment['ANGELIX_CONDITIONS_DEFECT_CLASS'] = 'YES'
+        if 'assignments' in self.config['defect']:
+            environment['ANGELIX_ASSIGNMENTS_DEFECT_CLASS'] = 'YES'
+
         if self.config['verbose']:
             stderr = None
         else:
             stderr = subprocess.DEVNULL
         with cd(project.dir):
-            subprocess.check_output(['instrument-repairable', project.buggy], stderr=stderr)
+            subprocess.check_output(['instrument-repairable', project.buggy],
+                                    stderr=stderr,
+                                    env=environment)
 
 
 class SuspiciousTransformer:

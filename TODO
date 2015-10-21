@@ -1,6 +1,6 @@
-* Visualize difference between dumps for failing tests
+* Check difference between dumps for failing tests
 * Inject only modified expressions
-* Assignments defect class
 * For loops
-* More optimized testing and compilation (for large test suites)
 * Strings as outputs
+* Optimize expression selection: for example, don't repair single variables
+* Better angelic forest: reuse old dependencies

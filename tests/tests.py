@@ -59,6 +59,12 @@ class TestAngelix(unittest.TestCase):
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 
+    def test_assignment(self):
+        test_dir = os.path.join(script_dir, 'assignment')
+        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--defect', 'assignments']
+        result = run_angelix(args, test_dir)
+        self.assertEqual(result, 'SUCCESS')
+        
       
 if __name__ == '__main__':
     unittest.main()

@@ -70,7 +70,7 @@ StatementMatcher RepairableNode =
                                      hasType(pointerType()))))).bind("repairable"),
         integerLiteral().bind("repairable"),
         characterLiteral().bind("repairable"),
-        // TODO: need to make sure that base is a variable, otherwise it cannot be represented in smt
+        // TODO: I need to make sure that base is a variable here:
         memberExpr().bind("repairable"), 
         binaryOperator(anyOf(hasOperatorName("=="),
                              hasOperatorName("!="),
@@ -106,11 +106,19 @@ StatementMatcher Splittable =
                        hasLHS(ignoringParenImpCasts(NonRepairableExpression)),
                        hasRHS(ignoringParenImpCasts(RepairableExpression))));
 
-
-StatementMatcher RepairableIfCondition =
+//TODO: add for loops
+StatementMatcher RepairableCondition =
   anyOf(ifStmt(anyOf(hasCondition(ignoringParenImpCasts(RepairableExpression)),
                      eachOf(hasCondition(Splittable), hasCondition(forEachDescendant(Splittable))))),
         whileStmt(anyOf(hasCondition(ignoringParenImpCasts(RepairableExpression)),
                      eachOf(hasCondition(Splittable), hasCondition(forEachDescendant(Splittable))))));
+
+StatementMatcher RepairableAssignment =
+  binaryOperator(hasParent(compoundStmt()),
+                 hasOperatorName("="),
+                 hasLHS(ignoringParenImpCasts(declRefExpr())),
+                 hasRHS(ignoringParenImpCasts(RepairableExpression)));
+
+StatementMatcher Repairable = anyOf(RepairableCondition, RepairableAssignment);
 
 #endif // ANGELIX_COMMON_H

@@ -25,9 +25,9 @@ std::string isBuggy(int beginLine, int beginColumn, int endLine, int endColumn) 
 }
 
 
-class ConditionalHandler : public MatchFinder::MatchCallback {
+class Handler : public MatchFinder::MatchCallback {
 public:
-  ConditionalHandler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
+  Handler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
 
   virtual void run(const MatchFinder::MatchResult &Result) {
     if (const Expr *expr = Result.Nodes.getNodeAs<clang::Expr>("repairable")) {
@@ -61,9 +61,9 @@ private:
 
 class MyASTConsumer : public ASTConsumer {
 public:
-  MyASTConsumer(Rewriter &R) : HandlerForConditional(R) {
+  MyASTConsumer(Rewriter &R) : HandlerForInjection(R) {
 
-    Matcher.addMatcher(RepairableIfCondition, &HandlerForConditional);
+    Matcher.addMatcher(Repairable, &HandlerForInjection);
   }
 
   void HandleTranslationUnit(ASTContext &Context) override {
@@ -71,7 +71,7 @@ public:
   }
 
 private:
-  ConditionalHandler HandlerForConditional;
+  Handler HandlerForInjection;
   MatchFinder Matcher;
 };
 

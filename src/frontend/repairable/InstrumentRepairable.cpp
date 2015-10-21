@@ -4,9 +4,9 @@
 #include "../AngelixCommon.h"
 
 
-class ConditionalHandler : public MatchFinder::MatchCallback {
+class Handler : public MatchFinder::MatchCallback {
 public:
-  ConditionalHandler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
+  Handler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
 
   virtual void run(const MatchFinder::MatchResult &Result) {
     if (const Expr *expr = Result.Nodes.getNodeAs<clang::Expr>("repairable")) {
@@ -44,9 +44,13 @@ private:
 
 class MyASTConsumer : public ASTConsumer {
 public:
-  MyASTConsumer(Rewriter &R) : HandlerForConditional(R) {
+  MyASTConsumer(Rewriter &R) : HandlerForRepairable(R) {
 
-    Matcher.addMatcher(RepairableIfCondition, &HandlerForConditional);
+    if (getenv("ANGELIX_CONDITIONS_DEFECT_CLASS"))
+      Matcher.addMatcher(RepairableCondition, &HandlerForRepairable);
+
+    if (getenv("ANGELIX_ASSIGNMENTS_DEFECT_CLASS"))
+      Matcher.addMatcher(RepairableAssignment, &HandlerForRepairable);
   }
 
   void HandleTranslationUnit(ASTContext &Context) override {
@@ -54,7 +58,7 @@ public:
   }
 
 private:
-  ConditionalHandler HandlerForConditional;
+  Handler HandlerForRepairable;
   MatchFinder Matcher;
 };
 
