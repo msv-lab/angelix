@@ -231,6 +231,12 @@ class Inferrer:
             from_bv32_converter_by_type['int'] = bv32_to_int
 
             matching_path = True
+
+            if 'reachable' not in oracle and len(reachable) > 0:
+                logger.info('labels \'{}\' executed while no executions required'.format(
+                    list(reachable)))
+                continue
+            
             for expected_variable, expected_values in oracle.items():
                 if expected_variable == 'reachable':
                     expected_reachable = set(expected_values)
