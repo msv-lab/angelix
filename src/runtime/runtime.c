@@ -351,6 +351,28 @@ SYMBOLIC_OUTPUT_PROTO(char, "char")
 #undef SYMBOLIC_OUTPUT_PROTO
 
 
+//TODO: later I need to express it through angelix_symbolic_output_str
+void angelix_symbolic_reachable(char* id) {
+  if (!outputs)
+    init_tables();
+  int previous = ht_get(outputs, "reachable");
+  int instance;
+  if (previous == NONE) {
+    instance = 0;
+  } else {
+    instance = previous + 1;
+  }
+  ht_set(outputs, "reachable", instance);
+  char name[MAX_NAME_LENGTH];
+  sprintf(name, "reachable!%s!%d", id, instance);
+  int dummy = 0;
+  int s;
+  klee_make_symbolic(&s, sizeof(int), name);
+  klee_assume(s == dummy);
+  return;
+}
+
+
 #define DUMP_OUTPUT_PROTO(type)                         \
   int angelix_dump_output_##type(type expr, char* id) { \
     if (getenv("ANGELIX_DUMP")) {                       \
@@ -376,6 +398,25 @@ DUMP_OUTPUT_PROTO(bool)
 DUMP_OUTPUT_PROTO(char)
 
 #undef DUMP_OUTPUT_PROTO
+
+
+//TODO: later I need to express it through angelix_dump_output_str
+void angelix_dump_reachable(char* id) {
+    if (getenv("ANGELIX_DUMP")) {
+      if (!outputs)
+        init_tables();
+      int previous = ht_get(outputs, "reachable");
+      int instance;
+      if (previous == NONE) {
+        instance = 0;
+      } else {
+        instance = previous + 1;
+      }
+      ht_set(outputs, "reachable", instance);
+      dump_str("reachable", instance, id);
+    }
+    return;
+}
 
 
 #define SUSPICIOUS_PROTO(type, typestr)                               \

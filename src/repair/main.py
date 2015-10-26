@@ -8,7 +8,8 @@ import logging
 import time
 
 from project import Validation, Frontend, Backend, CompilationError
-from utils import format_time, time_limit, TimeoutException, Dump, Trace
+from utils import format_time, time_limit, TimeoutException
+from runtime import Dump, Trace
 from transformation import RepairableTransformer, SuspiciousTransformer, FixInjector
 from testing import Tester
 from localization import Localizer

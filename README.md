@@ -59,16 +59,20 @@ Angelix requires specifying output values in the source code of the subject prog
         x = atoi(argv[1]);
         y = atoi(argv[2]);
         z = x + y;
+        if (z < 0) {
+            printf("Error\n");
+        }
         printf("%d\n", z + 1);
         return 0;
     }
 
-Output values are wrapped with `ANGELIX_OUTPUT` macro providing type and id of the expression. You also need to provide a default definition for this macro, so that the program remains compilable:
+Output values are wrapped with `ANGELIX_OUTPUT` macro providing type and label of the expression. Reachibility can be captured using `ANGELIX_REACHABLE` macro and label. You also need to provide a default definition for this macro, so that the program remains compilable:
 
     #include <stdio.h>
 
     #ifndef ANGELIX_OUTPUT
-    #define ANGELIX_OUTPUT(type, expr, id) expr
+    #define ANGELIX_OUTPUT(type, expr, label) expr
+    #define ANGELIX_REACHABLE(label)
     #endif
 
     int main(int argc, char** argv) {
@@ -76,16 +80,20 @@ Output values are wrapped with `ANGELIX_OUTPUT` macro providing type and id of t
         x = atoi(argv[1]);
         y = atoi(argv[2]);
         z = x + y;
+        if (z < 0) {
+            ANGELIX_REACHABLE("error");
+            printf("Error\n");
+        }
         printf("%d\n", ANGELIX_OUTPUT(int, z + 1, "stdout"));
         return 0;
     }
 
 The following types of output expressions are supported:
 
-* int
-* bool
-* char
-* str (null-terminated string)
+* [x] int
+* [x] bool
+* [x] char
+* [ ] str (null-terminated string)
 
 ## Test model ##
 
@@ -96,7 +104,7 @@ To abstract over test framework, Angelix uses the following objects:
 
 ### Oracle ###
 
-Oracle is an executable that takes a test identifier as the only argument, runs the corresponding test and terminates with `0` exit code if and only if the test passes. 
+Oracle is an executable that takes a test identifier as the only argument, runs the corresponding test and terminates with `0` exit code if and only if the test passes.
 
 Oracle executes buggy binary using _angelix run command_ stored in `ANGELIX_RUN` environment variable, if it is defined. Each test must include at most one execution of angelix run command. This is an example of oracle script:
 
@@ -105,6 +113,9 @@ Oracle executes buggy binary using _angelix run command_ stored in `ANGELIX_RUN`
     case "$1" in
         test1)
             "${ANGELIX_RUN:-eval}" ./test 1 2
+            ;;
+        test2)
+            "${ANGELIX_RUN:-eval}" ./test 0 -1
             ;;
     ...
 
@@ -116,14 +127,18 @@ Assert file is used to specify expected output values. Outputs are specified in 
 
     {
         "test1": {
-            "stdout": [1, 2 ,3]
-        },
+            "stdout": [4]
+            },
+        "test2": {
+            "stdout": [0],
+            "reachable": ["error"]
+        }
         ...
     }
 
-Each output id corresponds to a list of values, since an expression can be evaluated multiple times during the test execution.
+Each output label corresponds to a list of values since an expression can be evaluated multiple times during test execution. An empty list means that the value must not be executed, while the absence of a label means that any value is allowed. `reachable` is a special label for capturing reachibility property and corresponding values include labels that must be executed at least once.
 
-If expected outputs for a passing test case are not given, they are extracted automatically from the test executions. Expected outputs for failing test cases can be extracted from a golden version (it must be instrumented accordingly).
+If expected outputs for a passing test case are not given, they are extracted automatically from the test executions. Expected outputs for failing test cases can be extracted from golden version (golden version must be instrumented accordingly).
 
 ## Known issues ##
 

@@ -52,11 +52,13 @@ def parse_variables(vars):
     <type> ! suspicious ! <line> ! <column> ! <line> ! <column> ! <instance> ! original
     <type> ! suspicious ! <line> ! <column> ! <line> ! <column> ! <instance> ! env ! <name>
     <type> ! output ! <name> ! <instance>
+    reachable ! <name> ! <instance>
 
     returns outputs, suspicious
 
     outputs: name -> type * num of instances
     suspicious: expr -> type * num of instances * env-name list
+    reachable: set of strings
     
     Note: assume environment variables are always int
     '''
@@ -65,36 +67,42 @@ def parse_variables(vars):
     suspicious_type = dict()
     suspicious_instances = dict()
     suspicious_env = dict()
+    reachable = set()
     for v in vars:
         tokens = v.split('!')
-        type = tokens.pop(0)
-        kind = tokens.pop(0)
-        if kind == 'output':
-            name, instance = tokens.pop(0), int(tokens.pop(0))
-            output_type[name] = type
-            if name not in output_instances:
-                output_instances[name] = []
-            output_instances[name].append(instance)
-        elif kind == 'suspicious':
-            expr = int(tokens.pop(0)), int(tokens.pop(0)), int(tokens.pop(0)), int(tokens.pop(0))
-            instance = int(tokens.pop(0))
-            value = tokens.pop(0)
-            if value == 'angelic':
-                suspicious_type[expr] = type
-                if expr not in suspicious_instances:
-                    suspicious_instances[expr] = []
-                suspicious_instances[expr].append(instance)
-            elif value == 'original':
-                pass
-            elif value == 'env':
-                name = tokens.pop(0)
-                if expr not in suspicious_env:
-                    suspicious_env[expr] = set()
-                suspicious_env[expr].add(name)
+        first = tokens.pop(0)
+        if first == 'reachable':
+            label = tokens.pop(0)
+            reachable.add(label)
+        else:
+            type = first
+            kind = tokens.pop(0)
+            if kind == 'output':
+                name, instance = tokens.pop(0), int(tokens.pop(0))
+                output_type[name] = type
+                if name not in output_instances:
+                    output_instances[name] = []
+                output_instances[name].append(instance)
+            elif kind == 'suspicious':
+                expr = int(tokens.pop(0)), int(tokens.pop(0)), int(tokens.pop(0)), int(tokens.pop(0))
+                instance = int(tokens.pop(0))
+                value = tokens.pop(0)
+                if value == 'angelic':
+                    suspicious_type[expr] = type
+                    if expr not in suspicious_instances:
+                        suspicious_instances[expr] = []
+                    suspicious_instances[expr].append(instance)
+                elif value == 'original':
+                    pass
+                elif value == 'env':
+                    name = tokens.pop(0)
+                    if expr not in suspicious_env:
+                        suspicious_env[expr] = set()
+                    suspicious_env[expr].add(name)
+                else:
+                    raise InferenceError()
             else:
                 raise InferenceError()
-        else:
-            raise InferenceError()
 
     outputs = dict()
     for name, type in output_type.items():
@@ -112,7 +120,7 @@ def parse_variables(vars):
                 raise InferenceError()
         suspicious[expr] = (type, len(suspicious_instances[expr]), list(suspicious_env[expr]))
 
-    return outputs, suspicious
+    return outputs, suspicious, reachable
 
 
 class Inferrer:
@@ -168,9 +176,10 @@ class Inferrer:
             variables = [str(var) for var in get_vars(path)
                          if str(var).startswith('int!')
                          or str(var).startswith('bool!')
-                         or str(var).startswith('char!')]
+                         or str(var).startswith('char!')
+                         or str(var).startswith('reachable!')]
 
-            outputs, suspicious = parse_variables(variables)
+            outputs, suspicious, reachable = parse_variables(variables)
 
             # name -> value list (parsed)
             oracle_constraints = dict()
@@ -223,6 +232,14 @@ class Inferrer:
 
             matching_path = True
             for expected_variable, expected_values in oracle.items():
+                if expected_variable == 'reachable':
+                    expected_reachable = set(expected_values)
+                    if not (expected_reachable == reachable):
+                        logger.info('labels \'{}\' executed while {} required'.format(
+                            list(reachable),
+                            list(expected_reachable)))
+                        matching_path = False
+                    break
                 if expected_variable not in outputs.keys():
                     outputs[expected_variable] = (None, 0)  # unconstraint does not mean wrong
                 required_executions = len(expected_values)
