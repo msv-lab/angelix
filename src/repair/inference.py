@@ -245,7 +245,8 @@ class Inferrer:
                             list(reachable),
                             list(expected_reachable)))
                         matching_path = False
-                    break
+                        break
+                    continue
                 if expected_variable not in outputs.keys():
                     outputs[expected_variable] = (None, 0)  # unconstraint does not mean wrong
                 required_executions = len(expected_values)
