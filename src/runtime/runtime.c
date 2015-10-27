@@ -324,24 +324,28 @@ DUMP_PROTO(str)
 
 #undef WRITE_TO_FILE_PROTO
 
-#define SYMBOLIC_OUTPUT_PROTO(type, typestr)                  \
-  int angelix_symbolic_output_##type(type expr, char* id) {   \
-    if (!outputs)                                             \
-      init_tables();                                          \
-    int previous = ht_get(outputs, id);                       \
-    int instance;                                             \
-    if (previous == NONE) {                                   \
-      instance = 0;                                           \
-    } else {                                                  \
-      instance = previous + 1;                                \
-    }                                                         \
-    ht_set(outputs, id, instance);                            \
-    char name[MAX_NAME_LENGTH];                               \
-    sprintf(name, "%s!output!%s!%d", typestr, id, instance);  \
-    type s;                                                   \
-    klee_make_symbolic(&s, sizeof(s), name);                  \
-    klee_assume(s == expr);                                   \
-    return s;                                                 \
+#define SYMBOLIC_OUTPUT_PROTO(type, typestr)                    \
+  int angelix_symbolic_output_##type(type expr, char* id) {     \
+    if (getenv("ANGELIX_SYMBOLIC_RUNTIME")) {                   \
+      if (!outputs)                                             \
+        init_tables();                                          \
+      int previous = ht_get(outputs, id);                       \
+      int instance;                                             \
+      if (previous == NONE) {                                   \
+        instance = 0;                                           \
+      } else {                                                  \
+        instance = previous + 1;                                \
+      }                                                         \
+      ht_set(outputs, id, instance);                            \
+      char name[MAX_NAME_LENGTH];                               \
+      sprintf(name, "%s!output!%s!%d", typestr, id, instance);  \
+      type s;                                                   \
+      klee_make_symbolic(&s, sizeof(s), name);                  \
+      klee_assume(s == expr);                                   \
+      return s;                                                 \
+    } else {                                                    \
+      return expr;                                              \
+    }                                                           \
   }
 
 SYMBOLIC_OUTPUT_PROTO(int, "int")
@@ -353,22 +357,24 @@ SYMBOLIC_OUTPUT_PROTO(char, "char")
 
 //TODO: later I need to express it through angelix_symbolic_output_str
 void angelix_symbolic_reachable(char* id) {
-  if (!outputs)
-    init_tables();
-  int previous = ht_get(outputs, "reachable");
-  int instance;
-  if (previous == NONE) {
-    instance = 0;
-  } else {
-    instance = previous + 1;
+  if (getenv("ANGELIX_SYMBOLIC_RUNTIME")) {
+    if (!outputs)
+      init_tables();
+    int previous = ht_get(outputs, "reachable");
+    int instance;
+    if (previous == NONE) {
+      instance = 0;
+    } else {
+      instance = previous + 1;
+    }
+    ht_set(outputs, "reachable", instance);
+    char name[MAX_NAME_LENGTH];
+    sprintf(name, "reachable!%s!%d", id, instance);
+    int dummy = 0;
+    int s;
+    klee_make_symbolic(&s, sizeof(int), name);
+    klee_assume(s == dummy);
   }
-  ht_set(outputs, "reachable", instance);
-  char name[MAX_NAME_LENGTH];
-  sprintf(name, "reachable!%s!%d", id, instance);
-  int dummy = 0;
-  int s;
-  klee_make_symbolic(&s, sizeof(int), name);
-  klee_assume(s == dummy);
   return;
 }
 
@@ -448,7 +454,7 @@ void angelix_dump_reachable(char* id) {
     }                                                                 \
                                                                       \
     char name_orig[MAX_NAME_LENGTH];                                  \
-    char* orig_fmt = "%s!suspicious!%d!%d!%d!%d!%d!original";          \
+    char* orig_fmt = "%s!suspicious!%d!%d!%d!%d!%d!original";         \
     sprintf(name_orig, orig_fmt, typestr, bl, bc, el, ec, instance);  \
     int so;                                                           \
     klee_make_symbolic(&so, sizeof(so), name_orig);                   \

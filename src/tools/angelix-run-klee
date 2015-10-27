@@ -6,6 +6,8 @@ shift
 rm -rf "$ANGELIX_KLEE_WORKDIR"/klee-out-*
 rm -rf "$(dirname "$exe")"/klee-out-*
 
+export ANGELIX_SYMBOLIC_RUNTIME=ON
+
 klee -write-smt2s \
      -smtlib-human-readable \
      --libc=uclibc \
@@ -18,3 +20,6 @@ klee -write-smt2s \
      "$@"
 
 mv "$(dirname "$exe")"/klee-out-* "$ANGELIX_KLEE_WORKDIR"
+
+# it makes sence to return 0 so that the test can proceed
+exit 0

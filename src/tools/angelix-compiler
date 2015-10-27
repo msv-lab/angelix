@@ -87,6 +87,27 @@ sub filter_non_comp_args {
     return @comp_args;
 }
 
+sub fix_llvm_script {
+    use strict;
+    my $file = $_[0];
+
+    open(FILE, "<", $file) || die "File not found";
+    my @lines = <FILE>;
+    close(FILE);
+
+    my $abs_path = File::Spec->rel2abs($file);
+
+    my @newlines;
+    foreach(@lines) {
+        $_ =~ s/$file/$abs_path/g;
+        push(@newlines,$_);
+    }
+
+    open(FILE, ">", $file) || die "File not found";
+    print FILE @newlines;
+    close(FILE);
+}
+
 
 my $compilation_mode;
 
@@ -161,6 +182,8 @@ if ($compilation_mode eq "test") {
         my $call_llvm_ld = join(' ', @args);
         debug($call_llvm_ld);
         system($call_llvm_ld);
+
+        fix_llvm_script($target);
 
         system("angelix-patch-bitcode ${target}.bc");
 

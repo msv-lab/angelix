@@ -66,7 +66,7 @@ Angelix requires specifying output values in the source code of the subject prog
         return 0;
     }
 
-Output values are wrapped with `ANGELIX_OUTPUT` macro providing type and label of the expression. Reachibility can be captured using `ANGELIX_REACHABLE` macro and label. You also need to provide a default definition for this macro, so that the program remains compilable:
+Output values are wrapped with `ANGELIX_OUTPUT` macro providing type and label of the expression. Reachibility can be captured using `ANGELIX_REACHABLE` macro and label. You also need to provide a default definition for these macros, so that the program remains compilable:
 
     #include <stdio.h>
 
