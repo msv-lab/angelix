@@ -209,7 +209,7 @@ if __name__ == "__main__":
                         help='number of iterations through suspicious (default: %(default)s)')
     parser.add_argument('--localization', default='jaccard', choices=['jaccard', 'ochiai', 'tarantula'],
                         help='formula for localization algorithm (default: %(default)s)')
-    parser.add_argument('--klee-max-forks', metavar='NUM', type=int, default=0,
+    parser.add_argument('--klee-max-forks', metavar='NUM', type=int, default=1000,
                         help='KLEE max number of forks (default: %(default)s)')
     parser.add_argument('--klee-timeout', metavar='MS', type=int, default=0,
                         help='KLEE timeout (default: %(default)s)')
