@@ -112,10 +112,10 @@ Oracle executes buggy binary using _angelix run command_ stored in `ANGELIX_RUN`
 
     case "$1" in
         test1)
-            "${ANGELIX_RUN:-eval}" ./test 1 2
+            ${ANGELIX_RUN:-eval} ./test 1 2
             ;;
         test2)
-            "${ANGELIX_RUN:-eval}" ./test 0 -1
+            ${ANGELIX_RUN:-eval} ./test 0 -1
             ;;
     ...
 
@@ -136,10 +136,10 @@ Assert file is used to specify expected output values. Outputs are specified in 
         ...
     }
 
-Each output label corresponds to a list of values since an expression can be evaluated multiple times during test execution. An empty list means that the value must not be executed, while the absence of a label means that any value is allowed. `reachable` is a special label for capturing reachibility property and corresponding values include labels that must be executed at least once.
+Each output label corresponds to a list of values since an expression can be evaluated multiple times during test execution. An empty list means that the value must not be executed, while the absence of a label means that any value is allowed. `reachable` is a special label for capturing reachibility property and corresponding values include *all* labels that are executed at least once.
 
 If expected outputs for a passing test case are not given, they are extracted automatically from the test executions. Expected outputs for failing test cases can be extracted from golden version (golden version must be instrumented accordingly).
-
+    
 ## Known issues ##
 
 * If you use multiarch, there can be a linking [problem](https://stackoverflow.com/questions/6329887/compiling-problems-cannot-find-crt1-o) when compiling with `llvm-gcc`
