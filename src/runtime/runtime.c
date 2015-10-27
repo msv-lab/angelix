@@ -425,12 +425,12 @@ void angelix_dump_reachable(char* id) {
 }
 
 
-#define SUSPICIOUS_PROTO(type, typestr)                               \
-  int angelix_suspicious_##type(int expr,                             \
-                                int bl, int bc, int el, int ec,       \
-                                char** env_ids,                       \
-                                int* env_vals,                        \
-                                int env_size) {                       \
+#define SUSPICIOUS_PROTO(type, typestr)                                 \
+  int angelix_suspicious_##type(int expr,                               \
+                                int bl, int bc, int el, int ec,         \
+                                char** env_ids,                         \
+                                int* env_vals,                          \
+                                int env_size) {                         \
     if (getenv("ANGELIX_SYMBOLIC_RUNTIME")) {                           \
       if (!suspicious)                                                  \
         init_tables();                                                  \

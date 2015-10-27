@@ -30,6 +30,8 @@ class Tester:
             environment['ANGELIX_RUN'] = 'angelix-run-test'
         if klee:
             environment['ANGELIX_RUN'] = 'angelix-run-klee'
+            # using stub library to make lli work
+            environment['LLVMINTERP'] = 'lli -load {}/libkleeRuntest.so'.format(os.environ['KLEE_LIBRARY_PATH'])
             
         if self.config['verbose']:
             stderr = None
