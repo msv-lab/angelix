@@ -149,6 +149,7 @@ class Angelix:
             if not set(neg).isdisjoint(set(repair_suite)):
                 not_repaired = list(set(repair_suite) & set(neg))
                 logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
+                continue
             positive, negative = pos, neg
 
             while len(negative) > 0:
@@ -172,6 +173,7 @@ class Angelix:
                 if not set(neg).isdisjoint(set(repair_suite)):
                     not_repaired = list(set(repair_suite) & set(neg))
                     logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
+                    break
                 positive, negative = pos, neg
 
         if len(negative) > 0:

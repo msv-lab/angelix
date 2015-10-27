@@ -370,10 +370,9 @@ void angelix_symbolic_reachable(char* id) {
     ht_set(outputs, "reachable", instance);
     char name[MAX_NAME_LENGTH];
     sprintf(name, "reachable!%s!%d", id, instance);
-    int dummy = 0;
     int s;
     klee_make_symbolic(&s, sizeof(int), name);
-    klee_assume(s == dummy);
+    klee_assume(s);
   }
   return;
 }
