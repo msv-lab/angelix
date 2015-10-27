@@ -17,7 +17,8 @@ klee -write-smt2s \
      -max-time=$ANGELIX_KLEE_MAX_TIME \
      -max-solver-time=$ANGELIX_KLEE_MAX_SOLVER_TIME \
      "${exe}.patched.bc" \
-     "$@"
+     "$@" \
+     &> "$ANGELIX_KLEE_WORKDIR/last-klee-log.txt"
 
 mv "$(dirname "$exe")"/klee-out-* "$ANGELIX_KLEE_WORKDIR"
 

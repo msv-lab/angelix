@@ -197,11 +197,11 @@ if __name__ == "__main__":
                         help='configure command in the form of shell command (default: %(default)s)')
     parser.add_argument('--build', metavar='CMD', default='make -e',
                         help='build command in the form of simple shell command (default: %(default)s)')
-    parser.add_argument('--timeout', metavar='MS', type=int, default=100000,
+    parser.add_argument('--timeout', metavar='MS', type=int, default=3600000, # 1 hour
                         help='total repair timeout (default: %(default)s)')
     parser.add_argument('--initial-tests', metavar='NUM', type=int, default=3,
                         help='initial repair test suite size (default: %(default)s)')
-    parser.add_argument('--test-timeout', metavar='MS', type=int, default=10000,
+    parser.add_argument('--test-timeout', metavar='MS', type=int, default=30000, # 30 sec
                         help='test case timeout (default: %(default)s)')
     parser.add_argument('--suspicious', metavar='NUM', type=int, default=5,
                         help='number of suspicious repaired at ones (default: %(default)s)')
@@ -209,13 +209,13 @@ if __name__ == "__main__":
                         help='number of iterations through suspicious (default: %(default)s)')
     parser.add_argument('--localization', default='jaccard', choices=['jaccard', 'ochiai', 'tarantula'],
                         help='formula for localization algorithm (default: %(default)s)')
-    parser.add_argument('--klee-max-forks', metavar='NUM', type=int, default=1000,
+    parser.add_argument('--klee-max-forks', metavar='NUM', type=int, default=0,
                         help='KLEE max number of forks (default: %(default)s)')
     parser.add_argument('--klee-timeout', metavar='MS', type=int, default=0,
                         help='KLEE timeout (default: %(default)s)')
     parser.add_argument('--klee-solver-timeout', metavar='MS', type=int, default=0,
                         help='KLEE solver timeout (default: %(default)s)')
-    parser.add_argument('--synthesis-timeout', metavar='MS', type=int, default=10000,
+    parser.add_argument('--synthesis-timeout', metavar='MS', type=int, default=30000, # 30 sec
                         help='synthesis timeout (default: %(default)s)')
     parser.add_argument('--synthesis-levels', metavar='LEVEL', nargs='+',
                         default=['alternatives', 'integers', 'booleans', 'comparison'],
