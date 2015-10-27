@@ -431,42 +431,46 @@ void angelix_dump_reachable(char* id) {
                                 char** env_ids,                       \
                                 int* env_vals,                        \
                                 int env_size) {                       \
-    if (!suspicious)                                                  \
-      init_tables();                                                  \
-    char str_id[INT_LENGTH * 4 + 4];                                  \
-    sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);                   \
-    int previous = ht_get(suspicious, str_id);                        \
-    int instance;                                                     \
-    if (previous == NONE) {                                           \
-      instance = 0;                                                   \
-    } else {                                                          \
-      instance = previous + 1;                                        \
-    }                                                                 \
-    ht_set(suspicious, str_id, instance);                             \
-    int i;                                                            \
-    for (i = 0; i < env_size; i++) {                                  \
-      char name[MAX_NAME_LENGTH];                                     \
-      char* env_fmt = "int!suspicious!%d!%d!%d!%d!%d!env!%s";         \
-      sprintf(name, env_fmt, bl, bc, el, ec, instance, env_ids[i]);   \
-      int sv;                                                         \
-      klee_make_symbolic(&sv, sizeof(sv), name);                      \
-      klee_assume(sv == env_vals[i]);                                 \
-    }                                                                 \
-                                                                      \
-    char name_orig[MAX_NAME_LENGTH];                                  \
-    char* orig_fmt = "%s!suspicious!%d!%d!%d!%d!%d!original";         \
-    sprintf(name_orig, orig_fmt, typestr, bl, bc, el, ec, instance);  \
-    int so;                                                           \
-    klee_make_symbolic(&so, sizeof(so), name_orig);                   \
-    klee_assume(so == expr);                                          \
-                                                                      \
-    char name[MAX_NAME_LENGTH];                                       \
-    char* angelic_fmt = "%s!suspicious!%d!%d!%d!%d!%d!angelic";       \
-    sprintf(name, angelic_fmt, typestr, bl, bc, el, ec, instance);    \
-    int s;                                                            \
-    klee_make_symbolic(&s, sizeof(s), name);                          \
-                                                                      \
-    return s;                                                         \
+    if (getenv("ANGELIX_SYMBOLIC_RUNTIME")) {                           \
+      if (!suspicious)                                                  \
+        init_tables();                                                  \
+      char str_id[INT_LENGTH * 4 + 4];                                  \
+      sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);                   \
+      int previous = ht_get(suspicious, str_id);                        \
+      int instance;                                                     \
+      if (previous == NONE) {                                           \
+        instance = 0;                                                   \
+      } else {                                                          \
+        instance = previous + 1;                                        \
+      }                                                                 \
+      ht_set(suspicious, str_id, instance);                             \
+      int i;                                                            \
+      for (i = 0; i < env_size; i++) {                                  \
+        char name[MAX_NAME_LENGTH];                                     \
+        char* env_fmt = "int!suspicious!%d!%d!%d!%d!%d!env!%s";         \
+        sprintf(name, env_fmt, bl, bc, el, ec, instance, env_ids[i]);   \
+        int sv;                                                         \
+        klee_make_symbolic(&sv, sizeof(sv), name);                      \
+        klee_assume(sv == env_vals[i]);                                 \
+      }                                                                 \
+                                                                        \
+      char name_orig[MAX_NAME_LENGTH];                                  \
+      char* orig_fmt = "%s!suspicious!%d!%d!%d!%d!%d!original";         \
+      sprintf(name_orig, orig_fmt, typestr, bl, bc, el, ec, instance);  \
+      int so;                                                           \
+      klee_make_symbolic(&so, sizeof(so), name_orig);                   \
+      klee_assume(so == expr);                                          \
+                                                                        \
+      char name[MAX_NAME_LENGTH];                                       \
+      char* angelic_fmt = "%s!suspicious!%d!%d!%d!%d!%d!angelic";       \
+      sprintf(name, angelic_fmt, typestr, bl, bc, el, ec, instance);    \
+      int s;                                                            \
+      klee_make_symbolic(&s, sizeof(s), name);                          \
+                                                                        \
+      return s;                                                         \
+    } else {                                                            \
+      return expr;                                                      \
+    }                                                                   \
   }
 
 SUSPICIOUS_PROTO(int, "int")
