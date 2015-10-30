@@ -1,5 +1,5 @@
 import os
-from os.path import basename
+from os.path import basename, join
 from utils import cd
 import subprocess
 import logging
@@ -24,6 +24,8 @@ class Tester:
 
         if dump is not None:
             environment['ANGELIX_WITH_DUMPING'] = dump
+            reachable_dir = join(dump, 'reachable')  # maybe it should be done in other place?
+            os.mkdir(reachable_dir)
         if trace is not None:
             environment['ANGELIX_WITH_TRACING'] = trace
         if (trace is not None) or (dump is not None):

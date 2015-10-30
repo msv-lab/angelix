@@ -136,9 +136,9 @@ Assert file is used to specify expected output values. Outputs are specified in 
         ...
     }
 
-Each output label corresponds to a list of values since an expression can be evaluated multiple times during test execution. An empty list means that the value must not be executed, while the absence of a label means that any value is allowed. `reachable` is a special label for capturing reachibility property and corresponding values include *all* labels that are executed at least once.
+Each output label corresponds to a list of values since an expression can be evaluated multiple times during test execution. `reachable` is a special label for capturing reachibility property and corresponding values include labels that are executed at least once. An empty list for a label means that the corresponding expression (or location) must not be executed, while the absence of a label in the test specification means that any value is allowed.
 
-If expected outputs for a passing test case are not given, they are extracted automatically from the test executions. Expected outputs for failing test cases can be extracted from golden version (golden version must be instrumented accordingly).
+If expected outputs for a passing test case are not given, they are extracted automatically from the test execution. Expected outputs for failing test cases can be extracted from golden version (golden version must be instrumented accordingly). Note that when values are extracted from program runs, the value of the label `reachable` is empty list by default, as opposite to other labels that are not present in the specification if not executed.
     
 ## Known issues ##
 
