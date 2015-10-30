@@ -1,6 +1,0 @@
-* Check difference between dumps for failing tests
-* Inject only modified expressions
-* For loops
-* Strings as outputs
-* Optimize expression selection: for example, don't repair single variables
-* Better angelic forest: reuse old dependencies

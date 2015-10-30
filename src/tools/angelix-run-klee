@@ -8,12 +8,24 @@ rm -rf "$(dirname "$exe")"/klee-out-*
 
 export ANGELIX_SYMBOLIC_RUNTIME=ON
 
-klee -write-smt2s \
+if [ -z $ANGELIX_KLEE_SEARCH ]; then
+    search_arg=""
+else
+    search_arg="--search=$ANGELIX_KLEE_SEARCH"
+fi
+
+if [ -z $ANGELIX_KLEE_MAX_FORKS ]; then
+    forks_arg=""
+else
+    forks_arg="-max-forks=$ANGELIX_KLEE_MAX_FORKS"
+fi
+
+klee $search_arg $forks_arg \
+     -write-smt2s \
      -smtlib-human-readable \
      --libc=uclibc \
      --posix-runtime \
      -allow-external-sym-calls \
-     -max-forks=$ANGELIX_KLEE_MAX_FORKS \
      -max-time=$ANGELIX_KLEE_MAX_TIME \
      -max-solver-time=$ANGELIX_KLEE_MAX_SOLVER_TIME \
      "${exe}.patched.bc" \

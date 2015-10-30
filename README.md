@@ -144,6 +144,16 @@ If expected outputs for a passing test case are not given, they are extracted au
 
 * If you use multiarch, there can be a linking [problem](https://stackoverflow.com/questions/6329887/compiling-problems-cannot-find-crt1-o) when compiling with `llvm-gcc`
 
+## TODO ##
+
+* Check the difference between dumps of failing tests and expected values
+* Inject only modified expressions
+* Support for loops
+* Support str output type
+* Optimize expression selection: for example, don't repair single variables
+* Better angelic forest: reuse old dependencies through MAX-SAT
+* Support strings as test identifiers
+
 ## Contributors ##
 
 Principal investigator:

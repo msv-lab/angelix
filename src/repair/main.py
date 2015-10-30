@@ -211,7 +211,9 @@ if __name__ == "__main__":
                         help='number of iterations through suspicious (default: %(default)s)')
     parser.add_argument('--localization', default='jaccard', choices=['jaccard', 'ochiai', 'tarantula'],
                         help='formula for localization algorithm (default: %(default)s)')
-    parser.add_argument('--klee-max-forks', metavar='NUM', type=int, default=1000,
+    parser.add_argument('--klee-search', metavar='HEURISTIC', default=None, choices=['dfs', 'bfs', 'random-state', 'random-path', 'nurs:covnew', 'nurs:md2u', 'nurs:depth', 'nurs:icnt', 'nurs:cpicnt', 'nurs:qc'],
+                        help='KLEE search heuristic (default: KLEE default)')
+    parser.add_argument('--klee-max-forks', metavar='NUM', type=int, default=None,
                         help='KLEE max number of forks (default: %(default)s)')
     parser.add_argument('--klee-timeout', metavar='MS', type=int, default=0,
                         help='KLEE timeout (default: %(default)s)')
@@ -253,6 +255,7 @@ if __name__ == "__main__":
     config['iterations']          = args.iterations
     config['localization']        = args.localization
     config['klee_max_forks']      = args.klee_max_forks
+    config['klee_search']         = args.klee_search
     config['klee_timeout']        = args.klee_timeout
     config['klee_solver_timeout'] = args.klee_solver_timeout
     config['synthesis_timeout']   = args.synthesis_timeout
