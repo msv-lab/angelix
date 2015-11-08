@@ -1,6 +1,6 @@
 # Test Abstraction #
 
-Real-world C programs use various test frameworks. Often testing scenarious are expressed using a combination of small C programs and Bash/Perl scripts. Angelix requires extracting expected outputs from tests to perform semantics analysis. To do so, it provides a test framework abstraction that can be relatively easy injected into exising test harness.
+Real-world C programs use various test frameworks. Often testing scenarious are expressed using a combination of small C programs and Bash/Perl scripts. Angelix requires extracting expected outputs from tests to perform semantics analysis. To do so, it provides a test framework abstraction that can be injected into exising test harness.
 
 To abstract over test framework, Angelix require the following:
 
@@ -10,7 +10,7 @@ To abstract over test framework, Angelix require the following:
 
 ## Instrumentation ##
 
-Angelix requires specifying output values in the source code of the subject program. Consider a simple example:
+Angelix requires specifying output expressions in the source code of the subject program. Consider a simple example:
 
     #include <stdio.h>
 
@@ -26,7 +26,7 @@ Angelix requires specifying output values in the source code of the subject prog
         return 0;
     }
 
-Output values are wrapped with `ANGELIX_OUTPUT` macro providing type and label of the expression. Reachibility can be captured using `ANGELIX_REACHABLE` macro and label. You also need to provide a default definition for these macros, so that the program remains compilable:
+Output expressions are wrapped with `ANGELIX_OUTPUT` macro providing their type and label. Reachibility can be captured using `ANGELIX_REACHABLE` macro with label. You also need to provide default definitions for these macros, so that the program remains compilable:
 
     #include <stdio.h>
 
@@ -57,9 +57,9 @@ The following types of output expressions are supported:
 
 ## Running ##
 
-To abstract over the test runner, we use the notion of oracle executable. It takes a test identifier as the only argument, runs the corresponding test and terminates with `0` exit code if and only if the test passes.
+To provide interface to test runner, we use the notion of oracle executable. It takes a test identifier as the only argument, runs the corresponding test and terminates with `0` exit code if and only if the test passes.
 
-Oracle executes buggy binary using _angelix run command_ stored in `ANGELIX_RUN` environment variable, if it is defined. Each test must include at most one execution of angelix run command. This is an example of oracle script:
+Oracle executes bug-reproducing binary using _angelix run command_ stored in `ANGELIX_RUN` environment variable, if it is defined. Each test must include at most one execution of angelix run command. This is an example of an oracle script:
 
     #!/bin/bash
 
@@ -89,10 +89,10 @@ To specify expected outputs values for instrumented expression, we use an assert
         ...
     }
 
-Each output label corresponds to a list of values since an expression can be evaluated multiple times during test execution. `reachable` is a special label for capturing reachibility property and corresponding values include labels that are executed at least once. An empty list for a label means that the corresponding expression (or location) must not be executed, while the absence of a label in the test specification means that any value is allowed.
+Each output label corresponds to a list of values since an expression can be evaluated multiple times during test execution. `reachable` is a special label for capturing reachibility property and corresponding values include labels that are executed at least once. An empty list for a label means that the corresponding expression (or location) must not be executed, while the absence of a label in the test specification means that any values are allowed.
 
 ### Output extraction ###
 
-It is often difficult to define correct values for an arbitrary program expression. For this reason, Angelix can extract such values automatically from program runs for passing test cases, and from golden version's runs if it is available. When using golden version, it must be instrumented accordingly.
+It is often difficult to define correct values for an arbitrary program expression. For this reason, Angelix can extract such values automatically from program runs for passing test cases, and from golden version's runs for failing test cases if it is available. When using golden version, it must be instrumented accordingly.
 
 Note that when values are extracted from program runs, the value of the label `reachable` is empty list by default, as opposite to other labels that are not present in the specification if not executed.

@@ -34,7 +34,7 @@ Angelix uses symbolic execution and program synthesis to search for a patch. It 
 
 To analyze program test executions, Angelix requires interface to test running and test assertions (see [test framework abstraction](doc/TestAbstraction.md)).
 
-Angelix is designed to support Makefile-based projects. The following is required for successful execution of Angelix:
+Angelix is designed to support Makefile-based projects. The following is required for successful execution:
 
 * Compiler used by the build system can be substituted by redefining `CC` environment variable.
 * Compilation and linking are done by separate compiler calls.

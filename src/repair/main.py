@@ -309,7 +309,7 @@ if __name__ == "__main__":
                         help='dump values for given tests (default: %(default)s)')
     parser.add_argument('--synthesis-only', metavar="FILE", default=None,
                         help='synthesize and validate patch from angelic forest (default: %(default)s)')
-    parser.add_argument('--verbose', action='store_true', default=None,
+    parser.add_argument('--verbose', action='store_true',
                         help='print compilation and KLEE messages (default: %(default)s)')
     parser.add_argument('--quiet', action='store_true',
                         help='print only errors (default: %(default)s)')
