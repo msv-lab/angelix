@@ -45,7 +45,10 @@ klee $search_arg $forks_arg $time_arg $solver_time_arg $debug_arg \
      --posix-runtime \
      -allow-external-sym-calls \
      "${exe}.patched.bc" \
-     "$@"
+     "$@" \
+     2>&1 | tee klee.log
+
+mv klee.log "$ANGELIX_KLEE_WORKDIR"
 
 mv "$(dirname "$exe")"/klee-out-* "$ANGELIX_KLEE_WORKDIR"
 
