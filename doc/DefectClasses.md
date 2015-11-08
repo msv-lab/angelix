@@ -13,7 +13,7 @@ Angelix supports the following defect classes:
 Classes "if-conditions", "loop-conditions" and "assignments" correspond to modifications of _repairable_ expressions. Repairable expressions are defined in the following way:
 
 1. Integer and pointer variables, integer and character literals, member expressions are repairable.
-2. If x and y are repairable expressions, then so are `x == y`, `x != y`, `x <= y`, `x >= y`, `x > y`, `x < y`, `x + y`, `x - y`, `x * y`, `x / y`, `x || y, `x && y`, `!x`.
+2. If x and y are repairable expressions, then so are `x == y`, `x != y`, `x <= y`, `x >= y`, `x > y`, `x < y`, `x + y`, `x - y`, `x * y`, `x / y`, `x || y`, `x && y`, `!x`.
 3. An expression is repairable if it can be shown to be repairable on the basis of conditions 1 and 2.
 
 ### if-conditions ###

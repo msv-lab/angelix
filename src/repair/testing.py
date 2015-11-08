@@ -3,6 +3,7 @@ from os.path import basename, join
 from utils import cd
 import subprocess
 import logging
+import sys
 
 
 logger = logging.getLogger(__name__)
