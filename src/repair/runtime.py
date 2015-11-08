@@ -16,6 +16,23 @@ class Dump:
                     with open(instance_file, 'w') as file:
                         file.write(str(v))
 
+    def export(self):
+        json = dict()
+        tests = os.listdir(self.dir)
+        for test in tests:
+            dump = self[test]
+            json[test] = dict()
+            vars = os.listdir(dump)
+            for var in vars:
+                instances = os.listdir(join(dump, var))
+                json[test][var] = []
+                for i in range(0, len(instances)):
+                    file = join(dump, var, str(i))
+                    with open(file) as f:
+                        content = f.read()
+                    json[test][var].append(content)
+        return json
+
     def __init__(self, working_dir, correct_output):
         self.dir = join(working_dir, 'dump')
         os.mkdir(self.dir)

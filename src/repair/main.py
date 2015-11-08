@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 SYNTHESIS_LEVELS = ['alternatives',
                     'integer-constants',
                     'boolean-constants',
-                    'variables'
+                    'variables',
                     'basic-arithmetic',
                     'basic-logic',
                     'basic-inequalities',
@@ -205,6 +205,16 @@ class Angelix:
         else:
             return self.validation_src.diff_buggy()
 
+    def dump_outputs(self):
+        self.frontend_src.configure()
+        self.instrument_for_localization(self.frontend_src)
+        self.frontend_src.build()
+        logger.info('running tests for dumping')
+        for test in self.test_suite:
+            self.dump += test
+            self.run_test(self.frontend_src, test, dump=self.dump[test])
+        return self.dump.export()        
+
 
 if __name__ == "__main__":
 
@@ -255,10 +265,12 @@ if __name__ == "__main__":
                         choices=SYNTHESIS_LEVELS,
                         default=['alternatives', 'integer-constants', 'boolean-constants'],
                         help='component levels (default: %(default)s). choices: ' + ', '.join(SYNTHESIS_LEVELS))
+    parser.add_argument('--synthesis-max-variables', metavar='NUM', type=int, default=None,
+                        help='max number of program variables used for synthesis (default: %(default)s)')    
     parser.add_argument('--dump-only', action='store_true',
-                        help='[DEVELOPMENT] dump values for given tests (default: %(default)s)')
+                        help='dump values for given tests (default: %(default)s)')
     parser.add_argument('--synthesis-only', metavar="FILE", default=None,
-                        help='[DEVELOPMENT] synthesize and validate patch (default: %(default)s)')
+                        help='synthesize and validate patch from angelic forest (default: %(default)s)')
     parser.add_argument('--verbose', action='store_true', default=None,
                         help='print compilation and KLEE messages (default: %(default)s)')
     parser.add_argument('--quiet', action='store_true',
@@ -287,21 +299,22 @@ if __name__ == "__main__":
         exit(1)
 
     config = dict()
-    config['initial_tests']       = args.initial_tests
-    config['defect']              = args.defect
-    config['test_timeout']        = args.test_timeout
-    config['multiline']           = args.multiline
-    config['iterations']          = args.iterations
-    config['localization']        = args.localization
-    config['ignore_trivial']      = args.ignore_trivial
-    config['max_angelic_paths']   = args.max_angelic_paths
-    config['klee_max_forks']      = args.klee_max_forks
-    config['klee_search']         = args.klee_search
-    config['klee_timeout']        = args.klee_timeout
-    config['klee_solver_timeout'] = args.klee_solver_timeout
-    config['synthesis_timeout']   = args.synthesis_timeout
-    config['synthesis_levels']    = args.synthesis_levels
-    config['verbose']             = args.verbose
+    config['initial_tests']           = args.initial_tests
+    config['defect']                  = args.defect
+    config['test_timeout']            = args.test_timeout
+    config['multiline']               = args.multiline
+    config['iterations']              = args.iterations
+    config['localization']            = args.localization
+    config['ignore_trivial']          = args.ignore_trivial
+    config['max_angelic_paths']       = args.max_angelic_paths
+    config['klee_max_forks']          = args.klee_max_forks
+    config['klee_search']             = args.klee_search
+    config['klee_timeout']            = args.klee_timeout
+    config['klee_solver_timeout']     = args.klee_solver_timeout
+    config['synthesis_timeout']       = args.synthesis_timeout
+    config['synthesis_levels']        = args.synthesis_levels
+    config['synthesis_max_variables'] = args.synthesis_max_variables
+    config['verbose']                 = args.verbose
 
     tool = Angelix(working_dir,
                    src=args.src,
@@ -314,6 +327,20 @@ if __name__ == "__main__":
                    build=args.build,
                    configure=args.configure,
                    config=config)
+
+    if args.dump_only:
+        if args.golden is not None or asserts is not None:
+            logger.error('--dump-only does not accept golden version or assert file')
+            exit(1)
+        try:
+            dump = tool.dump_outputs()
+            with open('dump.json', 'w') as output_file:
+                asserts = json.dump(dump, output_file, indent=2)
+            logger.info('outputs successfully dumped (see dump.json)')
+            exit(0)
+        except CompilationError:
+            logger.info('failed to dump outputs')
+            exit(1)
 
     start = time.time()
 

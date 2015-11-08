@@ -62,6 +62,8 @@ class Synthesizer:
 
             logger.info('synthesizing patch with component level \'{}\''.format(level))
 
+            # TODO: add synthesis-max-variables
+
             config = {
                 "encodingConfig": {
                     "componentsMultipleOccurrences": False,
