@@ -46,8 +46,11 @@ class MyASTConsumer : public ASTConsumer {
 public:
   MyASTConsumer(Rewriter &R) : HandlerForRepairable(R) {
 
-    if (getenv("ANGELIX_CONDITIONS_DEFECT_CLASS"))
-      Matcher.addMatcher(RepairableCondition, &HandlerForRepairable);
+    if (getenv("ANGELIX_IF_CONDITIONS_DEFECT_CLASS"))
+      Matcher.addMatcher(RepairableIfCondition, &HandlerForRepairable);
+
+    if (getenv("ANGELIX_LOOP_CONDITIONS_DEFECT_CLASS"))
+      Matcher.addMatcher(RepairableLoopCondition, &HandlerForRepairable);
 
     if (getenv("ANGELIX_ASSIGNMENTS_DEFECT_CLASS"))
       Matcher.addMatcher(RepairableAssignment, &HandlerForRepairable);

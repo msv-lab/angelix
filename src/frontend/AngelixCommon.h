@@ -90,8 +90,16 @@ StatementMatcher NonRepairableNode =
   unless(RepairableNode);
 
 
+StatementMatcher TrivialNode =
+  anyOf(declRefExpr(), integerLiteral(), characterLiteral(), memberExpr());
+
+
 StatementMatcher RepairableExpression =
   allOf(RepairableNode, unless(hasDescendant(expr(ignoringParenImpCasts(NonRepairableNode)))));
+
+
+StatementMatcher NonTrivialRepairableExpression =
+  allOf(RepairableExpression, unless(TrivialNode));
 
 
 StatementMatcher NonRepairableExpression =
@@ -106,19 +114,75 @@ StatementMatcher Splittable =
                        hasLHS(ignoringParenImpCasts(NonRepairableExpression)),
                        hasRHS(ignoringParenImpCasts(RepairableExpression))));
 
-//TODO: add for loops
-StatementMatcher RepairableCondition =
-  anyOf(ifStmt(anyOf(hasCondition(ignoringParenImpCasts(RepairableExpression)),
-                     eachOf(hasCondition(Splittable), hasCondition(forEachDescendant(Splittable))))),
-        whileStmt(anyOf(hasCondition(ignoringParenImpCasts(RepairableExpression)),
-                     eachOf(hasCondition(Splittable), hasCondition(forEachDescendant(Splittable))))));
+
+StatementMatcher NonTrivialSplittable =
+  anyOf(binaryOperator(anyOf(hasOperatorName("||"), hasOperatorName("&&")),
+                       hasLHS(ignoringParenImpCasts(NonTrivialRepairableExpression)),
+                       hasRHS(ignoringParenImpCasts(NonRepairableExpression))),
+        binaryOperator(anyOf(hasOperatorName("||"), hasOperatorName("&&")),
+                       hasLHS(ignoringParenImpCasts(NonRepairableExpression)),
+                       hasRHS(ignoringParenImpCasts(NonTrivialRepairableExpression))));
+
+
+//TODO: I don't know how to create variables for these
+// narrowing matchers (what is the type?)
+#define hasSplittableCondition                                          \
+  anyOf(hasCondition(ignoringParenImpCasts(RepairableExpression)),      \
+        eachOf(hasCondition(Splittable), hasCondition(forEachDescendant(Splittable))))
+
+
+#define hasNonTrivialSplittableCondition                                     \
+  anyOf(hasCondition(ignoringParenImpCasts(NonTrivialRepairableExpression)), \
+        eachOf(hasCondition(NonTrivialSplittable),                           \
+               hasCondition(forEachDescendant(NonTrivialSplittable))))
+
+
+StatementMatcher RepairableIfCondition =
+  ifStmt(hasSplittableCondition);
+
+
+StatementMatcher NonTrivialRepairableIfCondition =
+  ifStmt(hasNonTrivialSplittableCondition);
+
+
+StatementMatcher RepairableLoopCondition = 
+  anyOf(whileStmt(hasSplittableCondition),
+        forStmt(hasSplittableCondition));
+
+
+StatementMatcher NonTrivialRepairableLoopCondition = 
+  anyOf(whileStmt(hasNonTrivialSplittableCondition),
+        forStmt(hasNonTrivialSplittableCondition));
+
+
+//TODO: better to create a variables, but I don't know what the type is
+#define isTopLevelStatement                                 \
+  anyOf(hasParent(compoundStmt()),                          \
+        hasParent(ifStmt()),                                \
+        hasParent(whileStmt()),                             \
+        hasParent(forStmt()))
+
 
 StatementMatcher RepairableAssignment =
-  binaryOperator(hasParent(compoundStmt()),
+  binaryOperator(isTopLevelStatement,
                  hasOperatorName("="),
                  hasLHS(ignoringParenImpCasts(declRefExpr())),
                  hasRHS(ignoringParenImpCasts(RepairableExpression)));
 
-StatementMatcher Repairable = anyOf(RepairableCondition, RepairableAssignment);
+
+StatementMatcher NonTrivialRepairableAssignment =
+  binaryOperator(isTopLevelStatement,
+                 hasOperatorName("="),
+                 hasLHS(ignoringParenImpCasts(declRefExpr())),
+                 hasRHS(ignoringParenImpCasts(NonTrivialRepairableExpression)));
+
+
+// Interesting expression is a repairable selected in a particular way
+StatementMatcher InterestingExpression = anyOf(RepairableIfCondition,
+                                               RepairableLoopCondition,
+                                               RepairableAssignment);
+
+
+//StatementMatcher InterestingStatement = 
 
 #endif // ANGELIX_COMMON_H

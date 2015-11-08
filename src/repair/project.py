@@ -8,6 +8,7 @@ import json
 from utils import cd
 import logging
 import tempfile
+import sys
 
 
 logger = logging.getLogger(__name__)
@@ -22,9 +23,9 @@ class Project:
     def __init__(self, config, dir, buggy, build_cmd, configure_cmd):
         self.config = config
         if self.config['verbose']:
-            self.stderr = None
+            self.subproc_output = sys.stderr
         else:
-            self.stderr = subprocess.DEVNULL
+            self.subproc_output = subprocess.DEVNULL
         self.dir = dir
         self.buggy = buggy
         self.build_cmd = build_cmd
@@ -60,24 +61,29 @@ class Project:
         logger.info('configuring {} source'.format(src))
         if self.configure_cmd is None:
             return
-        try:
-            with cd(self.dir):
-                subprocess.check_output(self.configure_cmd, shell=True, stderr=self.stderr)
-        except subprocess.CalledProcessError:
+        with cd(self.dir):
+            return_code = subprocess.call(self.configure_cmd,
+                                          shell=True,
+                                          stderr=self.subproc_output,
+                                          stdout=self.subproc_output)
+        if return_code != 0:
             logger.warning("configuration of {} returned non-zero code".format(relpath(dir)))
 
 
-def build_in_env(dir, cmd, stderr, env=os.environ):
+def build_in_env(dir, cmd, subproc_output, env=os.environ):
     dirpath = tempfile.mkdtemp()
     messages = join(dirpath, 'messages')
 
     environment = dict(env)
     environment['ANGELIX_COMPILER_MESSAGES'] = messages
 
-    try:
-        with cd(dir):
-            subprocess.check_output(cmd, env=environment, shell=True, stderr=stderr)
-    except subprocess.CalledProcessError:
+    with cd(dir):
+        return_code = subprocess.call(cmd,
+                                      env=environment,
+                                      shell=True,
+                                      stderr=subproc_output,
+                                      stdout=subproc_output)
+    if return_code != 0:        
         logger.warning("compilation of {} returned non-zero code".format(relpath(dir)))
 
     if exists(messages):
@@ -97,14 +103,14 @@ class Validation(Project):
 
     def build(self):
         logger.info('building {} source'.format(basename(self.dir)))
-        build_in_env(self.dir, self.build_cmd, self.stderr)
+        build_in_env(self.dir, self.build_cmd, self.subproc_output)
 
     def export_compilation_db(self):
         logger.info('building json compilation database from {} source'.format(basename(self.dir)))
 
         build_in_env(self.dir,
                      'bear ' + self.build_cmd,
-                     self.stderr)
+                     self.subproc_output)
 
         compilation_db_file = join(self.dir, 'compile_commands.json')
         with open(compilation_db_file) as file:
@@ -122,7 +128,7 @@ class Frontend(Project):
         logger.info('building {} source'.format(basename(self.dir)))
         build_with_cc(self.dir,
                       self.build_cmd,
-                      self.stderr,
+                      self.subproc_output,
                       'angelix-compiler --test')
 
 
@@ -132,5 +138,5 @@ class Backend(Project):
         logger.info('building {} source'.format(basename(self.dir)))
         build_with_cc(self.dir,
                       self.build_cmd,
-                      self.stderr,
+                      self.subproc_output,
                       'angelix-compiler --klee')

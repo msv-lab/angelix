@@ -208,7 +208,7 @@ class MyASTConsumer : public ASTConsumer {
 public:
   MyASTConsumer(Rewriter &R) : HandlerForSuspicious(R) {
 
-    Matcher.addMatcher(Repairable, &HandlerForSuspicious);
+    Matcher.addMatcher(InterestingExpression, &HandlerForSuspicious);
   }
 
   void HandleTranslationUnit(ASTContext &Context) override {

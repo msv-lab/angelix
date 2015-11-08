@@ -29,15 +29,15 @@ def run_angelix(args, dir):
 
 class TestAngelix(unittest.TestCase):
 
-    def test_condition(self):
-        test_dir = os.path.join(script_dir, 'condition')
+    def test_if_condition(self):
+        test_dir = os.path.join(script_dir, 'if-condition')
         args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json']
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 
     def test_loop_condition(self):
         test_dir = os.path.join(script_dir, 'loop-condition')
-        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--klee-max-forks', '5']
+        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--klee-max-forks', '5', '--defect', 'loop-conditions']
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 
@@ -68,6 +68,24 @@ class TestAngelix(unittest.TestCase):
     def test_reachability(self):
         test_dir = os.path.join(script_dir, 'reachability')
         args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json']
+        result = run_angelix(args, test_dir)
+        self.assertEqual(result, 'SUCCESS')
+
+    def test_for_loop(self):
+        test_dir = os.path.join(script_dir, 'for-loop')
+        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--klee-max-forks', '5', '--defect', 'loop-conditions']
+        result = run_angelix(args, test_dir)
+        self.assertEqual(result, 'SUCCESS')
+
+    def test_deletion(self):
+        test_dir = os.path.join(script_dir, 'deletion')
+        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--defect', 'deletions']
+        result = run_angelix(args, test_dir)
+        self.assertEqual(result, 'SUCCESS')
+        
+    def test_guard(self):
+        test_dir = os.path.join(script_dir, 'guard')
+        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--defect', 'guards', '--synthesis-level', 'extended-inequalities']
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 

@@ -34,14 +34,18 @@ class Tester:
             environment['ANGELIX_RUN'] = 'angelix-run-klee'
             # using stub library to make lli work
             environment['LLVMINTERP'] = 'lli -load {}/libkleeRuntest.so'.format(os.environ['KLEE_LIBRARY_PATH'])
-            
+
         if self.config['verbose']:
-            stderr = None
+            subproc_output = sys.stderr
         else:
-            stderr = subprocess.DEVNULL
+            subproc_output = subprocess.DEVNULL
 
         with cd(project.dir):
-            proc = subprocess.Popen(self.oracle + " " + test, env=environment, stderr=stderr, shell=True)
+            proc = subprocess.Popen(self.oracle + " " + test,
+                                    env=environment,
+                                    stdout=subproc_output,
+                                    stderr=subproc_output,
+                                    shell=True)
             if klee:
                 code = proc.wait()  # KLEE has its own timeout
             else:

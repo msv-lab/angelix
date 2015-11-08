@@ -137,8 +137,10 @@ class Inferrer:
             environment['ANGELIX_KLEE_MAX_FORKS'] = str(self.config['klee_max_forks'])
         if self.config['klee_search'] is not None:
             environment['ANGELIX_KLEE_SEARCH'] = self.config['klee_search']
-        environment['ANGELIX_KLEE_MAX_TIME'] = str(self.config['klee_timeout'])
-        environment['ANGELIX_KLEE_MAX_SOLVER_TIME'] = str(self.config['klee_solver_timeout'])
+        if self.config['klee_timeout'] is not None:
+            environment['ANGELIX_KLEE_MAX_TIME'] = str(self.config['klee_timeout'])
+        if self.config['klee_solver_timeout'] is not None:
+            environment['ANGELIX_KLEE_MAX_SOLVER_TIME'] = str(self.config['klee_solver_timeout'])
         environment['ANGELIX_KLEE_WORKDIR'] = project.dir
 
         self.run_test(project, test, klee=True, env=environment)

@@ -21,6 +21,31 @@ from synthesis import Synthesizer
 logger = logging.getLogger(__name__)
 
 
+SYNTHESIS_LEVELS = ['alternatives',
+                    'integer-constants',
+                    'boolean-constants',
+                    'variables'
+                    'basic-arithmetic',
+                    'basic-logic',
+                    'basic-inequalities',
+                    'extended-arithmetic',
+                    'extended-logic',
+                    'extended-inequalities',
+                    'mixed-conditional']
+
+
+DEFECT_CLASSES = ['if-conditions',
+                  'assignments',
+                  'loop-conditions',
+                  'deletions',
+                  'guards']
+
+
+KLEE_SEARCH_STRATEGIES = ['dfs', 'bfs', 'random-state', 'random-path',
+                          'nurs:covnew', 'nurs:md2u', 'nurs:depth',
+                          'nurs:icnt', 'nurs:cpicnt', 'nurs:qc']
+
+
 class Angelix:
 
     def __init__(self, working_dir, src, buggy, oracle, tests, golden, asserts, lines, build, configure, config):
@@ -192,10 +217,11 @@ if __name__ == "__main__":
     parser.add_argument('--golden', metavar='DIR', help='golden source directory')
     parser.add_argument('--assert', metavar='FILE', help='assert expected outputs')
     parser.add_argument('--defect', metavar='CLASS', nargs='+',
-                        default=['conditions', 'assignments'],
-                        help='defect classes (default: conditions assignments)')
+                        default=['if-conditions', 'assignments'],
+                        choices=DEFECT_CLASSES,
+                        help='defect classes (default: %(default)s). choices: ' + ', '.join(DEFECT_CLASSES))
     parser.add_argument('--lines', metavar='LINE', type=int, nargs='+', help='suspicious lines (default: all)')
-    parser.add_argument('--configure', metavar='ARGS', default=None,
+    parser.add_argument('--configure', metavar='CMD', default=None,
                         help='configure command in the form of shell command (default: %(default)s)')
     parser.add_argument('--build', metavar='CMD', default='make -e',
                         help='build command in the form of simple shell command (default: %(default)s)')
@@ -206,25 +232,33 @@ if __name__ == "__main__":
     parser.add_argument('--test-timeout', metavar='MS', type=int, default=30000, # 30 sec
                         help='test case timeout (default: %(default)s)')
     parser.add_argument('--suspicious', metavar='NUM', type=int, default=5,
-                        help='number of suspicious repaired at ones (default: %(default)s)')
+                        help='number of suspicious repaired at once (default: %(default)s)')
     parser.add_argument('--iterations', metavar='NUM', type=int, default=4,
                         help='number of iterations through suspicious (default: %(default)s)')
     parser.add_argument('--localization', default='jaccard', choices=['jaccard', 'ochiai', 'tarantula'],
                         help='formula for localization algorithm (default: %(default)s)')
-    parser.add_argument('--klee-search', metavar='HEURISTIC', default=None, choices=['dfs', 'bfs', 'random-state', 'random-path', 'nurs:covnew', 'nurs:md2u', 'nurs:depth', 'nurs:icnt', 'nurs:cpicnt', 'nurs:qc'],
-                        help='KLEE search heuristic (default: KLEE default)')
+    parser.add_argument('--ignore-trivial', action='store_true',
+                        help='ignore trivial expressions: variables and constants (default: %(default)s)')
+    parser.add_argument('--klee-search', metavar='HEURISTIC', default=None,
+                        choices=KLEE_SEARCH_STRATEGIES,
+                        help='KLEE search heuristic (default: KLEE\'s default). choices: ' + ', '.join(KLEE_SEARCH_STRATEGIES))
     parser.add_argument('--klee-max-forks', metavar='NUM', type=int, default=None,
                         help='KLEE max number of forks (default: %(default)s)')
-    parser.add_argument('--klee-timeout', metavar='MS', type=int, default=0,
+    parser.add_argument('--klee-timeout', metavar='MS', type=int, default=None,
                         help='KLEE timeout (default: %(default)s)')
-    parser.add_argument('--klee-solver-timeout', metavar='MS', type=int, default=0,
+    parser.add_argument('--klee-solver-timeout', metavar='MS', type=int, default=None,
                         help='KLEE solver timeout (default: %(default)s)')
     parser.add_argument('--synthesis-timeout', metavar='MS', type=int, default=30000, # 30 sec
                         help='synthesis timeout (default: %(default)s)')
     parser.add_argument('--synthesis-levels', metavar='LEVEL', nargs='+',
-                        default=['alternatives', 'integers', 'booleans', 'comparison'],
-                        help='component levels (default: alternatives integers booleans comparison)')
-    parser.add_argument('--verbose', action='store_true',
+                        choices=SYNTHESIS_LEVELS,
+                        default=['alternatives', 'integer-constants', 'boolean-constants'],
+                        help='component levels (default: %(default)s). choices: ' + ', '.join(SYNTHESIS_LEVELS))
+    parser.add_argument('--dump-only', action='store_true',
+                        help='[DEVELOPMENT] dump values for given tests (default: %(default)s)')
+    parser.add_argument('--synthesis-only', metavar="FILE", default=None,
+                        help='[DEVELOPMENT] synthesize and validate patch (default: %(default)s)')
+    parser.add_argument('--verbose', action='store_true', default=None,
                         help='print compilation and KLEE messages (default: %(default)s)')
     parser.add_argument('--quiet', action='store_true',
                         help='print only errors (default: %(default)s)')
@@ -254,6 +288,7 @@ if __name__ == "__main__":
     config['suspicious']          = args.suspicious
     config['iterations']          = args.iterations
     config['localization']        = args.localization
+    config['ignore_trivial']      = args.ignore_trivial
     config['klee_max_forks']      = args.klee_max_forks
     config['klee_search']         = args.klee_search
     config['klee_timeout']        = args.klee_timeout

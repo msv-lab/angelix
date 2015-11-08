@@ -19,11 +19,18 @@ class RepairableTransformer:
         src = basename(project.dir)
         logger.info('instrumenting repairable of {} source'.format(src))
         environment = dict(os.environ)
-        if 'conditions' in self.config['defect']:
-            environment['ANGELIX_CONDITIONS_DEFECT_CLASS'] = 'YES'
+        if 'if-conditions' in self.config['defect']:
+            environment['ANGELIX_IF_CONDITIONS_DEFECT_CLASS'] = 'YES'
         if 'assignments' in self.config['defect']:
             environment['ANGELIX_ASSIGNMENTS_DEFECT_CLASS'] = 'YES'
-
+        if 'loop-conditions' in self.config['defect']:
+            environment['ANGELIX_LOOP_CONDITIONS_DEFECT_CLASS'] = 'YES'
+        if 'deletions' in self.config['defect']:
+            environment['ANGELIX_DELETIONS_DEFECT_CLASS'] = 'YES'
+        if 'guards' in self.config['defect']:
+            environment['ANGELIX_GUARDS_DEFECT_CLASS'] = 'YES'
+        if self.config['ignore_trivial']:
+            environment['ANGELIX_IGNORE_TRIVIAL'] = 'YES'
         if self.config['verbose']:
             stderr = None
         else:

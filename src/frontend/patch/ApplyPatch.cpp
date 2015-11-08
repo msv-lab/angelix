@@ -63,7 +63,7 @@ class MyASTConsumer : public ASTConsumer {
 public:
   MyASTConsumer(Rewriter &R) : HandlerForInjection(R) {
 
-    Matcher.addMatcher(Repairable, &HandlerForInjection);
+    Matcher.addMatcher(InterestingExpression, &HandlerForInjection);
   }
 
   void HandleTranslationUnit(ASTContext &Context) override {

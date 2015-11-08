@@ -20,14 +20,25 @@ else
     forks_arg="-max-forks=$ANGELIX_KLEE_MAX_FORKS"
 fi
 
-klee $search_arg $forks_arg \
+if [ -z $ANGELIX_KLEE_MAX_TIME ]; then
+    time_arg=""
+else
+    time_arg="-max-time=$ANGELIX_KLEE_MAX_TIME"
+fi
+
+if [ -z $ANGELIX_KLEE_MAX_SOLVER_TIME ]; then
+    solver_time_arg=""
+else
+    solver_time_arg="-max-solver-time=$ANGELIX_KLEE_MAX_SOLVER_TIME"
+fi
+
+
+klee $search_arg $forks_arg $time_arg $solver_time_arg \
      -write-smt2s \
      -smtlib-human-readable \
      --libc=uclibc \
      --posix-runtime \
      -allow-external-sym-calls \
-     -max-time=$ANGELIX_KLEE_MAX_TIME \
-     -max-solver-time=$ANGELIX_KLEE_MAX_SOLVER_TIME \
      "${exe}.patched.bc" \
      "$@"
 
