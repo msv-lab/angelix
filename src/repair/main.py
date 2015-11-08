@@ -298,7 +298,7 @@ if __name__ == "__main__":
                         help='KLEE search heuristic (default: KLEE\'s default). choices: ' + ', '.join(KLEE_SEARCH_STRATEGIES))
     parser.add_argument('--klee-max-forks', metavar='NUM', type=int, default=None,
                         help='KLEE max number of forks (default: %(default)s)')
-    parser.add_argument('--klee-timeout', metavar='MS', type=int, default=None,
+    parser.add_argument('--klee-timeout', metavar='SEC', type=int, default=None,
                         help='KLEE timeout (default: %(default)s)')
     parser.add_argument('--klee-solver-timeout', metavar='MS', type=int, default=None,
                         help='KLEE solver timeout (default: %(default)s)')
