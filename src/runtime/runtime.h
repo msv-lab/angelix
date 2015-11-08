@@ -6,8 +6,8 @@
 #define ANGELIX_OUTPUT(type, expr, name) \
   angelix_symbolic_output_##type(expr, name)
 
-#define ANGELIX_SUSPICIOUS(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
-  angelix_suspicious_##type(expr, bl, bc, el, ec, env_ids, env_vals, env_size)
+#define ANGELIX_CHOOSE(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
+  angelix_choose_##type(expr, bl, bc, el, ec, env_ids, env_vals, env_size)
 
 #define ANGELIX_REACHABLE(name) \
   angelix_symbolic_reachable(name)
@@ -17,7 +17,7 @@
 #define ANGELIX_OUTPUT(type, expr, name) \
   angelix_dump_output_##type(expr, name)
 
-#define ANGELIX_SUSPICIOUS(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
+#define ANGELIX_CHOOSE(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
   expr
 
 #define ANGELIX_REACHABLE(name) \
@@ -35,8 +35,8 @@ int angelix_dump_output_bool(int expr, char* id);
 int angelix_dump_output_char(char expr, char* id);
 int angelix_dump_output_str(char* expr, char* id);
 
-int angelix_suspicious_int(int expr, int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size);
-int angelix_suspicious_bool(int expr, int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size);
+int angelix_choose_int(int expr, int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size);
+int angelix_choose_bool(int expr, int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size);
 
 void angelix_dump_reachable(char* id);
 void angelix_symbolic_reachable(char* id);

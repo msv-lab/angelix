@@ -1,5 +1,5 @@
 import unittest
-from subprocess import check_output
+from subprocess import check_output, DEVNULL
 import sys
 import os
 
@@ -23,7 +23,7 @@ script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
 def run_angelix(args, dir):
     with cd(dir):
-        output = check_output(['angelix', '--quiet'] + args)
+        output = check_output(['angelix'] + args, stderr=DEVNULL)
         return str(output, 'UTF-8').strip()
 
 

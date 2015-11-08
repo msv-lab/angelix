@@ -171,11 +171,11 @@ int ht_get( hashtable_t *hashtable, char *key ) {
 #define INT_LENGTH 15
 
 hashtable_t *outputs;
-hashtable_t *suspicious;
+hashtable_t *choices;
 
 void init_tables() {
   outputs = ht_create(65536);
-  suspicious = ht_create(65536);
+  choices = ht_create(65536);
 }
 
 /*
@@ -424,29 +424,29 @@ void angelix_dump_reachable(char* id) {
 }
 
 
-#define SUSPICIOUS_PROTO(type, typestr)                                 \
-  int angelix_suspicious_##type(int expr,                               \
-                                int bl, int bc, int el, int ec,         \
-                                char** env_ids,                         \
-                                int* env_vals,                          \
-                                int env_size) {                         \
+#define CHOOSE_PROTO(type, typestr)                                     \
+  int angelix_choose_##type(int expr,                                   \
+                            int bl, int bc, int el, int ec,             \
+                            char** env_ids,                             \
+                            int* env_vals,                              \
+                            int env_size) {                             \
     if (getenv("ANGELIX_SYMBOLIC_RUNTIME")) {                           \
-      if (!suspicious)                                                  \
+      if (!choices)                                                     \
         init_tables();                                                  \
       char str_id[INT_LENGTH * 4 + 4];                                  \
       sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);                   \
-      int previous = ht_get(suspicious, str_id);                        \
+      int previous = ht_get(choices, str_id);                           \
       int instance;                                                     \
       if (previous == NONE) {                                           \
         instance = 0;                                                   \
       } else {                                                          \
         instance = previous + 1;                                        \
       }                                                                 \
-      ht_set(suspicious, str_id, instance);                             \
+      ht_set(choices, str_id, instance);                                \
       int i;                                                            \
       for (i = 0; i < env_size; i++) {                                  \
         char name[MAX_NAME_LENGTH];                                     \
-        char* env_fmt = "int!suspicious!%d!%d!%d!%d!%d!env!%s";         \
+        char* env_fmt = "int!choice!%d!%d!%d!%d!%d!env!%s";             \
         sprintf(name, env_fmt, bl, bc, el, ec, instance, env_ids[i]);   \
         int sv;                                                         \
         klee_make_symbolic(&sv, sizeof(sv), name);                      \
@@ -454,14 +454,14 @@ void angelix_dump_reachable(char* id) {
       }                                                                 \
                                                                         \
       char name_orig[MAX_NAME_LENGTH];                                  \
-      char* orig_fmt = "%s!suspicious!%d!%d!%d!%d!%d!original";         \
+      char* orig_fmt = "%s!choice!%d!%d!%d!%d!%d!original";             \
       sprintf(name_orig, orig_fmt, typestr, bl, bc, el, ec, instance);  \
       int so;                                                           \
       klee_make_symbolic(&so, sizeof(so), name_orig);                   \
       klee_assume(so == expr);                                          \
                                                                         \
       char name[MAX_NAME_LENGTH];                                       \
-      char* angelic_fmt = "%s!suspicious!%d!%d!%d!%d!%d!angelic";       \
+      char* angelic_fmt = "%s!choice!%d!%d!%d!%d!%d!angelic";           \
       sprintf(name, angelic_fmt, typestr, bl, bc, el, ec, instance);    \
       int s;                                                            \
       klee_make_symbolic(&s, sizeof(s), name);                          \
@@ -472,10 +472,10 @@ void angelix_dump_reachable(char* id) {
     }                                                                   \
   }
 
-SUSPICIOUS_PROTO(int, "int")
-SUSPICIOUS_PROTO(bool, "bool")
+CHOOSE_PROTO(int, "int")
+CHOOSE_PROTO(bool, "bool")
 
-#undef SUSPICIOUS_PROTO
+#undef CHOOSE_PROTO
 
 // begin line, begin column, end line, end column
 void angelix_trace(int bl, int bc, int el, int ec) {

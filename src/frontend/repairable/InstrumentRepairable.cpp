@@ -4,9 +4,9 @@
 #include "../AngelixCommon.h"
 
 
-class Handler : public MatchFinder::MatchCallback {
+class ExpressionHandler : public MatchFinder::MatchCallback {
 public:
-  Handler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
+  ExpressionHandler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
 
   virtual void run(const MatchFinder::MatchResult &Result) {
     if (const Expr *expr = Result.Nodes.getNodeAs<clang::Expr>("repairable")) {
@@ -44,26 +44,26 @@ private:
 
 class MyASTConsumer : public ASTConsumer {
 public:
-  MyASTConsumer(Rewriter &R) : HandlerForRepairable(R) {
+  MyASTConsumer(Rewriter &R) : HandlerForExpressions(R) {
 
     if (getenv("ANGELIX_IGNORE_TRIVIAL")) {
       if (getenv("ANGELIX_IF_CONDITIONS_DEFECT_CLASS"))
-        Matcher.addMatcher(NonTrivialRepairableIfCondition, &HandlerForRepairable);
+        Matcher.addMatcher(NonTrivialRepairableIfCondition, &HandlerForExpressions);
 
       if (getenv("ANGELIX_LOOP_CONDITIONS_DEFECT_CLASS"))
-        Matcher.addMatcher(NonTrivialRepairableLoopCondition, &HandlerForRepairable);
+        Matcher.addMatcher(NonTrivialRepairableLoopCondition, &HandlerForExpressions);
 
       if (getenv("ANGELIX_ASSIGNMENTS_DEFECT_CLASS"))
-        Matcher.addMatcher(NonTrivialRepairableAssignment, &HandlerForRepairable);
+        Matcher.addMatcher(NonTrivialRepairableAssignment, &HandlerForExpressions);
     } else {
       if (getenv("ANGELIX_IF_CONDITIONS_DEFECT_CLASS"))
-        Matcher.addMatcher(RepairableIfCondition, &HandlerForRepairable);
+        Matcher.addMatcher(RepairableIfCondition, &HandlerForExpressions);
 
       if (getenv("ANGELIX_LOOP_CONDITIONS_DEFECT_CLASS"))
-        Matcher.addMatcher(RepairableLoopCondition, &HandlerForRepairable);
+        Matcher.addMatcher(RepairableLoopCondition, &HandlerForExpressions);
 
       if (getenv("ANGELIX_ASSIGNMENTS_DEFECT_CLASS"))
-        Matcher.addMatcher(RepairableAssignment, &HandlerForRepairable);
+        Matcher.addMatcher(RepairableAssignment, &HandlerForExpressions);
     }
   }
 
@@ -72,7 +72,7 @@ public:
   }
 
 private:
-  Handler HandlerForRepairable;
+  ExpressionHandler HandlerForExpressions;
   MatchFinder Matcher;
 };
 

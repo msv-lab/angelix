@@ -117,9 +117,9 @@ bool isSuspicious(int beginLine, int beginColumn, int endLine, int endColumn) {
 }
 
 
-class Handler : public MatchFinder::MatchCallback {
+class ExpressionHandler : public MatchFinder::MatchCallback {
 public:
-  Handler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
+  ExpressionHandler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
 
   virtual void run(const MatchFinder::MatchResult &Result) {
     if (const Expr *expr = Result.Nodes.getNodeAs<clang::Expr>("repairable")) {
@@ -181,7 +181,7 @@ public:
       int size = vars.size() + memberFromExpr.size();
 
       std::ostringstream stringStream;
-      stringStream << "ANGELIX_SUSPICIOUS("
+      stringStream << "ANGELIX_CHOOSE("
                    << "bool" << ", "
                    << toString(expr) << ", "
                    << beginLine << ", "
@@ -206,9 +206,9 @@ private:
 
 class MyASTConsumer : public ASTConsumer {
 public:
-  MyASTConsumer(Rewriter &R) : HandlerForSuspicious(R) {
+  MyASTConsumer(Rewriter &R) : HandlerForExpressions(R) {
 
-    Matcher.addMatcher(InterestingExpression, &HandlerForSuspicious);
+    Matcher.addMatcher(InterestingExpression, &HandlerForExpressions);
   }
 
   void HandleTranslationUnit(ASTContext &Context) override {
@@ -216,7 +216,7 @@ public:
   }
 
 private:
-  Handler HandlerForSuspicious;
+  ExpressionHandler HandlerForExpressions;
   MatchFinder Matcher;
 };
 

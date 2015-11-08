@@ -48,25 +48,25 @@ def get_vars(f):
 
 def parse_variables(vars):
     '''
-    <type> ! suspicious ! <line> ! <column> ! <line> ! <column> ! <instance> ! angelic
-    <type> ! suspicious ! <line> ! <column> ! <line> ! <column> ! <instance> ! original
-    <type> ! suspicious ! <line> ! <column> ! <line> ! <column> ! <instance> ! env ! <name>
+    <type> ! choice ! <line> ! <column> ! <line> ! <column> ! <instance> ! angelic
+    <type> ! choice ! <line> ! <column> ! <line> ! <column> ! <instance> ! original
+    <type> ! choice ! <line> ! <column> ! <line> ! <column> ! <instance> ! env ! <name>
     <type> ! output ! <name> ! <instance>
     reachable ! <name> ! <instance>
 
-    returns outputs, suspicious
+    returns outputs, choices, reachable
 
     outputs: name -> type * num of instances
-    suspicious: expr -> type * num of instances * env-name list
+    choices: expr -> type * num of instances * env-name list
     reachable: set of strings
     
     Note: assume environment variables are always int
     '''
     output_type = dict()
     output_instances = dict()
-    suspicious_type = dict()
-    suspicious_instances = dict()
-    suspicious_env = dict()
+    choice_type = dict()
+    choice_instances = dict()
+    choice_env = dict()
     reachable = set()
     for v in vars:
         tokens = v.split('!')
@@ -83,22 +83,22 @@ def parse_variables(vars):
                 if name not in output_instances:
                     output_instances[name] = []
                 output_instances[name].append(instance)
-            elif kind == 'suspicious':
+            elif kind == 'choice':
                 expr = int(tokens.pop(0)), int(tokens.pop(0)), int(tokens.pop(0)), int(tokens.pop(0))
                 instance = int(tokens.pop(0))
                 value = tokens.pop(0)
                 if value == 'angelic':
-                    suspicious_type[expr] = type
-                    if expr not in suspicious_instances:
-                        suspicious_instances[expr] = []
-                    suspicious_instances[expr].append(instance)
+                    choice_type[expr] = type
+                    if expr not in choice_instances:
+                        choice_instances[expr] = []
+                    choice_instances[expr].append(instance)
                 elif value == 'original':
                     pass
                 elif value == 'env':
                     name = tokens.pop(0)
-                    if expr not in suspicious_env:
-                        suspicious_env[expr] = set()
-                    suspicious_env[expr].add(name)
+                    if expr not in choice_env:
+                        choice_env[expr] = set()
+                    choice_env[expr].add(name)
                 else:
                     raise InferenceError()
             else:
@@ -112,15 +112,15 @@ def parse_variables(vars):
                 raise InferenceError()
         outputs[name] = (type, len(output_instances[name]))
 
-    suspicious = dict()
-    for expr, type in suspicious_type.items():
-        for i in range(0, len(suspicious_instances[expr])):
-            if i not in suspicious_instances[expr]:
+    choices = dict()
+    for expr, type in choice_type.items():
+        for i in range(0, len(choice_instances[expr])):
+            if i not in choice_instances[expr]:
                 logger.error('inconsistent variables')
                 raise InferenceError()
-        suspicious[expr] = (type, len(suspicious_instances[expr]), list(suspicious_env[expr]))
+        choices[expr] = (type, len(choice_instances[expr]), list(choice_env[expr]))
 
-    return outputs, suspicious, reachable
+    return outputs, choices, reachable
 
 
 class Inferrer:
@@ -184,7 +184,7 @@ class Inferrer:
                          or str(var).startswith('char!')
                          or str(var).startswith('reachable!')]
 
-            outputs, suspicious, reachable = parse_variables(variables)
+            outputs, choices, reachable = parse_variables(variables)
 
             # name -> value list (parsed)
             oracle_constraints = dict()
@@ -282,17 +282,17 @@ class Inferrer:
                               Select(array, BitVecVal(0, 32)))
 
             def angelic_variable(type, expr, instance):
-                pattern = '{}!suspicious!{}!{}!{}!{}!{}!angelic'
+                pattern = '{}!choice!{}!{}!{}!{}!{}!angelic'
                 s = pattern.format(type, expr[0], expr[1], expr[2], expr[3], instance)
                 return Array(s, BitVecSort(32), BitVecSort(8))
         
             def original_variable(type, expr, instance):
-                pattern = '{}!suspicious!{}!{}!{}!{}!{}!original'
+                pattern = '{}!choice!{}!{}!{}!{}!{}!original'
                 s = pattern.format(type, expr[0], expr[1], expr[2], expr[3], instance)
                 return Array(s, BitVecSort(32), BitVecSort(8))
 
             def env_variable(expr, instance, name):
-                pattern = 'int!suspicious!{}!{}!{}!{}!{}!env!{}'
+                pattern = 'int!choice!{}!{}!{}!{}!{}!env!{}'
                 s = pattern.format(expr[0], expr[1], expr[2], expr[3], instance, name)
                 return Array(s, BitVecSort(32), BitVecSort(8))
 
@@ -319,7 +319,7 @@ class Inferrer:
                     bv_value = to_bv32_converter_by_type[type](value)
                     solver.add(bv_value == array_to_bv32(array))
 
-            for (expr, item) in suspicious.items():
+            for (expr, item) in choices.items():
                 type, instances, env = item
                 for instance in range(0, instances):
                     selector = angelic_selector(expr, instance)
@@ -344,7 +344,7 @@ class Inferrer:
 
             angelic_path = dict()
 
-            for (expr, item) in suspicious.items():
+            for (expr, item) in choices.items():
                 angelic_path[expr] = []
                 type, instances, env = item
                 for instance in range(0, instances):
