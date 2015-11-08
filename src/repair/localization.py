@@ -75,7 +75,7 @@ class Localizer:
             for e in executed:
                 executed_negative[e] += 1
 
-        ranking = []
+        with_score = []
 
         def is_selected(expr):
             return expr[0] in self.lines
@@ -86,22 +86,22 @@ class Localizer:
 
         for e in all:
             score = formula(executed_positive[e], executed_negative[e], len(positive), len(negative))
-            ranking.append((e, score))
+            with_score.append((e, score))
 
-        sorted(ranking, key=lambda r: r[1], reverse=True)
+        ranking = sorted(with_score, key=lambda r: r[1], reverse=True)
         top = ranking[:multiline * iterations]
 
-        sorted(top, key=lambda r: r[0][0])  # by beginning line
+        sorted_by_line = sorted(top, key=lambda r: r[0][0])
 
         groups = []
         for i in range(0, iterations):
-            if len(top) == 0:
+            if len(sorted_by_line) == 0:
                 break
             groups.append([])
             for j in range(0, multiline):
-                if len(top) == 0:
+                if len(sorted_by_line) == 0:
                     break
-                expr, score = top.pop()
+                expr, score = sorted_by_line.pop()
                 groups[i].append(expr)
                 logger.info("selected expression {} with score {:.5} in group {}".format(expr, score, i))
         return groups
