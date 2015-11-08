@@ -18,7 +18,7 @@ typedef int bool;
   Hashtable implementation (for positive integers)
  */
 
-#define NONE -1
+int table_miss = 1;
 
 struct entry_s {
 	char *key;
@@ -154,9 +154,11 @@ int ht_get( hashtable_t *hashtable, char *key ) {
  
 	/* Did we actually find anything? */
 	if( pair == NULL || pair->key == NULL || strcmp( key, pair->key ) != 0 ) {
-		return NONE;
+    table_miss = 1;
+		return 0;
  
 	} else {
+    table_miss = 0;
 		return pair->value;
 	}
 	
@@ -170,12 +172,14 @@ int ht_get( hashtable_t *hashtable, char *key ) {
 #define MAX_NAME_LENGTH 1000
 #define INT_LENGTH 15
 
-hashtable_t *outputs;
-hashtable_t *choices;
+hashtable_t *output_instances;
+hashtable_t *choice_instances;
+hashtable_t *const_choices;
 
 void init_tables() {
-  outputs = ht_create(65536);
-  choices = ht_create(65536);
+  output_instances = ht_create(65536);
+  choice_instances = ht_create(65536);
+  const_choices = ht_create(65536);
 }
 
 /*
@@ -327,16 +331,16 @@ DUMP_PROTO(str)
 #define SYMBOLIC_OUTPUT_PROTO(type, typestr)                    \
   int angelix_symbolic_output_##type(type expr, char* id) {     \
     if (getenv("ANGELIX_SYMBOLIC_RUNTIME")) {                   \
-      if (!outputs)                                             \
+      if (!output_instances)                                    \
         init_tables();                                          \
-      int previous = ht_get(outputs, id);                       \
+      int previous = ht_get(output_instances, id);              \
       int instance;                                             \
-      if (previous == NONE) {                                   \
+      if (table_miss) {                                         \
         instance = 0;                                           \
       } else {                                                  \
         instance = previous + 1;                                \
       }                                                         \
-      ht_set(outputs, id, instance);                            \
+      ht_set(output_instances, id, instance);                   \
       char name[MAX_NAME_LENGTH];                               \
       sprintf(name, "%s!output!%s!%d", typestr, id, instance);  \
       type s;                                                   \
@@ -358,16 +362,16 @@ SYMBOLIC_OUTPUT_PROTO(char, "char")
 //TODO: later I need to express it through angelix_symbolic_output_str
 void angelix_symbolic_reachable(char* id) {
   if (getenv("ANGELIX_SYMBOLIC_RUNTIME")) {
-    if (!outputs)
+    if (!output_instances)
       init_tables();
-    int previous = ht_get(outputs, "reachable");
+    int previous = ht_get(output_instances, "reachable");
     int instance;
-    if (previous == NONE) {
+    if (table_miss) {
       instance = 0;
     } else {
       instance = previous + 1;
     }
-    ht_set(outputs, "reachable", instance);
+    ht_set(output_instances, "reachable", instance);
     char name[MAX_NAME_LENGTH];
     sprintf(name, "reachable!%s!%d", id, instance);
     int s;
@@ -381,16 +385,16 @@ void angelix_symbolic_reachable(char* id) {
 #define DUMP_OUTPUT_PROTO(type)                         \
   int angelix_dump_output_##type(type expr, char* id) { \
     if (getenv("ANGELIX_DUMP")) {                       \
-      if (!outputs)                                     \
+      if (!output_instances)                            \
         init_tables();                                  \
-      int previous = ht_get(outputs, id);               \
+      int previous = ht_get(output_instances, id);      \
       int instance;                                     \
-      if (previous == NONE) {                           \
+      if (table_miss) {                                 \
         instance = 0;                                   \
       } else {                                          \
         instance = previous + 1;                        \
       }                                                 \
-      ht_set(outputs, id, instance);                    \
+      ht_set(output_instances, id, instance);           \
       dump_##type(id, instance, expr);                  \
       return expr;                                      \
     } else {                                            \
@@ -408,16 +412,16 @@ DUMP_OUTPUT_PROTO(char)
 //TODO: later I need to express it through angelix_dump_output_str
 void angelix_dump_reachable(char* id) {
     if (getenv("ANGELIX_DUMP")) {
-      if (!outputs)
+      if (!output_instances)
         init_tables();
-      int previous = ht_get(outputs, "reachable");
+      int previous = ht_get(output_instances, "reachable");
       int instance;
-      if (previous == NONE) {
+      if (table_miss) {
         instance = 0;
       } else {
         instance = previous + 1;
       }
-      ht_set(outputs, "reachable", instance);
+      ht_set(output_instances, "reachable", instance);
       dump_str("reachable", instance, id);
     }
     return;
@@ -431,18 +435,18 @@ void angelix_dump_reachable(char* id) {
                             int* env_vals,                              \
                             int env_size) {                             \
     if (getenv("ANGELIX_SYMBOLIC_RUNTIME")) {                           \
-      if (!choices)                                                     \
+      if (!choice_instances)                                            \
         init_tables();                                                  \
-      char str_id[INT_LENGTH * 4 + 4];                                  \
+      char str_id[INT_LENGTH * 4 + 4 + 1];                              \
       sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);                   \
-      int previous = ht_get(choices, str_id);                           \
+      int previous = ht_get(choice_instances, str_id);                  \
       int instance;                                                     \
-      if (previous == NONE) {                                           \
+      if (table_miss) {                                                 \
         instance = 0;                                                   \
       } else {                                                          \
         instance = previous + 1;                                        \
       }                                                                 \
-      ht_set(choices, str_id, instance);                                \
+      ht_set(choice_instances, str_id, instance);                       \
       int i;                                                            \
       for (i = 0; i < env_size; i++) {                                  \
         char name[MAX_NAME_LENGTH];                                     \
@@ -475,7 +479,38 @@ void angelix_dump_reachable(char* id) {
 CHOOSE_PROTO(int, "int")
 CHOOSE_PROTO(bool, "bool")
 
-#undef CHOOSE_PROTO
+
+#undef CHOOSE_CONST_PROTO
+
+#define CHOOSE_CONST_PROTO(type, typestr)                           \
+  int angelix_choose_const_##type(int expr,                         \
+                                  int bl, int bc, int el, int ec) { \
+    if (getenv("ANGELIX_SYMBOLIC_RUNTIME")) {                       \
+      if (!const_choices)                                           \
+        init_tables();                                              \
+      char str_id[INT_LENGTH * 4 + 4 + 1];                          \
+      sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);               \
+      int choice = ht_get(const_choices, str_id);                   \
+      if (table_miss) {                                             \
+        char name[MAX_NAME_LENGTH];                                 \
+        char* angelic_fmt = "%s!const!%d!%d!%d!%d";                 \
+        sprintf(name, angelic_fmt, typestr, bl, bc, el, ec);        \
+        int s;                                                      \
+        klee_make_symbolic(&s, sizeof(s), name);                    \
+        ht_set(const_choices, str_id, s);                           \
+        return s;                                                   \
+      } else {                                                      \
+        return choice;                                              \
+      }                                                             \
+    } else {                                                        \
+      return expr;                                                  \
+    }                                                               \
+  }
+
+CHOOSE_CONST_PROTO(int, "int")
+CHOOSE_CONST_PROTO(bool, "bool")
+
+#undef CHOOSE_CONST_PROTO
 
 // begin line, begin column, end line, end column
 void angelix_trace(int bl, int bc, int el, int ec) {

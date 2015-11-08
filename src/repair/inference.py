@@ -51,13 +51,15 @@ def parse_variables(vars):
     <type> ! choice ! <line> ! <column> ! <line> ! <column> ! <instance> ! angelic
     <type> ! choice ! <line> ! <column> ! <line> ! <column> ! <instance> ! original
     <type> ! choice ! <line> ! <column> ! <line> ! <column> ! <instance> ! env ! <name>
+    <type> ! const ! <line> ! <column> ! <line> ! <column>
     <type> ! output ! <name> ! <instance>
     reachable ! <name> ! <instance>
 
-    returns outputs, choices, reachable
+    returns outputs, choices, constants, reachable
 
     outputs: name -> type * num of instances
     choices: expr -> type * num of instances * env-name list
+    constants: expr list
     reachable: set of strings
     
     Note: assume environment variables are always int
@@ -68,6 +70,7 @@ def parse_variables(vars):
     choice_instances = dict()
     choice_env = dict()
     reachable = set()
+    constants = set()
     for v in vars:
         tokens = v.split('!')
         first = tokens.pop(0)
@@ -101,6 +104,12 @@ def parse_variables(vars):
                     choice_env[expr].add(name)
                 else:
                     raise InferenceError()
+            elif kind == 'const':
+                if type == 'int':
+                    logger.error('integer constant choices are not supported')
+                    raise InferenceError()
+                expr = int(tokens.pop(0)), int(tokens.pop(0)), int(tokens.pop(0)), int(tokens.pop(0))
+                constants.add(expr)
             else:
                 raise InferenceError()
 
@@ -120,7 +129,7 @@ def parse_variables(vars):
                 raise InferenceError()
         choices[expr] = (type, len(choice_instances[expr]), list(choice_env[expr]))
 
-    return outputs, choices, reachable
+    return outputs, choices, constants, reachable
 
 
 class Inferrer:
@@ -184,7 +193,7 @@ class Inferrer:
                          or str(var).startswith('char!')
                          or str(var).startswith('reachable!')]
 
-            outputs, choices, reachable = parse_variables(variables)
+            outputs, choices, constants, reachable = parse_variables(variables)
 
             # name -> value list (parsed)
             oracle_constraints = dict()
@@ -342,6 +351,7 @@ class Inferrer:
                 continue
             model = solver.model()
 
+            # expr -> (angelic * original * env) list
             angelic_path = dict()
 
             for (expr, item) in choices.items():
@@ -360,6 +370,8 @@ class Inferrer:
                         env_values[name] = value
 
                     angelic_path[expr].append((angelic, original, env_values))
+
+            # TODO: add constants to angelic path
 
             angelic_paths.append(angelic_path)
 

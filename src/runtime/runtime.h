@@ -9,6 +9,9 @@
 #define ANGELIX_CHOOSE(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
   angelix_choose_##type(expr, bl, bc, el, ec, env_ids, env_vals, env_size)
 
+#define ANGELIX_CHOOSE_CONST(type, expr, bl, bc, el, ec) \
+  angelix_choose_const_##type##(expr, bl, bc, el, ec)
+
 #define ANGELIX_REACHABLE(name) \
   angelix_symbolic_reachable(name)
 
@@ -18,6 +21,9 @@
   angelix_dump_output_##type(expr, name)
 
 #define ANGELIX_CHOOSE(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
+  expr
+
+#define ANGELIX_CHOOSE_CONST(type, expr, bl, bc, el, ec) \
   expr
 
 #define ANGELIX_REACHABLE(name) \
@@ -37,6 +43,9 @@ int angelix_dump_output_str(char* expr, char* id);
 
 int angelix_choose_int(int expr, int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size);
 int angelix_choose_bool(int expr, int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size);
+
+int angelix_choose_const_int(int expr, int bl, int bc, int el, int ec);
+int angelix_choose_const_bool(int expr, int bl, int bc, int el, int ec);
 
 void angelix_dump_reachable(char* id);
 void angelix_symbolic_reachable(char* id);

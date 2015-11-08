@@ -1,6 +1,6 @@
 # Angelix #
 
-Semantics-based automated program repair tool for C programs. Angelix fixes bugs manifested by failing test cases and searches for the minimal change in order to preserve the oroginal source code. Powered by KLEE symbolic execution engine and Z3 SMT solver.
+Semantics-based automated program repair tool for C programs. Angelix fixes bugs manifested by failing test cases and searches for the minimal change in order to preserve the original source code. Powered by KLEE symbolic execution engine and Z3 SMT solver.
 
 ## Installation ##
 
