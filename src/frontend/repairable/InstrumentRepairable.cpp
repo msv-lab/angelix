@@ -46,14 +46,25 @@ class MyASTConsumer : public ASTConsumer {
 public:
   MyASTConsumer(Rewriter &R) : HandlerForRepairable(R) {
 
-    if (getenv("ANGELIX_IF_CONDITIONS_DEFECT_CLASS"))
-      Matcher.addMatcher(RepairableIfCondition, &HandlerForRepairable);
+    if (getenv("ANGELIX_IGNORE_TRIVIAL")) {
+      if (getenv("ANGELIX_IF_CONDITIONS_DEFECT_CLASS"))
+        Matcher.addMatcher(NonTrivialRepairableIfCondition, &HandlerForRepairable);
 
-    if (getenv("ANGELIX_LOOP_CONDITIONS_DEFECT_CLASS"))
-      Matcher.addMatcher(RepairableLoopCondition, &HandlerForRepairable);
+      if (getenv("ANGELIX_LOOP_CONDITIONS_DEFECT_CLASS"))
+        Matcher.addMatcher(NonTrivialRepairableLoopCondition, &HandlerForRepairable);
 
-    if (getenv("ANGELIX_ASSIGNMENTS_DEFECT_CLASS"))
-      Matcher.addMatcher(RepairableAssignment, &HandlerForRepairable);
+      if (getenv("ANGELIX_ASSIGNMENTS_DEFECT_CLASS"))
+        Matcher.addMatcher(NonTrivialRepairableAssignment, &HandlerForRepairable);
+    } else {
+      if (getenv("ANGELIX_IF_CONDITIONS_DEFECT_CLASS"))
+        Matcher.addMatcher(RepairableIfCondition, &HandlerForRepairable);
+
+      if (getenv("ANGELIX_LOOP_CONDITIONS_DEFECT_CLASS"))
+        Matcher.addMatcher(RepairableLoopCondition, &HandlerForRepairable);
+
+      if (getenv("ANGELIX_ASSIGNMENTS_DEFECT_CLASS"))
+        Matcher.addMatcher(RepairableAssignment, &HandlerForRepairable);
+    }
   }
 
   void HandleTranslationUnit(ASTContext &Context) override {
