@@ -37,7 +37,6 @@ SYNTHESIS_LEVELS = ['alternatives',
 DEFECT_CLASSES = ['if-conditions',
                   'assignments',
                   'loop-conditions',
-                  'deletions',
                   'guards']
 
 
@@ -280,6 +279,10 @@ if __name__ == "__main__":
             asserts = json.load(output_file)
     else:
         asserts = None
+
+    if 'guards' in args.defect and 'assignments' in args.defect:
+        logger.error('\'guards\' and \'assignments\' defect classes are currently incompatible')
+        exit(1)
 
     config = dict()
     config['initial_tests']       = args.initial_tests

@@ -522,3 +522,7 @@ void angelix_trace(int bl, int bc, int el, int ec) {
     fclose(fp);
   }
 }
+
+int angelix_ignore() {
+  return 0;
+}

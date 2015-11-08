@@ -204,11 +204,88 @@ private:
 };
 
 
+class StatementHandler : public MatchFinder::MatchCallback {
+public:
+  StatementHandler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
+
+  virtual void run(const MatchFinder::MatchResult &Result) {
+    if (const Stmt *stmt = Result.Nodes.getNodeAs<clang::Stmt>("repairable")) {
+      SourceManager &srcMgr = Rewrite.getSourceMgr();
+
+      SourceRange expandedLoc = getExpandedLoc(stmt, srcMgr);
+
+      unsigned beginLine = srcMgr.getSpellingLineNumber(expandedLoc.getBegin());
+      unsigned beginColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getBegin());
+      unsigned endLine = srcMgr.getSpellingLineNumber(expandedLoc.getEnd());
+      unsigned endColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getEnd());
+
+      if (! isSuspicious(beginLine, beginColumn, endLine, endColumn)) {
+        return;
+      }
+
+      std::cout << beginLine << " " << beginColumn << " " << endLine << " " << endColumn << "\n"
+                << toString(stmt) << "\n";
+
+      std::ostringstream stmtId;
+      stmtId << beginLine << "-" << beginColumn << "-" << endLine << "-" << endColumn;
+      std::string extractedDir(getenv("ANGELIX_EXTRACTED"));
+      std::ofstream fs(extractedDir + "/" + stmtId.str() + ".smt2");
+      fs << "(assert true)\n";
+
+      const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*stmt);
+      std::unordered_set<VarDecl*> varsFromScope = collectVarsFromScope(node, Result.Context);
+      std::unordered_set<VarDecl*> vars;
+      vars.insert(varsFromScope.begin(), varsFromScope.end());
+      std::ostringstream exprStream;
+      std::ostringstream nameStream;
+      bool first = true;
+      for (auto it = vars.begin(); it != vars.end(); ++it) {
+        if (first) {
+          first = false;
+        } else {
+          exprStream << ", ";
+          nameStream << ", ";
+        }
+        VarDecl* var = *it;
+        exprStream << var->getName().str();
+        nameStream << "\"" << var->getName().str() << "\"";
+      }
+
+      int size = vars.size();
+
+      std::ostringstream stringStream;
+      stringStream << "if ("
+                   << "ANGELIX_CHOOSE("
+                   << "bool" << ", "
+                   << 1 << ", "
+                   << beginLine << ", "
+                   << beginColumn << ", "
+                   << endLine << ", "
+                   << endColumn << ", "
+                   << "((char*[]){" << nameStream.str() << "}), "
+                   << "((int[]){" << exprStream.str() << "}), "
+                   << size
+                   << ")"
+                   << ") "
+                   << toString(stmt);
+      std::string replacement = stringStream.str();
+
+      Rewrite.ReplaceText(expandedLoc, replacement);
+    }
+  }
+
+private:
+  Rewriter &Rewrite;
+
+};
+
+
 class MyASTConsumer : public ASTConsumer {
 public:
-  MyASTConsumer(Rewriter &R) : HandlerForExpressions(R) {
+  MyASTConsumer(Rewriter &R) : HandlerForExpressions(R), HandlerForStatements(R) {
 
     Matcher.addMatcher(InterestingExpression, &HandlerForExpressions);
+    Matcher.addMatcher(InterestingStatement, &HandlerForStatements);
   }
 
   void HandleTranslationUnit(ASTContext &Context) override {
@@ -217,6 +294,7 @@ public:
 
 private:
   ExpressionHandler HandlerForExpressions;
+  StatementHandler HandlerForStatements;
   MatchFinder Matcher;
 };
 

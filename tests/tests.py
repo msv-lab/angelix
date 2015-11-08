@@ -79,7 +79,7 @@ class TestAngelix(unittest.TestCase):
 
     def test_deletion(self):
         test_dir = os.path.join(script_dir, 'deletion')
-        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--defect', 'deletions']
+        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--defect', 'guards']
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
         

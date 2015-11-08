@@ -182,7 +182,17 @@ StatementMatcher InterestingExpression = anyOf(RepairableIfCondition,
                                                RepairableLoopCondition,
                                                RepairableAssignment);
 
+// TODO: make variable
+#define hasAngelixOutput\
+  hasDescendant(callExpr(callee(functionDecl(hasName("angelix_ignore")))))
 
-//StatementMatcher InterestingStatement = 
+
+StatementMatcher InterestingStatement =
+  anyOf(binaryOperator(isTopLevelStatement,
+                       hasOperatorName("="),
+                       hasLHS(ignoringParenImpCasts(declRefExpr())),
+                       unless(hasAngelixOutput)).bind("repairable"),
+        callExpr(isTopLevelStatement,
+                 unless(hasAngelixOutput)).bind("repairable"));
 
 #endif // ANGELIX_COMMON_H

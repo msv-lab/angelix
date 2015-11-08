@@ -42,10 +42,47 @@ private:
 };
 
 
+class StatementHandler : public MatchFinder::MatchCallback {
+public:
+  StatementHandler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
+
+  virtual void run(const MatchFinder::MatchResult &Result) {
+    if (const Stmt *stmt = Result.Nodes.getNodeAs<clang::Stmt>("repairable")) {
+      SourceManager &srcMgr = Rewrite.getSourceMgr();
+
+      SourceRange expandedLoc = getExpandedLoc(stmt, srcMgr);
+
+      unsigned beginLine = srcMgr.getSpellingLineNumber(expandedLoc.getBegin());
+      unsigned beginColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getBegin());
+      unsigned endLine = srcMgr.getSpellingLineNumber(expandedLoc.getEnd());
+      unsigned endColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getEnd());
+
+      std::cout << beginLine << " " << beginColumn << " " << endLine << " " << endColumn << "\n"
+                << toString(stmt) << "\n";
+
+      std::ostringstream stringStream;
+      stringStream << "{ angelix_trace("
+                   << beginLine << ", "
+                   << beginColumn << ", "
+                   << endLine << ", "
+                   << endColumn
+                   << "); "
+                   << toString(stmt)
+                   << "; }";
+      std::string replacement = stringStream.str();
+
+      Rewrite.ReplaceText(expandedLoc, replacement);
+    }
+  }
+
+private:
+  Rewriter &Rewrite;
+};
+
+
 class MyASTConsumer : public ASTConsumer {
 public:
-  MyASTConsumer(Rewriter &R) : HandlerForExpressions(R) {
-
+  MyASTConsumer(Rewriter &R) : HandlerForExpressions(R), HandlerForStatements(R) {
     if (getenv("ANGELIX_IGNORE_TRIVIAL")) {
       if (getenv("ANGELIX_IF_CONDITIONS_DEFECT_CLASS"))
         Matcher.addMatcher(NonTrivialRepairableIfCondition, &HandlerForExpressions);
@@ -65,6 +102,8 @@ public:
       if (getenv("ANGELIX_ASSIGNMENTS_DEFECT_CLASS"))
         Matcher.addMatcher(RepairableAssignment, &HandlerForExpressions);
     }
+    if (getenv("ANGELIX_GUARDS_DEFECT_CLASS"))
+      Matcher.addMatcher(InterestingStatement, &HandlerForStatements);
   }
 
   void HandleTranslationUnit(ASTContext &Context) override {
@@ -73,6 +112,7 @@ public:
 
 private:
   ExpressionHandler HandlerForExpressions;
+  StatementHandler HandlerForStatements;
   MatchFinder Matcher;
 };
 

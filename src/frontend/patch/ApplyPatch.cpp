@@ -59,11 +59,57 @@ private:
 };
 
 
+class StatementHandler : public MatchFinder::MatchCallback {
+public:
+  StatementHandler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
+
+  virtual void run(const MatchFinder::MatchResult &Result) {
+    if (const Stmt *stmt = Result.Nodes.getNodeAs<clang::Stmt>("repairable")) {
+      SourceManager &srcMgr = Rewrite.getSourceMgr();
+
+      SourceRange expandedLoc = getExpandedLoc(stmt, srcMgr);
+
+      unsigned beginLine = srcMgr.getSpellingLineNumber(expandedLoc.getBegin());
+      unsigned beginColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getBegin());
+      unsigned endLine = srcMgr.getSpellingLineNumber(expandedLoc.getEnd());
+      unsigned endColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getEnd());
+
+      std::string guard = isBuggy(beginLine, beginColumn, endLine, endColumn);
+
+      if (guard == "") {
+        return;
+      }
+
+      if (guard == "1") {
+        return;
+      }
+
+      std::stringstream replacement;
+
+      if (guard == "0") {
+        replacement << "";
+      } else {
+        replacement << "if (" << guard << ") " << toString(stmt);
+      }
+
+      std::cout << beginLine << " " << beginColumn << " " << endLine << " " << endColumn << "\n"
+                << "<   " << toString(stmt) << "\n"
+                << ">   " << replacement.str() << "\n";
+
+      
+      Rewrite.ReplaceText(expandedLoc, replacement.str());
+    }
+  }
+
+private:
+  Rewriter &Rewrite;
+};
+
 class MyASTConsumer : public ASTConsumer {
 public:
-  MyASTConsumer(Rewriter &R) : HandlerForExpressions(R) {
-
+  MyASTConsumer(Rewriter &R) : HandlerForExpressions(R), HandlerForStatements(R) {
     Matcher.addMatcher(InterestingExpression, &HandlerForExpressions);
+    Matcher.addMatcher(InterestingStatement, &HandlerForStatements);
   }
 
   void HandleTranslationUnit(ASTContext &Context) override {
@@ -72,6 +118,7 @@ public:
 
 private:
   ExpressionHandler HandlerForExpressions;
+  StatementHandler HandlerForStatements;
   MatchFinder Matcher;
 };
 

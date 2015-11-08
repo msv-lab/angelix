@@ -68,7 +68,7 @@ dump-ast () {
 }
 
 instr-rep () {
-    instrument-repairable "$1" -- "-I$LLVM3_DIR/build/lib/clang/3.7.0/include"
+    instrument-repairable "$1" -- "-I$LLVM3_DIR/build/lib/clang/3.7.0/include" -include "$ANGELIX_RUNTIME_H" -D ANGELIX_INSTRUMENTATION
 }
 
 instr-sus () {

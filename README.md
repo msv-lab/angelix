@@ -30,7 +30,7 @@ Tested on Ubuntu 14.04 64-bit.
 
 ## Usage ##
 
-Angelix uses symbolic execution and program synthesis to search for a patch. It can delete program statements, add if guards and modify simple program expressions (see supported [defect classes](doc/DefectClasses.md) and [synthesis levels](doc/SynthesisLevels.md)).
+Angelix uses symbolic execution and program synthesis to search for a patch. It can add guards for program statements and modify simple program expressions (see supported [defect classes](doc/DefectClasses.md) and [synthesis levels](doc/SynthesisLevels.md)).
 
 To analyze program test executions, Angelix requires interface to test running and test assertions (see [test framework abstraction](doc/TestAbstraction.md)).
 

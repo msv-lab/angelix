@@ -5,7 +5,6 @@ Angelix supports the following defect classes:
 * if-conditions
 * loop-conditions
 * assignments
-* deletions
 * guards
 
 ## Expressions ##
@@ -30,11 +29,7 @@ Modifications of all repairable right-hand-sides of assignments, where an assign
 
 ## Statements ##
 
-Classes "deletions" and "guards" correspond to statement-level modifications.
-
-### deletions ###
-
-Deletions of all assignments and function calls that are immediate children of a block statement.
+Class "guards" corresponds to statement-level modifications.
 
 ### guards ###
 

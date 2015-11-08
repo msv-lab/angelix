@@ -51,7 +51,9 @@ class Project:
             item['directory'] = join(self.dir, item['directory'])
             item['file'] = join(self.dir, item['file'])
             item['command'] = item['command'] + ' -I' + os.environ['LLVM3_INCLUDE_PATH']
-            # TODO add clang headers to the command
+            # this is a hack to skip output expressions when perform transformation:
+            item['command'] = item['command'] + ' -include ' + os.environ['ANGELIX_RUNTIME_H']
+            item['command'] = item['command'] + ' -D ANGELIX_INSTRUMENTATION'
         compilation_db_file = join(self.dir, 'compile_commands.json')
         with open(compilation_db_file, 'w') as file:
             json.dump(compilation_db, file, indent=2)
