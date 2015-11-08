@@ -138,6 +138,13 @@ class Inferrer:
         self.config = config
         self.run_test = tester
 
+    def _reduce_angelic_forest(self, angelic_paths):
+        '''reduce the size of angelic forest (select shortest paths)'''
+        logger.info('reducing angelic forest size from {} to {}'.format(len(angelic_paths),
+                                                                        self.config['max_angelic_paths']))
+        sorted_af = sorted(angelic_paths, key=len)
+        return sorted_af[:self.config['max_angelic_paths']]
+
     def __call__(self, project, test, dump):
         logger.info('infering specification for test \'{}\''.format(test))
 
@@ -375,5 +382,10 @@ class Inferrer:
 
             angelic_paths.append(angelic_path)
 
-        logger.info('found {} angelic paths for test \'{}\''.format(len(angelic_paths), test))
+        if self.config['max_angelic_paths'] is not None and \
+           len(angelic_paths) > self.config['max_angelic_paths']:
+            angelic_paths = self._reduce_angelic_forest(angelic_paths)
+        else:
+            logger.info('found {} angelic paths for test \'{}\''.format(len(angelic_paths), test))
+        
         return angelic_paths

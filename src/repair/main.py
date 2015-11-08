@@ -57,7 +57,7 @@ class Angelix:
 
         tester = Tester(config, oracle)
         self.run_test = tester
-        self.groups_of_suspicious = Localizer(config, lines)
+        self.get_suspicious_groups = Localizer(config, lines)
         self.reduce = Reducer(config)
         self.infer_spec = Inferrer(config, tester)
         self.synthesize_fix = Synthesizer(config, extracted, angelic_forest_file)
@@ -139,7 +139,7 @@ class Angelix:
 
         positive_traces = [(test, self.trace.parse(test)) for test in positive]
         negative_traces = [(test, self.trace.parse(test)) for test in negative]
-        suspicious = self.groups_of_suspicious(positive_traces, negative_traces)
+        suspicious = self.get_suspicious_groups(positive_traces, negative_traces)
         if len(suspicious) == 0:
             logger.warning('no suspicious expressions localized')
 
@@ -230,14 +230,16 @@ if __name__ == "__main__":
                         help='initial repair test suite size (default: %(default)s)')
     parser.add_argument('--test-timeout', metavar='MS', type=int, default=30000, # 30 sec
                         help='test case timeout (default: %(default)s)')
-    parser.add_argument('--suspicious', metavar='NUM', type=int, default=5,
-                        help='number of suspicious repaired at once (default: %(default)s)')
+    parser.add_argument('--multiline', metavar='NUM', type=int, default=5,
+                        help='number of expressions considered at once (default: %(default)s)')
     parser.add_argument('--iterations', metavar='NUM', type=int, default=4,
-                        help='number of iterations through suspicious (default: %(default)s)')
+                        help='number of iterations through suspicious expressions (default: %(default)s)')
     parser.add_argument('--localization', default='jaccard', choices=['jaccard', 'ochiai', 'tarantula'],
                         help='formula for localization algorithm (default: %(default)s)')
     parser.add_argument('--ignore-trivial', action='store_true',
                         help='ignore trivial expressions: variables and constants (default: %(default)s)')
+    parser.add_argument('--max-angelic-paths', metavar='NUM', type=int, default=None,
+                        help='max number of angelic paths for a test case (default: %(default)s)')
     parser.add_argument('--klee-search', metavar='HEURISTIC', default=None,
                         choices=KLEE_SEARCH_STRATEGIES,
                         help='KLEE search heuristic (default: KLEE\'s default). choices: ' + ', '.join(KLEE_SEARCH_STRATEGIES))
@@ -288,10 +290,11 @@ if __name__ == "__main__":
     config['initial_tests']       = args.initial_tests
     config['defect']              = args.defect
     config['test_timeout']        = args.test_timeout
-    config['suspicious']          = args.suspicious
+    config['multiline']           = args.multiline
     config['iterations']          = args.iterations
     config['localization']        = args.localization
     config['ignore_trivial']      = args.ignore_trivial
+    config['max_angelic_paths']   = args.max_angelic_paths
     config['klee_max_forks']      = args.klee_max_forks
     config['klee_search']         = args.klee_search
     config['klee_timeout']        = args.klee_timeout

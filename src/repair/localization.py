@@ -37,10 +37,10 @@ class Localizer:
         trace: expression list
 
         computes config['iterations'] groups
-        each consisting of config['suspicious'] suspicious
+        each consisting of config['multiline'] suspicious expressions
         '''
 
-        suspicious = self.config['suspicious']
+        multiline = self.config['multiline']
         iterations = self.config['iterations']
 
         if self.config['localization'] == 'ochiai':
@@ -89,7 +89,7 @@ class Localizer:
             ranking.append((e, score))
 
         sorted(ranking, key=lambda r: r[1], reverse=True)
-        top = ranking[:suspicious * iterations]
+        top = ranking[:multiline * iterations]
 
         sorted(top, key=lambda r: r[0][0])  # by beginning line
 
@@ -98,7 +98,7 @@ class Localizer:
             if len(top) == 0:
                 break
             groups.append([])
-            for j in range(0, suspicious):
+            for j in range(0, multiline):
                 if len(top) == 0:
                     break
                 expr, score = top.pop()
