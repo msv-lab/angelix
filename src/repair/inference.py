@@ -194,7 +194,11 @@ class Inferrer:
         for smt in smt_files:
             logger.info('solving path {}'.format(relpath(smt)))
 
-            path = z3.parse_smt2_file(smt)
+            try:
+                path = z3.parse_smt2_file(smt)
+            except:
+                logger.warning('failed to parse {}'.format(smt))
+                continue
 
             variables = [str(var) for var in get_vars(path)
                          if str(var).startswith('int!')
