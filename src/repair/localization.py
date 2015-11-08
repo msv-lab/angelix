@@ -101,7 +101,7 @@ class Localizer:
             for j in range(0, multiline):
                 if len(sorted_by_line) == 0:
                     break
-                expr, score = sorted_by_line.pop()
+                expr, score = sorted_by_line.pop(0)
                 groups[i].append(expr)
                 logger.info("selected expression {} with score {:.5} in group {}".format(expr, score, i))
         return groups
