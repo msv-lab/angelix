@@ -52,7 +52,12 @@ class Synthesizer:
 
     def __call__(self, angelic_forest):
 
-        self.dump_angelic_forest(angelic_forest)
+        if type(angelic_forest) == str:
+            # angelic_forest is a file
+            shutil.copyfile(angelic_forest, self.angelic_forest_file)
+        else:
+            # angelic_forest is a data structure
+            self.dump_angelic_forest(angelic_forest)
 
         dirpath = tempfile.mkdtemp()
         patch_file = join(dirpath, 'patch')

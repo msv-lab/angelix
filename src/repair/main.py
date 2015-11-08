@@ -93,19 +93,20 @@ class Angelix:
         self.dump = Dump(working_dir, asserts)
         self.trace = Trace(working_dir)
 
+
+    def evaluate(self, src):
+        positive = []
+        negative = []
+        for test in self.test_suite:
+            if self.run_test(src, test):
+                positive.append(test)
+            else:
+                negative.append(test)
+        return positive, negative
+        
+
     def generate_patch(self):
-
-        def evaluate(src):
-            positive = []
-            negative = []
-            for test in self.test_suite:
-                if self.run_test(src, test):
-                    positive.append(test)
-                else:
-                    negative.append(test)
-            return positive, negative
-
-        positive, negative = evaluate(self.validation_src)
+        positive, negative = self.evaluate(self.validation_src)
 
         self.frontend_src.configure()
         self.instrument_for_localization(self.frontend_src)
@@ -169,7 +170,7 @@ class Angelix:
             self.validation_src.restore_buggy()
             self.apply_patch(self.validation_src, initial_fix)
             self.validation_src.build()
-            pos, neg = evaluate(self.validation_src)
+            pos, neg = self.evaluate(self.validation_src)
             if not set(neg).isdisjoint(set(repair_suite)):
                 not_repaired = list(set(repair_suite) & set(neg))
                 logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
@@ -193,7 +194,7 @@ class Angelix:
                 self.validation_src.restore_buggy()
                 self.apply_patch(self.validation_src, fix)
                 self.validation_src.build()
-                pos, neg = evaluate(self.validation_src)
+                pos, neg = self.evaluate(self.validation_src)
                 if not set(neg).isdisjoint(set(repair_suite)):
                     not_repaired = list(set(repair_suite) & set(neg))
                     logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
@@ -213,7 +214,44 @@ class Angelix:
         for test in self.test_suite:
             self.dump += test
             self.run_test(self.frontend_src, test, dump=self.dump[test])
-        return self.dump.export()        
+        return self.dump.export()
+
+    def synthesize_from(self, af_file):
+        with open(af_file) as file:
+            data = json.load(file)
+        repair_suite = data.keys()
+
+        expressions = set()
+        for _, paths in data.items():
+           for path in paths:
+               for value in path:
+                   expr = tuple(map(int, value['expression'].split('-')))
+                   expressions.add(expr)
+
+        # we need this to extract buggy expressions:
+        self.backend_src.restore_buggy()
+        self.backend_src.configure()
+        self.instrument_for_inference(self.backend_src, list(expressions))
+        
+        fix = self.synthesize_fix(af_file)
+        if fix is None:
+            logger.info('cannot synthesize fix')
+            return None
+        logger.info('fix is synthesized')
+
+        self.validation_src.restore_buggy()
+        self.apply_patch(self.validation_src, fix)
+        self.validation_src.build()
+        positive, negative = self.evaluate(self.validation_src)
+        if not set(negative).isdisjoint(set(repair_suite)):
+            not_repaired = list(set(repair_suite) & set(negative))
+            logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
+            return None
+
+        if len(negative) > 0:
+            return None
+        else:
+            return self.validation_src.diff_buggy()
 
 
 if __name__ == "__main__":
@@ -346,7 +384,10 @@ if __name__ == "__main__":
 
     try:
         with time_limit(args.timeout):
-            patch = tool.generate_patch()
+            if args.synthesis_only is not None:
+                patch = tool.synthesize_from(args.synthesis_only)
+            else:
+                patch = tool.generate_patch()
     except TimeoutException:
         logger.info("failed to generate patch (timeout)")
         print('TIMEOUT')
