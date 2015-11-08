@@ -157,6 +157,8 @@ class Inferrer:
             environment['ANGELIX_KLEE_MAX_TIME'] = str(self.config['klee_timeout'])
         if self.config['klee_solver_timeout'] is not None:
             environment['ANGELIX_KLEE_MAX_SOLVER_TIME'] = str(self.config['klee_solver_timeout'])
+        if self.config['klee_debug']:
+            environment['ANGELIX_KLEE_DEBUG'] = 'YES'
         environment['ANGELIX_KLEE_WORKDIR'] = project.dir
 
         self.run_test(project, test, klee=True, env=environment)

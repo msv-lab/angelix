@@ -6,6 +6,7 @@ import time
 import json
 import logging
 import time
+import sys
 
 from project import Validation, Frontend, Backend, CompilationError
 from utils import format_time, time_limit, TimeoutException
@@ -43,6 +44,10 @@ DEFECT_CLASSES = ['if-conditions',
 KLEE_SEARCH_STRATEGIES = ['dfs', 'bfs', 'random-state', 'random-path',
                           'nurs:covnew', 'nurs:md2u', 'nurs:depth',
                           'nurs:icnt', 'nurs:cpicnt', 'nurs:qc']
+
+
+# Otherwise inference.get_vars fails:
+sys.setrecursionlimit(10000)
 
 
 class Angelix:
@@ -297,6 +302,8 @@ if __name__ == "__main__":
                         help='KLEE timeout (default: %(default)s)')
     parser.add_argument('--klee-solver-timeout', metavar='MS', type=int, default=None,
                         help='KLEE solver timeout (default: %(default)s)')
+    parser.add_argument('--klee-debug', action='store_true',
+                        help='print functions executed by KLEE (default: %(default)s)')    
     parser.add_argument('--synthesis-timeout', metavar='MS', type=int, default=30000, # 30 sec
                         help='synthesis timeout (default: %(default)s)')
     parser.add_argument('--synthesis-levels', metavar='LEVEL', nargs='+',
@@ -349,6 +356,7 @@ if __name__ == "__main__":
     config['klee_search']             = args.klee_search
     config['klee_timeout']            = args.klee_timeout
     config['klee_solver_timeout']     = args.klee_solver_timeout
+    config['klee_debug']              = args.klee_debug
     config['synthesis_timeout']       = args.synthesis_timeout
     config['synthesis_levels']        = args.synthesis_levels
     config['synthesis_max_variables'] = args.synthesis_max_variables

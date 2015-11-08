@@ -32,8 +32,13 @@ else
     solver_time_arg="-max-solver-time=$ANGELIX_KLEE_MAX_SOLVER_TIME"
 fi
 
+if [ -z $ANGELIX_KLEE_DEBUG ]; then
+    debug_arg=""
+else
+    debug_arg="-debug-print-escaping-functions"
+fi
 
-klee $search_arg $forks_arg $time_arg $solver_time_arg \
+klee $search_arg $forks_arg $time_arg $solver_time_arg $debug_arg \
      -write-smt2s \
      -smtlib-human-readable \
      --libc=uclibc \
