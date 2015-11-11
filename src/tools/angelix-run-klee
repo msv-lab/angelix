@@ -20,6 +20,12 @@ else
     forks_arg="-max-forks=$ANGELIX_KLEE_MAX_FORKS"
 fi
 
+if [ -z $ANGELIX_KLEE_MAX_DEPTH ]; then
+    depth_arg=""
+else
+    depth_arg="-max-depth=$ANGELIX_KLEE_MAX_DEPTH"
+fi
+
 if [ -z $ANGELIX_KLEE_MAX_TIME ]; then
     time_arg=""
 else
@@ -38,7 +44,7 @@ else
     debug_arg="-debug-print-escaping-functions"
 fi
 
-klee $search_arg $forks_arg $time_arg $solver_time_arg $debug_arg \
+klee $search_arg $forks_arg $depth_arg $time_arg $solver_time_arg $debug_arg \
      -write-smt2s \
      -smtlib-human-readable \
      --libc=uclibc \

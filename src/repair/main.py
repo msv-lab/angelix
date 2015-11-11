@@ -298,6 +298,8 @@ if __name__ == "__main__":
                         help='KLEE search heuristic (default: KLEE\'s default). choices: ' + ', '.join(KLEE_SEARCH_STRATEGIES))
     parser.add_argument('--klee-max-forks', metavar='NUM', type=int, default=None,
                         help='KLEE max number of forks (default: %(default)s)')
+    parser.add_argument('--klee-max-depth', metavar='NUM', type=int, default=None,
+                        help='KLEE max KLEE depth (default: %(default)s)')    
     parser.add_argument('--klee-timeout', metavar='SEC', type=int, default=None,
                         help='KLEE timeout (default: %(default)s)')
     parser.add_argument('--klee-solver-timeout', metavar='MS', type=int, default=None,
@@ -353,6 +355,7 @@ if __name__ == "__main__":
     config['ignore_trivial']          = args.ignore_trivial
     config['max_angelic_paths']       = args.max_angelic_paths
     config['klee_max_forks']          = args.klee_max_forks
+    config['klee_max_depth']          = args.klee_max_depth
     config['klee_search']             = args.klee_search
     config['klee_timeout']            = args.klee_timeout
     config['klee_solver_timeout']     = args.klee_solver_timeout
