@@ -283,9 +283,9 @@ if __name__ == "__main__":
                         help='initial repair test suite size (default: %(default)s)')
     parser.add_argument('--test-timeout', metavar='MS', type=int, default=30000, # 30 sec
                         help='test case timeout (default: %(default)s)')
-    parser.add_argument('--multiline', metavar='NUM', type=int, default=5,
+    parser.add_argument('--group-size', metavar='NUM', type=int, default=3,
                         help='number of expressions considered at once (default: %(default)s)')
-    parser.add_argument('--iterations', metavar='NUM', type=int, default=4,
+    parser.add_argument('--iterations', metavar='NUM', type=int, default=5,
                         help='number of iterations through suspicious expressions (default: %(default)s)')
     parser.add_argument('--localization', default='jaccard', choices=['jaccard', 'ochiai', 'tarantula'],
                         help='formula for localization algorithm (default: %(default)s)')
@@ -347,7 +347,7 @@ if __name__ == "__main__":
     config['initial_tests']           = args.initial_tests
     config['defect']                  = args.defect
     config['test_timeout']            = args.test_timeout
-    config['multiline']               = args.multiline
+    config['group_size']              = args.group_size
     config['iterations']              = args.iterations
     config['localization']            = args.localization
     config['ignore_trivial']          = args.ignore_trivial
