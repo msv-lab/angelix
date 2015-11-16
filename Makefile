@@ -21,29 +21,29 @@ clean-all: $(CLEAN_MODULES)
 
 # Information for retrieving dependencies
 
-# TODO: remove quotes:
+DOWNLOAD=wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 --tries=5 --continue
 
-LLVM_GCC_URL="http://llvm.org/releases/2.9/llvm-gcc4.2-2.9-x86_64-linux.tar.bz2"
+LLVM_GCC_URL=http://llvm.org/releases/2.9/llvm-gcc4.2-2.9-x86_64-linux.tar.bz2
 LLVM_GCC_ARCHIVE=llvm-gcc4.2-2.9-x86_64-linux.tar.bz2
-LLVM2_PATCH_URL="http://www.mail-archive.com/klee-dev@imperial.ac.uk/msg01302/unistd-llvm-2.9-jit.patch"
-LLVM2_PATCH="unistd-llvm-2.9-jit.patch"
-LLVM2_URL="http://llvm.org/releases/2.9/llvm-2.9.tgz"
-LLVM2_ARCHIVE="llvm-2.9.tgz"
-LLVM3_URL="http://llvm.org/releases/3.7.0/llvm-3.7.0.src.tar.xz"
-LLVM3_ARCHIVE="llvm-3.7.0.src.tar.xz"
-CLANG_URL="http://llvm.org/releases/3.7.0/cfe-3.7.0.src.tar.xz"
-CLANG_ARCHIVE="cfe-3.7.0.src.tar.xz"
-CLANG_TOOLS_EXTRA_URL="http://llvm.org/git/clang-tools-extra.git"
-COMPILER_RT_URL="http://llvm.org/releases/3.7.0/compiler-rt-3.7.0.src.tar.xz"
-COMPILER_RT_ARCHIVE="compiler-rt-3.7.0.src.tar.xz"
-CLANG_TOOLS_EXTRA_URL="http://llvm.org/git/clang-tools-extra.git"
-STP_URL="https://github.com/stp/stp.git"
-MINISAT_URL="https://github.com/niklasso/minisat.git"
-Z3_URL="https://github.com/Z3Prover/z3.git"
-KLEE_URL="https://github.com/klee/klee.git"
-KLEE_UCLIBC_URL="https://github.com/klee/klee-uclibc.git"
-BEAR_URL="https://github.com/rizsotto/Bear.git"
-MAXSMT_URL="https://github.com/mechtaev/maxsmt-playground.git"
+LLVM2_PATCH_URL=http://www.mail-archive.com/klee-dev@imperial.ac.uk/msg01302/unistd-llvm-2.9-jit.patch
+LLVM2_PATCH=unistd-llvm-2.9-jit.patch
+LLVM2_URL=http://llvm.org/releases/2.9/llvm-2.9.tgz
+LLVM2_ARCHIVE=llvm-2.9.tgz
+LLVM3_URL=http://llvm.org/releases/3.7.0/llvm-3.7.0.src.tar.xz
+LLVM3_ARCHIVE=llvm-3.7.0.src.tar.xz
+CLANG_URL=http://llvm.org/releases/3.7.0/cfe-3.7.0.src.tar.xz
+CLANG_ARCHIVE=cfe-3.7.0.src.tar.xz
+CLANG_TOOLS_EXTRA_URL=http://llvm.org/git/clang-tools-extra.git
+COMPILER_RT_URL=http://llvm.org/releases/3.7.0/compiler-rt-3.7.0.src.tar.xz
+COMPILER_RT_ARCHIVE=compiler-rt-3.7.0.src.tar.xz
+CLANG_TOOLS_EXTRA_URL=http://llvm.org/git/clang-tools-extra.git
+STP_URL=https://github.com/stp/stp.git
+MINISAT_URL=https://github.com/niklasso/minisat.git
+Z3_URL=https://github.com/Z3Prover/z3.git
+KLEE_URL=https://github.com/klee/klee.git
+KLEE_UCLIBC_URL=https://github.com/klee/klee-uclibc.git
+BEAR_URL=https://github.com/rizsotto/Bear.git
+MAXSMT_URL=https://github.com/mechtaev/maxsmt-playground.git
 
 # Testing #
 
@@ -56,7 +56,7 @@ llvm-gcc: build/$(LLVM_GCC_ARCHIVE)
 	cd build && tar xf $(LLVM_GCC_ARCHIVE)
 
 build/$(LLVM_GCC_ARCHIVE):
-	cd build && wget $(LLVM_GCC_URL)
+	cd build && $(DOWNLOAD) $(LLVM_GCC_URL)
 
 clean-llvm-gcc:
 
@@ -68,10 +68,10 @@ llvm2: build/$(LLVM2_ARCHIVE) build/$(LLVM2_PATCH)
 	cd $(LLVM2_DIR) && ./configure --enable-optimized --enable-assertions && make
 
 build/$(LLVM2_ARCHIVE):
-	cd build && wget $(LLVM2_URL)
+	cd build && $(DOWNLOAD) $(LLVM2_URL)
 
 build/$(LLVM2_PATCH):
-	cd build && wget $(LLVM2_PATCH_URL)
+	cd build && $(DOWNLOAD) $(LLVM2_PATCH_URL)
 
 clean-llvm2:
 	rm -rf $(LLVM2_DIR)/build
@@ -188,13 +188,13 @@ clang: build/$(LLVM3_ARCHIVE) build/$(CLANG_ARCHIVE) build/$(COMPILER_RT_ARCHIVE
 	mkdir -p "$(LLVM3_DIR)/build" && cd "$(LLVM3_DIR)/build" && cmake -G "Unix Makefiles" ../ && make
 
 build/$(LLVM3_ARCHIVE):
-	cd build && wget $(LLVM3_URL)
+	cd build && $(DOWNLOAD) $(LLVM3_URL)
 
 build/$(CLANG_ARCHIVE):
-	cd build && wget $(CLANG_URL)
+	cd build && $(DOWNLOAD) $(CLANG_URL)
 
 build/$(COMPILER_RT_ARCHIVE):
-	cd build && wget $(COMPILER_RT_URL)
+	cd build && $(DOWNLOAD) $(COMPILER_RT_URL)
 
 clean-clang:
 	rm -rf "$(LLVM3_DIR)/build"
