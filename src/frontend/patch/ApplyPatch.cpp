@@ -108,7 +108,7 @@ private:
 class MyASTConsumer : public ASTConsumer {
 public:
   MyASTConsumer(Rewriter &R) : HandlerForExpressions(R), HandlerForStatements(R) {
-    Matcher.addMatcher(InterestingExpression, &HandlerForExpressions);
+    Matcher.addMatcher(InterestingRepairableExpression, &HandlerForExpressions);
     Matcher.addMatcher(InterestingStatement, &HandlerForStatements);
   }
 

@@ -89,6 +89,12 @@ class TestAngelix(unittest.TestCase):
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 
+    def test_semfix(self):
+        test_dir = os.path.join(script_dir, 'semfix')
+        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--semfix', '--synthesis-level', 'variables']
+        result = run_angelix(args, test_dir)
+        self.assertEqual(result, 'SUCCESS')
+
 
 if __name__ == '__main__':
     unittest.main()

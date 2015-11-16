@@ -21,8 +21,10 @@ clean-all: $(CLEAN_MODULES)
 
 # Information for retrieving dependencies
 
+# TODO: remove quotes:
+
 LLVM_GCC_URL="http://llvm.org/releases/2.9/llvm-gcc4.2-2.9-x86_64-linux.tar.bz2"
-LLVM_GCC_ARCHIVE="llvm-gcc4.2-2.9-x86_64-linux.tar.bz2"
+LLVM_GCC_ARCHIVE=llvm-gcc4.2-2.9-x86_64-linux.tar.bz2
 LLVM2_PATCH_URL="http://www.mail-archive.com/klee-dev@imperial.ac.uk/msg01302/unistd-llvm-2.9-jit.patch"
 LLVM2_PATCH="unistd-llvm-2.9-jit.patch"
 LLVM2_URL="http://llvm.org/releases/2.9/llvm-2.9.tgz"

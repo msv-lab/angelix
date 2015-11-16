@@ -47,8 +47,8 @@ class Tester:
                                     stdout=subproc_output,
                                     stderr=subproc_output,
                                     shell=True)
-            if klee:
-                code = proc.wait()  # KLEE has its own timeout
+            if klee or self.config['test_timeout'] is None: # KLEE has its own timeout
+                code = proc.wait()  
             else:
                 code = proc.wait(timeout=self.config['test_timeout'])
                 

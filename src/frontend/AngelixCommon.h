@@ -156,10 +156,10 @@ StatementMatcher NonTrivialRepairableLoopCondition =
 
 
 //TODO: better to create a variables, but I don't know what the type is
-#define isTopLevelStatement                                 \
-  anyOf(hasParent(compoundStmt()),                          \
-        hasParent(ifStmt()),                                \
-        hasParent(whileStmt()),                             \
+#define isTopLevelStatement        \
+  anyOf(hasParent(compoundStmt()), \
+        hasParent(ifStmt()),       \
+        hasParent(whileStmt()),    \
         hasParent(forStmt()))
 
 
@@ -176,23 +176,49 @@ StatementMatcher NonTrivialRepairableAssignment =
                  hasLHS(ignoringParenImpCasts(declRefExpr())),
                  hasRHS(ignoringParenImpCasts(NonTrivialRepairableExpression)));
 
+//TODO: currently these selectors are not completely orthogonal
+// for example, if RHS of assignment contains if condition like here:
+// x = ({ if (...) {...}; 1; });
+// it may fail
 
-// Interesting expression is a repairable selected in a particular way
-StatementMatcher InterestingExpression = anyOf(RepairableIfCondition,
-                                               RepairableLoopCondition,
-                                               RepairableAssignment);
 
-// TODO: make variable
+StatementMatcher InterestingRepairableExpression =
+  anyOf(RepairableIfCondition,
+        RepairableLoopCondition,
+        RepairableAssignment);
+
+
+// TODO: make variable instead of macro
 #define hasAngelixOutput\
   hasDescendant(callExpr(callee(functionDecl(hasName("angelix_ignore")))))
 
 
+StatementMatcher InterestingCondition =
+  anyOf(ifStmt(hasCondition(expr(unless(hasAngelixOutput)).bind("repairable"))),
+        whileStmt(hasCondition(expr(unless(hasAngelixOutput)).bind("repairable"))),
+        forStmt(hasCondition(expr(unless(hasAngelixOutput)).bind("repairable"))));
+
+
+StatementMatcher InterestingIntegerAssignment =
+  binaryOperator(isTopLevelStatement,
+                 hasOperatorName("="),
+                 hasLHS(ignoringParenImpCasts(declRefExpr(hasType(isInteger())))),
+                 unless(hasAngelixOutput)).bind("repairable");
+
+
+StatementMatcher InterestingAssignment =
+  binaryOperator(isTopLevelStatement,
+                 hasOperatorName("="),
+                 hasLHS(ignoringParenImpCasts(declRefExpr())),
+                 unless(hasAngelixOutput)).bind("repairable");
+
+
+StatementMatcher InterestingCall =
+  callExpr(isTopLevelStatement,
+           unless(hasAngelixOutput)).bind("repairable");
+
+
 StatementMatcher InterestingStatement =
-  anyOf(binaryOperator(isTopLevelStatement,
-                       hasOperatorName("="),
-                       hasLHS(ignoringParenImpCasts(declRefExpr())),
-                       unless(hasAngelixOutput)).bind("repairable"),
-        callExpr(isTopLevelStatement,
-                 unless(hasAngelixOutput)).bind("repairable"));
+  anyOf(InterestingAssignment, InterestingCall);
 
 #endif // ANGELIX_COMMON_H

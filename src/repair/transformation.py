@@ -31,6 +31,8 @@ class RepairableTransformer:
             environment['ANGELIX_GUARDS_DEFECT_CLASS'] = 'YES'
         if self.config['ignore_trivial']:
             environment['ANGELIX_IGNORE_TRIVIAL'] = 'YES'
+        if self.config['semfix']:
+            environment['ANGELIX_SEMFIX_MODE'] = 'YES'
         if self.config['verbose']:
             stderr = None
         else:
@@ -56,6 +58,9 @@ class SuspiciousTransformer:
         with open(suspicious_file, 'w') as file:
             for e in expressions:
                 file.write('{} {} {} {}\n'.format(*e))
+
+        if self.config['semfix']:
+            environment['ANGELIX_SEMFIX_MODE'] = 'YES'
 
         environment['ANGELIX_EXTRACTED'] = self.extracted
         environment['ANGELIX_SUSPICIOUS'] = suspicious_file

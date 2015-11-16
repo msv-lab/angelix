@@ -83,27 +83,32 @@ private:
 class MyASTConsumer : public ASTConsumer {
 public:
   MyASTConsumer(Rewriter &R) : HandlerForExpressions(R), HandlerForStatements(R) {
-    if (getenv("ANGELIX_IGNORE_TRIVIAL")) {
-      if (getenv("ANGELIX_IF_CONDITIONS_DEFECT_CLASS"))
-        Matcher.addMatcher(NonTrivialRepairableIfCondition, &HandlerForExpressions);
-
-      if (getenv("ANGELIX_LOOP_CONDITIONS_DEFECT_CLASS"))
-        Matcher.addMatcher(NonTrivialRepairableLoopCondition, &HandlerForExpressions);
-
-      if (getenv("ANGELIX_ASSIGNMENTS_DEFECT_CLASS"))
-        Matcher.addMatcher(NonTrivialRepairableAssignment, &HandlerForExpressions);
+    if (getenv("ANGELIX_SEMFIX_MODE")) {
+      Matcher.addMatcher(InterestingCondition, &HandlerForExpressions);
+      Matcher.addMatcher(InterestingIntegerAssignment, &HandlerForStatements);
     } else {
-      if (getenv("ANGELIX_IF_CONDITIONS_DEFECT_CLASS"))
-        Matcher.addMatcher(RepairableIfCondition, &HandlerForExpressions);
+      if (getenv("ANGELIX_IGNORE_TRIVIAL")) {
+        if (getenv("ANGELIX_IF_CONDITIONS_DEFECT_CLASS"))
+          Matcher.addMatcher(NonTrivialRepairableIfCondition, &HandlerForExpressions);
 
-      if (getenv("ANGELIX_LOOP_CONDITIONS_DEFECT_CLASS"))
-        Matcher.addMatcher(RepairableLoopCondition, &HandlerForExpressions);
+        if (getenv("ANGELIX_LOOP_CONDITIONS_DEFECT_CLASS"))
+          Matcher.addMatcher(NonTrivialRepairableLoopCondition, &HandlerForExpressions);
 
-      if (getenv("ANGELIX_ASSIGNMENTS_DEFECT_CLASS"))
-        Matcher.addMatcher(RepairableAssignment, &HandlerForExpressions);
+        if (getenv("ANGELIX_ASSIGNMENTS_DEFECT_CLASS"))
+          Matcher.addMatcher(NonTrivialRepairableAssignment, &HandlerForExpressions);
+      } else {
+        if (getenv("ANGELIX_IF_CONDITIONS_DEFECT_CLASS"))
+          Matcher.addMatcher(RepairableIfCondition, &HandlerForExpressions);
+
+        if (getenv("ANGELIX_LOOP_CONDITIONS_DEFECT_CLASS"))
+          Matcher.addMatcher(RepairableLoopCondition, &HandlerForExpressions);
+
+        if (getenv("ANGELIX_ASSIGNMENTS_DEFECT_CLASS"))
+          Matcher.addMatcher(RepairableAssignment, &HandlerForExpressions);
+      }
+      if (getenv("ANGELIX_GUARDS_DEFECT_CLASS"))
+        Matcher.addMatcher(InterestingStatement, &HandlerForStatements);
     }
-    if (getenv("ANGELIX_GUARDS_DEFECT_CLASS"))
-      Matcher.addMatcher(InterestingStatement, &HandlerForStatements);
   }
 
   void HandleTranslationUnit(ASTContext &Context) override {

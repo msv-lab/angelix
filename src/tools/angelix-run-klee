@@ -41,7 +41,7 @@ fi
 if [ -z $ANGELIX_KLEE_DEBUG ]; then
     debug_arg=""
 else
-    debug_arg="-debug-print-escaping-functions"
+    debug_arg="-debug-print-instructions"
 fi
 
 klee $search_arg $forks_arg $depth_arg $time_arg $solver_time_arg $debug_arg \
