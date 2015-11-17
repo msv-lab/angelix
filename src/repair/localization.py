@@ -1,4 +1,4 @@
-from math import sqrt
+from math import sqrt, ceil
 import logging
 
 
@@ -36,12 +36,12 @@ class Localizer:
         positive, negative: (test * trace) list
         trace: expression list
 
-        computes config['iterations'] groups
+        computes config['suspicious']/config['group_size'] groups
         each consisting of config['group_size'] suspicious expressions
         '''
 
         group_size = self.config['group_size']
-        iterations = self.config['iterations']
+        suspicious = self.config['suspicious']
 
         if self.config['localization'] == 'ochiai':
             formula = ochiai
@@ -89,12 +89,12 @@ class Localizer:
             with_score.append((e, score))
 
         ranking = sorted(with_score, key=lambda r: r[1], reverse=True)
-        top = ranking[:group_size * iterations]
+        top = ranking[:suspicious]
 
         sorted_by_line = sorted(top, key=lambda r: r[0][0])
 
         groups = []
-        for i in range(0, iterations):
+        for i in range(0, ceil(suspicious / group_size)):
             if len(sorted_by_line) == 0:
                 break
             groups.append([])

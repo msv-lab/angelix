@@ -290,9 +290,9 @@ if __name__ == "__main__":
     parser.add_argument('--test-timeout', metavar='MS', type=int, default=None,
                         help='test case timeout (default: %(default)s)')
     parser.add_argument('--group-size', metavar='NUM', type=int, default=DEFAULT_GROUP_SIZE,
-                        help='number of expressions considered at once (default: %(default)s)')
-    parser.add_argument('--iterations', metavar='NUM', type=int, default=10,
-                        help='number of iterations through suspicious expressions (default: %(default)s)')
+                        help='number of statements considered at once (default: %(default)s)')
+    parser.add_argument('--suspicious', metavar='NUM', type=int, default=20,
+                        help='total number of suspicious statements (default: %(default)s)')
     parser.add_argument('--localization', default='jaccard', choices=['jaccard', 'ochiai', 'tarantula'],
                         help='formula for localization algorithm (default: %(default)s)')
     parser.add_argument('--ignore-trivial', action='store_true',
@@ -359,7 +359,7 @@ if __name__ == "__main__":
     config['defect']                = args.defect
     config['test_timeout']          = args.test_timeout
     config['group_size']            = args.group_size
-    config['iterations']            = args.iterations
+    config['suspicious']            = args.suspicious
     config['localization']          = args.localization
     config['ignore_trivial']        = args.ignore_trivial
     config['max_angelic_paths']     = args.max_angelic_paths
