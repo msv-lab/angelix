@@ -272,8 +272,6 @@ if __name__ == "__main__":
     parser.add_argument('tests', metavar='TEST', nargs='+', help='test case')
     parser.add_argument('--golden', metavar='DIR', help='golden source directory')
     parser.add_argument('--assert', metavar='FILE', help='assert expected outputs')
-    parser.add_argument('--semfix', action='store_true',
-                        help='enable SemFix mode (default: %(default)s)')
     parser.add_argument('--defect', metavar='CLASS', nargs='+',
                         default=['if-conditions', 'assignments'],
                         choices=DEFECT_CLASSES,
@@ -322,6 +320,8 @@ if __name__ == "__main__":
                         help='max number of program variables used for synthesis (default: %(default)s)')
     parser.add_argument('--synthesis-global-vars', action='store_true',
                         help='use global program variables for synthesis (default: %(default)s)')
+    parser.add_argument('--semfix', action='store_true',
+                        help='enable SemFix mode (default: %(default)s)')
     parser.add_argument('--dump-only', action='store_true',
                         help='dump actual outputs for given tests (default: %(default)s)')
     parser.add_argument('--synthesis-only', metavar="FILE", default=None,
@@ -352,6 +352,21 @@ if __name__ == "__main__":
     if 'guards' in args.defect and 'assignments' in args.defect:
         logger.error('\'guards\' and \'assignments\' defect classes are currently incompatible')
         exit(1)
+
+    if args.semfix:
+        if args.defect is not None:
+            logger.warning('--semfix disables --defect option')
+        if args.ignore_trivial:
+            logger.warning('--semfix disables --ignore-trivial option')
+        if not (args.group_size == DEFAULT_GROUP_SIZE):
+            logger.warning('--semfix disables --group-size option')
+        args.group_size = 1
+
+    if args.dump_only:
+        if args.golden is not None:
+            logger.warning('--dump-only disables --golden option')
+        if asserts is not None:
+            logger.warning('--dump-only disables --assert option') 
 
     config = dict()
     config['initial_tests']         = args.initial_tests
@@ -388,10 +403,6 @@ if __name__ == "__main__":
                    config=config)
 
     if args.dump_only:
-        if args.golden is not None:
-            logger.warning('--dump-only disables --golden option')
-        if asserts is not None:
-            logger.warning('--dump-only disables --assert option') 
         try:
             dump = tool.dump_outputs()
             with open('dump.json', 'w') as output_file:
@@ -401,15 +412,6 @@ if __name__ == "__main__":
         except CompilationError:
             logger.info('failed to dump outputs')
             exit(1)
-
-    if args.semfix:
-        if args.defect is not None:
-            logger.warning('--semfix disables --defect option')
-        if args.ignore_trivial:
-            logger.warning('--semfix disables --ignore-trivial option')
-        if not (args.group_size == DEFAULT_GROUP_SIZE):
-            logger.warning('--semfix disables --group-size option')
-        args.group_size = 1
 
     start = time.time()
 
