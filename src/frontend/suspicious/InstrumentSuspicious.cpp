@@ -9,7 +9,6 @@
 #include "SMTLIB2.h"
 
 
-// TODO: currently
 std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynTypedNode node, ASTContext* context) {
   const FunctionDecl* fd;
   if ((fd = node.get<FunctionDecl>()) != NULL) {
@@ -119,7 +118,7 @@ bool isSuspicious(int beginLine, int beginColumn, int endLine, int endColumn) {
 
 class ExpressionHandler : public MatchFinder::MatchCallback {
 public:
-  ExpressionHandler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
+  ExpressionHandler(Rewriter &Rewrite, std::string t) : Rewrite(Rewrite), type(t) {}
 
   virtual void run(const MatchFinder::MatchResult &Result) {
     if (const Expr *expr = Result.Nodes.getNodeAs<clang::Expr>("repairable")) {
@@ -182,7 +181,7 @@ public:
 
       std::ostringstream stringStream;
       stringStream << "ANGELIX_CHOOSE("
-                   << "bool" << ", "
+                   << type << ", "
                    << toString(expr) << ", "
                    << beginLine << ", "
                    << beginColumn << ", "
@@ -200,6 +199,81 @@ public:
 
 private:
   Rewriter &Rewrite;
+  std::string type;
+
+};
+
+
+class SemfixExpressionHandler : public MatchFinder::MatchCallback {
+public:
+  SemfixExpressionHandler(Rewriter &Rewrite, std::string t) : Rewrite(Rewrite), type(t) {}
+
+  virtual void run(const MatchFinder::MatchResult &Result) {
+    if (const Expr *expr = Result.Nodes.getNodeAs<clang::Expr>("repairable")) {
+      SourceManager &srcMgr = Rewrite.getSourceMgr();
+
+      SourceRange expandedLoc = getExpandedLoc(expr, srcMgr);
+
+      unsigned beginLine = srcMgr.getSpellingLineNumber(expandedLoc.getBegin());
+      unsigned beginColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getBegin());
+      unsigned endLine = srcMgr.getSpellingLineNumber(expandedLoc.getEnd());
+      unsigned endColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getEnd());
+
+      if (! isSuspicious(beginLine, beginColumn, endLine, endColumn)) {
+        return;
+      }
+
+      std::cout << beginLine << " " << beginColumn << " " << endLine << " " << endColumn << "\n"
+                << toString(expr) << "\n";
+
+      std::ostringstream exprId;
+      exprId << beginLine << "-" << beginColumn << "-" << endLine << "-" << endColumn;
+      std::string extractedDir(getenv("ANGELIX_EXTRACTED"));
+      std::ofstream fs(extractedDir + "/" + exprId.str() + ".smt2");
+      fs << "(assert true)\n"; // this is a hack, but not dangerous
+
+      const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*expr);
+      std::unordered_set<VarDecl*> varsFromScope = collectVarsFromScope(node, Result.Context);
+      std::unordered_set<VarDecl*> vars;
+      vars.insert(varsFromScope.begin(), varsFromScope.end());
+      std::ostringstream exprStream;
+      std::ostringstream nameStream;
+      bool first = true;
+      for (auto it = vars.begin(); it != vars.end(); ++it) {
+        if (first) {
+          first = false;
+        } else {
+          exprStream << ", ";
+          nameStream << ", ";
+        }
+        VarDecl* var = *it;
+        exprStream << var->getName().str();
+        nameStream << "\"" << var->getName().str() << "\"";
+      }
+
+      int size = vars.size();
+
+      std::ostringstream stringStream;
+      stringStream << "ANGELIX_CHOOSE("
+                   << type << ", "
+                   << "1" << ", " // don't execute expression, because it can have side effects
+                   << beginLine << ", "
+                   << beginColumn << ", "
+                   << endLine << ", "
+                   << endColumn << ", "
+                   << "((char*[]){" << nameStream.str() << "}), "
+                   << "((int[]){" << exprStream.str() << "}), "
+                   << size
+                   << ")";
+      std::string replacement = stringStream.str();
+
+      Rewrite.ReplaceText(expandedLoc, replacement);
+    }
+  }
+
+private:
+  Rewriter &Rewrite;
+  std::string type;
 
 };
 
@@ -282,10 +356,19 @@ private:
 
 class MyASTConsumer : public ASTConsumer {
 public:
-  MyASTConsumer(Rewriter &R) : HandlerForExpressions(R), HandlerForStatements(R) {
-
-    Matcher.addMatcher(InterestingRepairableExpression, &HandlerForExpressions);
-    Matcher.addMatcher(InterestingStatement, &HandlerForStatements);
+  MyASTConsumer(Rewriter &R) : HandlerForIntegerExpressions(R, "int"),
+                               HandlerForBooleanExpressions(R, "bool"),
+                               HandlerForStatements(R),
+                               SemfixHandlerForIntegerExpressions(R, "int"),
+                               SemfixHandlerForBooleanExpressions(R, "bool")  {
+    if (getenv("ANGELIX_SEMFIX_MODE")) {
+      Matcher.addMatcher(InterestingCondition, &SemfixHandlerForBooleanExpressions);
+      Matcher.addMatcher(InterestingIntegerAssignment, &SemfixHandlerForIntegerExpressions);
+    } else {
+      Matcher.addMatcher(RepairableAssignment, &HandlerForIntegerExpressions);
+      Matcher.addMatcher(InterestingRepairableCondition, &HandlerForBooleanExpressions);      
+      Matcher.addMatcher(InterestingStatement, &HandlerForStatements);
+    }
   }
 
   void HandleTranslationUnit(ASTContext &Context) override {
@@ -293,8 +376,12 @@ public:
   }
 
 private:
-  ExpressionHandler HandlerForExpressions;
+  ExpressionHandler HandlerForIntegerExpressions;
+  ExpressionHandler HandlerForBooleanExpressions;  
   StatementHandler HandlerForStatements;
+  SemfixExpressionHandler SemfixHandlerForIntegerExpressions;
+  SemfixExpressionHandler SemfixHandlerForBooleanExpressions;  
+  
   MatchFinder Matcher;
 };
 

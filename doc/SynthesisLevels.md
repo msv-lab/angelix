@@ -55,15 +55,15 @@ Additional integer constant, `=`, `>`, `>=`.
 
 ## extended-arithmetic ##
 
-Additional visible variables, `+`, `-`.
+Additional visible variables, integer constant, `+`, `-`.
 
 ## extended-logic ##
 
-Additional visible variables, `||`, `&&`.
+Additional visible variables, int-to-bool converter, `||`, `&&`.
 
 ## extended-inequalities ##
 
-Additional visible variables, `=`, `>`, `>=`.
+Additional visible variables, integer constant, `=`, `>`, `>=`.
 
 ## mixed-conditional ##
 

@@ -182,9 +182,13 @@ StatementMatcher NonTrivialRepairableAssignment =
 // it may fail
 
 
-StatementMatcher InterestingRepairableExpression =
+StatementMatcher InterestingRepairableCondition =
   anyOf(RepairableIfCondition,
-        RepairableLoopCondition,
+        RepairableLoopCondition);
+
+
+StatementMatcher InterestingRepairableExpression =
+  anyOf(InterestingRepairableCondition,
         RepairableAssignment);
 
 
@@ -203,7 +207,8 @@ StatementMatcher InterestingIntegerAssignment =
   binaryOperator(isTopLevelStatement,
                  hasOperatorName("="),
                  hasLHS(ignoringParenImpCasts(declRefExpr(hasType(isInteger())))),
-                 unless(hasAngelixOutput)).bind("repairable");
+                 hasRHS(expr().bind("repairable")),
+                 unless(hasAngelixOutput));
 
 
 StatementMatcher InterestingAssignment =

@@ -187,7 +187,7 @@ class Angelix:
             positive, negative = pos, neg
 
             while len(negative) > 0:
-                counterexample = negative.pop(0)
+                counterexample = negative[0]
                 logger.info('counterexample test is {}'.format(counterexample))
                 repair_suite.append(counterexample)
                 angelic_forest[counterexample] = self.infer_spec(self.backend_src,

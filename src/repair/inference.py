@@ -377,7 +377,15 @@ class Inferrer:
                     angelic = from_bv32_converter_by_type[type](bv_angelic)
                     bv_original = model[original_selector(expr, instance)]
                     original = from_bv32_converter_by_type[type](bv_original)
-                    logger.info('expression {}[{}]: angelic = {}, original = {}'.format(expr, instance, angelic, original))
+                    if self.config['semfix']:
+                        logger.info('expression {}[{}]: angelic = {}'.format(expr,
+                                                                             instance,
+                                                                             angelic))
+                    else:
+                        logger.info('expression {}[{}]: angelic = {}, original = {}'.format(expr,
+                                                                                            instance,
+                                                                                            angelic,
+                                                                                            original))
                     env_values = dict()
                     for name in env:
                         bv_env = model[env_selector(expr, instance, name)]

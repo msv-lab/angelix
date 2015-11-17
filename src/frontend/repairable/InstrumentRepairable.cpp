@@ -85,7 +85,7 @@ public:
   MyASTConsumer(Rewriter &R) : HandlerForExpressions(R), HandlerForStatements(R) {
     if (getenv("ANGELIX_SEMFIX_MODE")) {
       Matcher.addMatcher(InterestingCondition, &HandlerForExpressions);
-      Matcher.addMatcher(InterestingIntegerAssignment, &HandlerForStatements);
+      Matcher.addMatcher(InterestingIntegerAssignment, &HandlerForExpressions);
     } else {
       if (getenv("ANGELIX_IGNORE_TRIVIAL")) {
         if (getenv("ANGELIX_IF_CONDITIONS_DEFECT_CLASS"))

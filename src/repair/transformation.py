@@ -95,6 +95,9 @@ class FixInjector:
                 file.write('{} {} {} {}\n'.format(*e))
                 file.write(p + "\n")
 
+        if self.config['semfix']:
+            environment['ANGELIX_SEMFIX_MODE'] = 'YES'
+
         environment['ANGELIX_PATCH'] = patch_file
 
         if self.config['verbose']:

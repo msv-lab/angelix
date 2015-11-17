@@ -117,7 +117,10 @@ class Synthesizer:
                     expr = tuple(map(int, line.strip().split('-')))
                     original = content.pop(0).strip()
                     fixed = content.pop(0).strip()
-                    logger.info('fixing expression {}: {} ---> {}'.format(expr, original, fixed))
+                    if self.config['semfix']:
+                        logger.info('synthesized expression {}: {}'.format(expr, fixed))
+                    else:
+                        logger.info('fixing expression {}: {} ---> {}'.format(expr, original, fixed))
                     patch[expr] = fixed
                 return patch
             else:

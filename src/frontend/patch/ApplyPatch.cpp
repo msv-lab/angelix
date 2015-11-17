@@ -105,11 +105,17 @@ private:
   Rewriter &Rewrite;
 };
 
+
 class MyASTConsumer : public ASTConsumer {
 public:
   MyASTConsumer(Rewriter &R) : HandlerForExpressions(R), HandlerForStatements(R) {
-    Matcher.addMatcher(InterestingRepairableExpression, &HandlerForExpressions);
-    Matcher.addMatcher(InterestingStatement, &HandlerForStatements);
+    if (getenv("ANGELIX_SEMFIX_MODE")) {
+      Matcher.addMatcher(InterestingCondition, &HandlerForExpressions);
+      Matcher.addMatcher(InterestingIntegerAssignment, &HandlerForExpressions);
+    } else {
+      Matcher.addMatcher(InterestingRepairableExpression, &HandlerForExpressions);
+      Matcher.addMatcher(InterestingStatement, &HandlerForStatements);
+    }
   }
 
   void HandleTranslationUnit(ASTContext &Context) override {
