@@ -92,6 +92,8 @@ def parse_variables(vars):
                 value = tokens.pop(0)
                 if value == 'angelic':
                     choice_type[expr] = type
+                    if expr not in choice_env: # because it can be empty
+                        choice_env[expr] = set()
                     if expr not in choice_instances:
                         choice_instances[expr] = []
                     choice_instances[expr].append(instance)

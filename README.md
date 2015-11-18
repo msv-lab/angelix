@@ -46,6 +46,10 @@ Angelix is hygienic (it does not modify original project files), however, it als
 
 Run `angelix --help` to see the list of available options.
 
+## Known Issues
+
+* If you use multiarch on Ubuntu, there can be a library path problem: https://stackoverflow.com/questions/6329887/compiling-problems-cannot-find-crt1-o
+
 ## Contributors ##
 
 Principal investigator:
