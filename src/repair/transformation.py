@@ -62,6 +62,9 @@ class SuspiciousTransformer:
         if self.config['semfix']:
             environment['ANGELIX_SEMFIX_MODE'] = 'YES'
 
+        if self.config['synthesis_global_vars']:
+            environment['ANGELIX_GLOBAL_VARIABLES'] = 'YES'
+
         environment['ANGELIX_EXTRACTED'] = self.extracted
         environment['ANGELIX_SUSPICIOUS'] = suspicious_file
 

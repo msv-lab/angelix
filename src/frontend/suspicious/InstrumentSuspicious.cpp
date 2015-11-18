@@ -27,12 +27,12 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
             BinaryOperator* op = cast<BinaryOperator>(*it);
             SourceRange expandedLoc = getExpandedLoc(op, context->getSourceManager());
             unsigned beginLine = context->getSourceManager().getSpellingLineNumber(expandedLoc.getBegin());          
-            if (line > beginLine && 
+            if (line > beginLine &&                
                 BinaryOperator::getOpcodeStr(op->getOpcode()).lower() == "=" &&
                 isa<DeclRefExpr>(op->getLHS())) {
               DeclRefExpr* dref = cast<DeclRefExpr>(op->getLHS());
               VarDecl* vd;
-              if ((vd = cast<VarDecl>(dref->getDecl())) != NULL) {
+              if ((vd = cast<VarDecl>(dref->getDecl())) != NULL && vd->getType().getTypePtr()->isIntegerType()) {
                 set.insert(vd);
               }
             }
@@ -40,8 +40,26 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
         }
       }
     }
+
+    if (getenv("ANGELIX_GLOBAL_VARIABLES")) {
+      ArrayRef<ast_type_traits::DynTypedNode> parents = context->getParents(node);
+      if (parents.size() > 0) {
+        const ast_type_traits::DynTypedNode parent = *(parents.begin()); // TODO: for now only first
+        const TranslationUnitDecl* tu;
+        if ((tu = parent.get<TranslationUnitDecl>()) != NULL) {
+          for (auto it = tu->decls_begin(); it != tu->decls_end(); ++it) {
+            if (isa<VarDecl>(*it)) {
+              VarDecl* vd = cast<VarDecl>(*it);
+              unsigned beginLine = getDeclExpandedLine(vd, context->getSourceManager());
+              if (line > beginLine && vd->getType().getTypePtr()->isIntegerType()) set.insert(vd);
+            }
+          }
+        }
+      }
+    }
     
     return set;
+    
   } else {
     ArrayRef<ast_type_traits::DynTypedNode> parents = context->getParents(node);
     if (parents.size() > 0) {

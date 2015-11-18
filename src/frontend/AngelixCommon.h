@@ -24,6 +24,19 @@ using namespace llvm;
 #define INPLACE_MODIFICATION 1
 
 
+unsigned getDeclExpandedLine(const clang::Decl* decl, SourceManager &srcMgr) {
+  SourceLocation startLoc = decl->getLocStart();
+  if(startLoc.isMacroID()) {
+    // Get the start/end expansion locations
+    std::pair<SourceLocation, SourceLocation> expansionRange = srcMgr.getImmediateExpansionRange(startLoc);
+    // We're just interested in the start location
+    startLoc = expansionRange.first;
+  }
+
+  return srcMgr.getSpellingLineNumber(startLoc);
+}
+
+
 SourceRange getExpandedLoc(const clang::Stmt* expr, SourceManager &srcMgr) {
   SourceLocation startLoc = expr->getLocStart();
   SourceLocation endLoc = expr->getLocEnd();
