@@ -9,7 +9,7 @@
 #include "SMTLIB2.h"
 
 
-std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynTypedNode node, ASTContext* context) {
+std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynTypedNode node, ASTContext* context, unsigned line) {
   const FunctionDecl* fd;
   if ((fd = node.get<FunctionDecl>()) != NULL) {
     std::unordered_set<VarDecl*> set;
@@ -17,12 +17,36 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
       auto vd = cast<VarDecl>(*it);
       set.insert(vd);
     }
+
+    if (fd->hasBody()) {
+      Stmt* body = fd->getBody();
+      CompoundStmt* cstmt;
+      if ((cstmt = cast<CompoundStmt>(body)) != NULL) {
+        for (auto it = cstmt->body_begin(); it != cstmt->body_end(); ++it) {
+          if (isa<BinaryOperator>(*it)) {
+            BinaryOperator* op = cast<BinaryOperator>(*it);
+            SourceRange expandedLoc = getExpandedLoc(op, context->getSourceManager());
+            unsigned beginLine = context->getSourceManager().getSpellingLineNumber(expandedLoc.getBegin());          
+            if (line > beginLine && 
+                BinaryOperator::getOpcodeStr(op->getOpcode()).lower() == "=" &&
+                isa<DeclRefExpr>(op->getLHS())) {
+              DeclRefExpr* dref = cast<DeclRefExpr>(op->getLHS());
+              VarDecl* vd;
+              if ((vd = cast<VarDecl>(dref->getDecl())) != NULL) {
+                set.insert(vd);
+              }
+            }
+          }
+        }
+      }
+    }
+    
     return set;
   } else {
     ArrayRef<ast_type_traits::DynTypedNode> parents = context->getParents(node);
     if (parents.size() > 0) {
       const ast_type_traits::DynTypedNode parent = *(parents.begin()); // TODO: for now only first
-      return collectVarsFromScope(parent, context);
+      return collectVarsFromScope(parent, context, line);
     } else {
       std::unordered_set<VarDecl*> set;
       return set;
@@ -145,7 +169,7 @@ public:
       fs << "(assert " << toSMTLIB2(expr) << ")\n";
 
       const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*expr);
-      std::unordered_set<VarDecl*> varsFromScope = collectVarsFromScope(node, Result.Context);
+      std::unordered_set<VarDecl*> varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
       std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(expr);
       std::unordered_set<MemberExpr*> memberFromExpr = collectMemberExprFromExpr(expr);
       std::unordered_set<VarDecl*> vars;
@@ -233,7 +257,7 @@ public:
       fs << "(assert true)\n"; // this is a hack, but not dangerous
 
       const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*expr);
-      std::unordered_set<VarDecl*> varsFromScope = collectVarsFromScope(node, Result.Context);
+      std::unordered_set<VarDecl*> varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
       std::unordered_set<VarDecl*> vars;
       vars.insert(varsFromScope.begin(), varsFromScope.end());
       std::ostringstream exprStream;
@@ -307,7 +331,7 @@ public:
       fs << "(assert true)\n";
 
       const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*stmt);
-      std::unordered_set<VarDecl*> varsFromScope = collectVarsFromScope(node, Result.Context);
+      std::unordered_set<VarDecl*> varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
       std::unordered_set<VarDecl*> vars;
       vars.insert(varsFromScope.begin(), varsFromScope.end());
       std::ostringstream exprStream;
