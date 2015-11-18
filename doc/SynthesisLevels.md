@@ -67,4 +67,4 @@ Additional visible variables, integer constant, `=`, `>`, `>=`.
 
 ## mixed-conditional ##
 
-TODO
+Additional visible variables, integer constant, `>`, `>=`, `||`, `&&`, `+`, `-`.
