@@ -107,6 +107,8 @@ def parse_variables(vars):
                 else:
                     raise InferenceError()
             elif kind == 'const':
+                logger.error('constant choices are not supported')
+                raise InferenceError()                
                 if type == 'int':
                     logger.error('integer constant choices are not supported')
                     raise InferenceError()

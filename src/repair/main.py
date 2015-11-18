@@ -48,13 +48,14 @@ KLEE_SEARCH_STRATEGIES = ['dfs', 'bfs', 'random-state', 'random-path',
                           'nurs:covnew', 'nurs:md2u', 'nurs:depth',
                           'nurs:icnt', 'nurs:cpicnt', 'nurs:qc']
 
+
 DEFAULT_GROUP_SIZE = 2
+
 
 DEFAULT_INITIAL_TESTS = 2
 
 
-# Otherwise inference.get_vars fails:
-sys.setrecursionlimit(10000)
+sys.setrecursionlimit(10000)  # Otherwise inference.get_vars fails
 
 
 class Angelix:
@@ -292,6 +293,8 @@ if __name__ == "__main__":
                         help='test case timeout (default: %(default)s)')
     parser.add_argument('--group-size', metavar='NUM', type=int, default=DEFAULT_GROUP_SIZE,
                         help='number of statements considered at once (default: %(default)s)')
+    parser.add_argument('--group-by-score', action='store_true',
+                        help='group statements by suspiciousness score (default: grouping by location)')
     parser.add_argument('--suspicious', metavar='NUM', type=int, default=20,
                         help='total number of suspicious statements (default: %(default)s)')
     parser.add_argument('--localization', default='jaccard', choices=['jaccard', 'ochiai', 'tarantula'],
@@ -357,6 +360,10 @@ if __name__ == "__main__":
         logger.error('\'guards\' and \'assignments\' defect classes are currently incompatible')
         exit(1)
 
+    if args.synthesis_max_vars is not None:
+        logger.error('--synthesis-max-vars is not implemented')
+        exit(1)
+
     if args.semfix:
         if not (args.defect == DEFAULT_DEFECTS):
             logger.warning('--semfix disables --defect option')
@@ -370,7 +377,7 @@ if __name__ == "__main__":
         if args.golden is not None:
             logger.warning('--dump-only disables --golden option')
         if asserts is not None:
-            logger.warning('--dump-only disables --assert option') 
+            logger.warning('--dump-only disables --assert option')
 
     config = dict()
     config['initial_tests']         = args.initial_tests
@@ -378,6 +385,7 @@ if __name__ == "__main__":
     config['defect']                = args.defect
     config['test_timeout']          = args.test_timeout
     config['group_size']            = args.group_size
+    config['group_by_score']        = args.group_by_score
     config['suspicious']            = args.suspicious
     config['localization']          = args.localization
     config['ignore_trivial']        = args.ignore_trivial
@@ -393,6 +401,10 @@ if __name__ == "__main__":
     config['synthesis_max_vars']    = args.synthesis_max_vars
     config['synthesis_global_vars'] = args.synthesis_global_vars
     config['verbose']               = args.verbose
+
+    if args.verbose:
+        for key, value in config.items():
+            logger.info('option {} = {}'.format(key, value))
 
     tool = Angelix(working_dir,
                    src=args.src,

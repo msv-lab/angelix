@@ -89,19 +89,32 @@ class Localizer:
             with_score.append((e, score))
 
         ranking = sorted(with_score, key=lambda r: r[1], reverse=True)
-        top = ranking[:suspicious]
+        
+        if self.config['group_by_score']:
+            top = ranking[:suspicious]
+        else:
+            top = sorted(ranking[:suspicious], key=lambda r: r[0][0])  # sort by location
 
-        sorted_by_line = sorted(top, key=lambda r: r[0][0])
+        groups_with_score = []
+        for i in range(0, ceil(suspicious / group_size)):
+            if len(top) == 0:
+                break
+            group = []
+            total_score = 0
+            for j in range(0, group_size):
+                if len(top) == 0:
+                    break
+                expr, score = top.pop(0)
+                total_score += score
+                group.append(expr)
+            groups_with_score.append((group, total_score))
+
+        sorted_groups = sorted(groups_with_score, key=lambda r: r[1], reverse=True)
 
         groups = []
-        for i in range(0, ceil(suspicious / group_size)):
-            if len(sorted_by_line) == 0:
-                break
-            groups.append([])
-            for j in range(0, group_size):
-                if len(sorted_by_line) == 0:
-                    break
-                expr, score = sorted_by_line.pop(0)
-                groups[i].append(expr)
+        for (i, (group, score)) in enumerate(sorted_groups):
+            groups.append(group)
+            for expr in group:
                 logger.info("selected expression {} with score {:.5} in group {}".format(expr, score, i))
+        
         return groups
