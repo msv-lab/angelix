@@ -78,6 +78,7 @@ class Synthesizer:
                     "level": "linear"
                 },
                 "simplification": False,
+                "reuseStructure": not self.config['semfix'],
                 "spaceReduction": True,
                 "componentLevel": level,
                 "solverBound": 3,

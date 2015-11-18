@@ -19,7 +19,7 @@ from inference import Inferrer, InferenceError
 from synthesis import Synthesizer
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("repair")
 
 
 SYNTHESIS_LEVELS = ['alternatives',
@@ -39,6 +39,9 @@ DEFECT_CLASSES = ['if-conditions',
                   'assignments',
                   'loop-conditions',
                   'guards']
+
+
+DEFAULT_DEFECTS = ['if-conditions', 'assignments']
 
 
 KLEE_SEARCH_STRATEGIES = ['dfs', 'bfs', 'random-state', 'random-path',
@@ -273,7 +276,7 @@ if __name__ == "__main__":
     parser.add_argument('--golden', metavar='DIR', help='golden source directory')
     parser.add_argument('--assert', metavar='FILE', help='assert expected outputs')
     parser.add_argument('--defect', metavar='CLASS', nargs='+',
-                        default=['if-conditions', 'assignments'],
+                        default=DEFAULT_DEFECTS,
                         choices=DEFECT_CLASSES,
                         help='defect classes (default: %(default)s). choices: ' + ', '.join(DEFECT_CLASSES))
     parser.add_argument('--lines', metavar='LINE', type=int, nargs='+', help='suspicious lines (default: all)')
@@ -333,10 +336,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    FORMAT = '%(levelname)-8s %(name)-15s %(message)s'
     if args.quiet:
-        logging.basicConfig(level=logging.WARNING)
+        logging.basicConfig(level=logging.WARNING, format=FORMAT)
     else:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.INFO, format=FORMAT)
 
     working_dir = join(os.getcwd(), ".angelix")
     if exists(working_dir):
@@ -354,7 +358,7 @@ if __name__ == "__main__":
         exit(1)
 
     if args.semfix:
-        if args.defect is not None:
+        if not (args.defect == DEFAULT_DEFECTS):
             logger.warning('--semfix disables --defect option')
         if args.ignore_trivial:
             logger.warning('--semfix disables --ignore-trivial option')

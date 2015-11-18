@@ -146,7 +146,7 @@ class Inferrer:
         return sorted_af[:self.config['max_angelic_paths']]
 
     def __call__(self, project, test, dump):
-        logger.info('infering specification for test \'{}\''.format(test))
+        logger.info('inferring specification for test \'{}\''.format(test))
 
         environment = dict(os.environ)
         if self.config['klee_max_forks'] is not None:
