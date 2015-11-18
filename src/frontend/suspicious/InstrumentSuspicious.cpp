@@ -73,6 +73,16 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
 }
 
 
+bool isBooleanExpr(const Expr* expr) {
+  if (isa<BinaryOperator>(expr)) {
+    const BinaryOperator* op = cast<BinaryOperator>(expr);
+    std::string opStr = BinaryOperator::getOpcodeStr(op->getOpcode()).lower();
+    return opStr == "==" || opStr == "!=" || opStr == "<=" || opStr == ">=" || opStr == ">" || opStr == "<" || opStr == "||" || opStr == "&&";
+  }
+  return false;
+}
+
+
 class CollectVariables : public StmtVisitor<CollectVariables> {
   std::unordered_set<VarDecl*> *VSet;
   std::unordered_set<MemberExpr*> *MSet;
@@ -295,9 +305,14 @@ public:
 
       int size = vars.size();
 
+      std::string correctedType = type;
+      if (type == "int" && isBooleanExpr(expr)) {
+        correctedType = "bool";
+      }
+
       std::ostringstream stringStream;
       stringStream << "ANGELIX_CHOOSE("
-                   << type << ", "
+                   << correctedType << ", "
                    << "1" << ", " // don't execute expression, because it can have side effects
                    << beginLine << ", "
                    << beginColumn << ", "
