@@ -28,7 +28,7 @@ unsigned getDeclExpandedLine(const clang::Decl* decl, SourceManager &srcMgr) {
   SourceLocation startLoc = decl->getLocStart();
   if(startLoc.isMacroID()) {
     // Get the start/end expansion locations
-    std::pair<SourceLocation, SourceLocation> expansionRange = srcMgr.getImmediateExpansionRange(startLoc);
+    std::pair<SourceLocation, SourceLocation> expansionRange = srcMgr.getExpansionRange(startLoc);
     // We're just interested in the start location
     startLoc = expansionRange.first;
   }
@@ -43,13 +43,13 @@ SourceRange getExpandedLoc(const clang::Stmt* expr, SourceManager &srcMgr) {
 
   if(startLoc.isMacroID()) {
     // Get the start/end expansion locations
-    std::pair<SourceLocation, SourceLocation> expansionRange = srcMgr.getImmediateExpansionRange(startLoc);
+    std::pair<SourceLocation, SourceLocation> expansionRange = srcMgr.getExpansionRange(startLoc);
     // We're just interested in the start location
     startLoc = expansionRange.first;
   }
   if(endLoc.isMacroID()) {
     // Get the start/end expansion locations
-    std::pair<SourceLocation, SourceLocation> expansionRange = srcMgr.getImmediateExpansionRange(endLoc);
+    std::pair<SourceLocation, SourceLocation> expansionRange = srcMgr.getExpansionRange(endLoc);
     // We're just interested in the start location
     endLoc = expansionRange.second; // TODO: I am not sure about it
   }
