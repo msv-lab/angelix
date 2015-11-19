@@ -28,7 +28,7 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
           if (isa<BinaryOperator>(*it)) {
             BinaryOperator* op = cast<BinaryOperator>(*it);
             SourceRange expandedLoc = getExpandedLoc(op, context->getSourceManager());
-            unsigned beginLine = context->getSourceManager().getSpellingLineNumber(expandedLoc.getBegin());          
+            unsigned beginLine = context->getSourceManager().getExpansionLineNumber(expandedLoc.getBegin());          
             if (line > beginLine &&                
                 BinaryOperator::getOpcodeStr(op->getOpcode()).lower() == "=" &&
                 isa<DeclRefExpr>(op->getLHS())) {
@@ -180,10 +180,10 @@ public:
 
       SourceRange expandedLoc = getExpandedLoc(expr, srcMgr);
 
-      unsigned beginLine = srcMgr.getSpellingLineNumber(expandedLoc.getBegin());
-      unsigned beginColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getBegin());
-      unsigned endLine = srcMgr.getSpellingLineNumber(expandedLoc.getEnd());
-      unsigned endColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getEnd());
+      unsigned beginLine = srcMgr.getExpansionLineNumber(expandedLoc.getBegin());
+      unsigned beginColumn = srcMgr.getExpansionColumnNumber(expandedLoc.getBegin());
+      unsigned endLine = srcMgr.getExpansionLineNumber(expandedLoc.getEnd());
+      unsigned endColumn = srcMgr.getExpansionColumnNumber(expandedLoc.getEnd());
 
       if (! isSuspicious(beginLine, beginColumn, endLine, endColumn)) {
         return;
@@ -268,10 +268,10 @@ public:
 
       SourceRange expandedLoc = getExpandedLoc(expr, srcMgr);
 
-      unsigned beginLine = srcMgr.getSpellingLineNumber(expandedLoc.getBegin());
-      unsigned beginColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getBegin());
-      unsigned endLine = srcMgr.getSpellingLineNumber(expandedLoc.getEnd());
-      unsigned endColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getEnd());
+      unsigned beginLine = srcMgr.getExpansionLineNumber(expandedLoc.getBegin());
+      unsigned beginColumn = srcMgr.getExpansionColumnNumber(expandedLoc.getBegin());
+      unsigned endLine = srcMgr.getExpansionLineNumber(expandedLoc.getEnd());
+      unsigned endColumn = srcMgr.getExpansionColumnNumber(expandedLoc.getEnd());
 
       if (! isSuspicious(beginLine, beginColumn, endLine, endColumn)) {
         return;
@@ -347,10 +347,10 @@ public:
 
       SourceRange expandedLoc = getExpandedLoc(stmt, srcMgr);
 
-      unsigned beginLine = srcMgr.getSpellingLineNumber(expandedLoc.getBegin());
-      unsigned beginColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getBegin());
-      unsigned endLine = srcMgr.getSpellingLineNumber(expandedLoc.getEnd());
-      unsigned endColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getEnd());
+      unsigned beginLine = srcMgr.getExpansionLineNumber(expandedLoc.getBegin());
+      unsigned beginColumn = srcMgr.getExpansionColumnNumber(expandedLoc.getBegin());
+      unsigned endLine = srcMgr.getExpansionLineNumber(expandedLoc.getEnd());
+      unsigned endColumn = srcMgr.getExpansionColumnNumber(expandedLoc.getEnd());
 
       if (! isSuspicious(beginLine, beginColumn, endLine, endColumn)) {
         return;

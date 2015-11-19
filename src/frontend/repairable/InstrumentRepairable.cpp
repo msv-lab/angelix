@@ -14,10 +14,10 @@ public:
 
       SourceRange expandedLoc = getExpandedLoc(expr, srcMgr);
 
-      unsigned beginLine = srcMgr.getSpellingLineNumber(expandedLoc.getBegin());
-      unsigned beginColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getBegin());
-      unsigned endLine = srcMgr.getSpellingLineNumber(expandedLoc.getEnd());
-      unsigned endColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getEnd());
+      unsigned beginLine = srcMgr.getExpansionLineNumber(expandedLoc.getBegin());
+      unsigned beginColumn = srcMgr.getExpansionColumnNumber(expandedLoc.getBegin());
+      unsigned endLine = srcMgr.getExpansionLineNumber(expandedLoc.getEnd());
+      unsigned endColumn = srcMgr.getExpansionColumnNumber(expandedLoc.getEnd());
 
       std::cout << beginLine << " " << beginColumn << " " << endLine << " " << endColumn << "\n"
                 << toString(expr) << "\n";
@@ -52,10 +52,10 @@ public:
 
       SourceRange expandedLoc = getExpandedLoc(stmt, srcMgr);
 
-      unsigned beginLine = srcMgr.getSpellingLineNumber(expandedLoc.getBegin());
-      unsigned beginColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getBegin());
-      unsigned endLine = srcMgr.getSpellingLineNumber(expandedLoc.getEnd());
-      unsigned endColumn = srcMgr.getSpellingColumnNumber(expandedLoc.getEnd());
+      unsigned beginLine = srcMgr.getExpansionLineNumber(expandedLoc.getBegin());
+      unsigned beginColumn = srcMgr.getExpansionColumnNumber(expandedLoc.getBegin());
+      unsigned endLine = srcMgr.getExpansionLineNumber(expandedLoc.getEnd());
+      unsigned endColumn = srcMgr.getExpansionColumnNumber(expandedLoc.getEnd());
 
       std::cout << beginLine << " " << beginColumn << " " << endLine << " " << endColumn << "\n"
                 << toString(stmt) << "\n";

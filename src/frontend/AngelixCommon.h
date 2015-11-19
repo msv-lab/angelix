@@ -33,7 +33,7 @@ unsigned getDeclExpandedLine(const clang::Decl* decl, SourceManager &srcMgr) {
     startLoc = expansionRange.first;
   }
 
-  return srcMgr.getSpellingLineNumber(startLoc);
+  return srcMgr.getExpansionLineNumber(startLoc);
 }
 
 
