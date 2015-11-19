@@ -13,9 +13,11 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
   const FunctionDecl* fd;
   if ((fd = node.get<FunctionDecl>()) != NULL) {
     std::unordered_set<VarDecl*> set;
-    for (auto it = fd->param_begin(); it != fd->param_end(); ++it) {
-      auto vd = cast<VarDecl>(*it);
-      set.insert(vd);
+    if (getenv("ANGELIX_FUNCTION_PARAMETERS")) {
+      for (auto it = fd->param_begin(); it != fd->param_end(); ++it) {
+        auto vd = cast<VarDecl>(*it);
+        set.insert(vd);
+      }
     }
 
     if (fd->hasBody()) {

@@ -65,6 +65,9 @@ class SuspiciousTransformer:
         if self.config['synthesis_global_vars']:
             environment['ANGELIX_GLOBAL_VARIABLES'] = 'YES'
 
+        if self.config['synthesis_func_params']:
+            environment['ANGELIX_FUNCTION_PARAMETERS'] = 'YES'
+
         environment['ANGELIX_EXTRACTED'] = self.extracted
         environment['ANGELIX_SUSPICIOUS'] = suspicious_file
 
