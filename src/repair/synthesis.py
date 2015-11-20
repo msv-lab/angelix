@@ -71,7 +71,8 @@ class Synthesizer:
 
             config = {
                 "encodingConfig": {
-                    "componentsMultipleOccurrences": False,
+                    "componentsMultipleOccurrences": True,
+                    # better if false, if not enough primitive components, synthesis can fail
                     "phantomComponents": True,
                     "repairBooleanConst": False,
                     "repairIntegerConst": False,
