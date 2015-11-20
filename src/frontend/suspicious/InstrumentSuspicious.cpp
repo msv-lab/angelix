@@ -20,29 +20,6 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
       }
     }
 
-    if (fd->hasBody()) {
-      Stmt* body = fd->getBody();
-      CompoundStmt* cstmt;
-      if ((cstmt = cast<CompoundStmt>(body)) != NULL) {
-        for (auto it = cstmt->body_begin(); it != cstmt->body_end(); ++it) {
-          if (isa<BinaryOperator>(*it)) {
-            BinaryOperator* op = cast<BinaryOperator>(*it);
-            SourceRange expandedLoc = getExpandedLoc(op, context->getSourceManager());
-            unsigned beginLine = context->getSourceManager().getExpansionLineNumber(expandedLoc.getBegin());          
-            if (line > beginLine &&                
-                BinaryOperator::getOpcodeStr(op->getOpcode()).lower() == "=" &&
-                isa<DeclRefExpr>(op->getLHS())) {
-              DeclRefExpr* dref = cast<DeclRefExpr>(op->getLHS());
-              VarDecl* vd;
-              if ((vd = cast<VarDecl>(dref->getDecl())) != NULL && vd->getType().getTypePtr()->isIntegerType()) {
-                set.insert(vd);
-              }
-            }
-          }
-        }
-      }
-    }
-
     if (getenv("ANGELIX_GLOBAL_VARIABLES")) {
       ArrayRef<ast_type_traits::DynTypedNode> parents = context->getParents(node);
       if (parents.size() > 0) {
@@ -63,14 +40,37 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
     return set;
     
   } else {
+
+    std::unordered_set<VarDecl*> set;
+
+    const CompoundStmt* cstmt;
+    if ((cstmt = node.get<CompoundStmt>()) != NULL) {
+      for (auto it = cstmt->body_begin(); it != cstmt->body_end(); ++it) {
+        if (isa<BinaryOperator>(*it)) {
+          BinaryOperator* op = cast<BinaryOperator>(*it);
+          SourceRange expandedLoc = getExpandedLoc(op, context->getSourceManager());
+          unsigned beginLine = context->getSourceManager().getExpansionLineNumber(expandedLoc.getBegin());          
+          if (line > beginLine &&                
+              BinaryOperator::getOpcodeStr(op->getOpcode()).lower() == "=" &&
+              isa<DeclRefExpr>(op->getLHS())) {
+            DeclRefExpr* dref = cast<DeclRefExpr>(op->getLHS());
+            VarDecl* vd;
+            if ((vd = cast<VarDecl>(dref->getDecl())) != NULL && vd->getType().getTypePtr()->isIntegerType()) {
+              set.insert(vd);
+            }
+          }
+        }
+      }
+    }
+    
     ArrayRef<ast_type_traits::DynTypedNode> parents = context->getParents(node);
     if (parents.size() > 0) {
       const ast_type_traits::DynTypedNode parent = *(parents.begin()); // TODO: for now only first
-      return collectVarsFromScope(parent, context, line);
-    } else {
-      std::unordered_set<VarDecl*> set;
-      return set;
+      std::unordered_set<VarDecl*> parent_set = collectVarsFromScope(parent, context, line);
+      set.insert(parent_set.cbegin(), parent_set.cend());
     }
+
+    return set;
   }
 }
 

@@ -309,7 +309,7 @@ if __name__ == "__main__":
     parser.add_argument('--klee-max-forks', metavar='NUM', type=int, default=None,
                         help='KLEE max number of forks (default: %(default)s)')
     parser.add_argument('--klee-max-depth', metavar='NUM', type=int, default=None,
-                        help='KLEE max KLEE depth (default: %(default)s)')
+                        help='KLEE max symbolic branches (default: %(default)s)')
     parser.add_argument('--klee-timeout', metavar='SEC', type=int, default=None,
                         help='KLEE timeout (default: %(default)s)')
     parser.add_argument('--klee-solver-timeout', metavar='MS', type=int, default=None,
