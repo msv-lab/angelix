@@ -11,7 +11,8 @@ import sys
 from project import Validation, Frontend, Backend, CompilationError
 from utils import format_time, time_limit, TimeoutException
 from runtime import Dump, Trace
-from transformation import RepairableTransformer, SuspiciousTransformer, FixInjector
+from transformation import RepairableTransformer, SuspiciousTransformer, \
+                           FixInjector, TransformationError
 from testing import Tester
 from localization import Localizer
 from reduction import Reducer
@@ -428,7 +429,7 @@ if __name__ == "__main__":
                 asserts = json.dump(dump, output_file, indent=2)
             logger.info('outputs successfully dumped (see dump.json)')
             exit(0)
-        except CompilationError:
+        except (CompilationError, TransformationError):
             logger.info('failed to dump outputs')
             exit(1)
 
@@ -450,7 +451,7 @@ if __name__ == "__main__":
         logger.info("failed to generate patch (timeout)")
         print('TIMEOUT')
         exit(0)
-    except (CompilationError, InferenceError):
+    except (CompilationError, InferenceError, TransformationError):
         logger.info("failed to generate patch")
         print('FAIL')
         exit(1)

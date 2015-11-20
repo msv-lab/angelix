@@ -1,4 +1,5 @@
 import logging
+from math import sqrt
 
 
 logger = logging.getLogger(__name__)
@@ -17,7 +18,7 @@ class Reducer:
         computes config['initial_tests'] tests that maximally cover given expressions
         '''
         number = self.config['initial_tests']
-        number_failing = 1
+        number_failing = int(sqrt(number))
 
         # this code was originally written for multiple files:
         source_name = ''

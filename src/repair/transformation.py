@@ -1,5 +1,6 @@
 import os
-from os.path import join, basename
+import sys
+from os.path import join, basename, relpath
 import tempfile
 import subprocess
 from utils import cd
@@ -10,10 +11,18 @@ import shutil
 logger = logging.getLogger(__name__)
 
 
+class TransformationError(Exception):
+    pass
+
+
 class RepairableTransformer:
 
     def __init__(self, config):
         self.config = config
+        if self.config['verbose']:
+            self.subproc_output = sys.stderr
+        else:
+            self.subproc_output = subprocess.DEVNULL
 
     def __call__(self, project):
         src = basename(project.dir)
@@ -33,14 +42,14 @@ class RepairableTransformer:
             environment['ANGELIX_IGNORE_TRIVIAL'] = 'YES'
         if self.config['semfix']:
             environment['ANGELIX_SEMFIX_MODE'] = 'YES'
-        if self.config['verbose']:
-            stderr = None
-        else:
-            stderr = subprocess.DEVNULL
         with cd(project.dir):
-            subprocess.check_output(['instrument-repairable', project.buggy],
-                                    stderr=stderr,
-                                    env=environment)
+            return_code = subprocess.call(['instrument-repairable', project.buggy],
+                                          stderr=self.subproc_output,
+                                          stdout=self.subproc_output,
+                                          env=environment)
+        if return_code != 0:
+            logger.error("transformation of {} failed".format(relpath(project.dir)))
+            raise TransformationError()
 
 
 class SuspiciousTransformer:
@@ -48,6 +57,10 @@ class SuspiciousTransformer:
     def __init__(self, config, extracted):
         self.config = config
         self.extracted = extracted
+        if self.config['verbose']:
+            self.subproc_output = sys.stderr
+        else:
+            self.subproc_output = subprocess.DEVNULL
 
     def __call__(self, project, expressions):
         src = basename(project.dir)
@@ -71,15 +84,14 @@ class SuspiciousTransformer:
         environment['ANGELIX_EXTRACTED'] = self.extracted
         environment['ANGELIX_SUSPICIOUS'] = suspicious_file
 
-        if self.config['verbose']:
-            stderr = None
-        else:
-            stderr = subprocess.DEVNULL
-
         with cd(project.dir):
-            subprocess.check_output(['instrument-suspicious', project.buggy],
-                                    env=environment,
-                                    stderr=stderr)
+            return_code = subprocess.call(['instrument-suspicious', project.buggy],
+                                          stderr=self.subproc_output,
+                                          stdout=self.subproc_output,
+                                          env=environment)
+        if return_code != 0:
+            logger.error("transformation of {} failed".format(relpath(project.dir)))
+            raise TransformationError()
 
         shutil.rmtree(dirpath)
 
@@ -88,6 +100,10 @@ class FixInjector:
 
     def __init__(self, config):
         self.config = config
+        if self.config['verbose']:
+            self.subproc_output = sys.stderr
+        else:
+            self.subproc_output = subprocess.DEVNULL
 
     def __call__(self, project, patch):
         src = basename(project.dir)
@@ -106,15 +122,14 @@ class FixInjector:
 
         environment['ANGELIX_PATCH'] = patch_file
 
-        if self.config['verbose']:
-            stderr = None
-        else:
-            stderr = subprocess.DEVNULL
-
         with cd(project.dir):
-            subprocess.check_output(['apply-patch', project.buggy],
-                                    env=environment,
-                                    stderr=stderr)
+            return_code = subprocess.call(['apply-patch', project.buggy],
+                                          stderr=self.subproc_output,
+                                          stdout=self.subproc_output,
+                                          env=environment)
+        if return_code != 0:
+            logger.error("transformation of {} failed".format(relpath(project.dir)))
+            raise TransformationError()
 
         shutil.rmtree(dirpath)
 
