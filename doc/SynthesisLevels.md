@@ -68,3 +68,8 @@ Additional visible variables, integer constant, `=`, `>`, `>=`.
 ## mixed-conditional ##
 
 Additional visible variables, integer constant, `>`, `>=`, `||`, `&&`, `+`, `-`.
+
+## conditional-arithmetic ##
+
+Additional visible variables, integer constant, `>`, `>=`, `+`, `-`, 'ite'.
+

@@ -1,7 +1,7 @@
 import copy
 import difflib
 import os
-from os.path import join, exists, relpath, basename
+from os.path import join, exists, relpath, basename, realpath
 import shutil
 import subprocess
 import json
@@ -9,6 +9,7 @@ from utils import cd
 import logging
 import tempfile
 import sys
+import re
 
 
 logger = logging.getLogger(__name__)
@@ -50,6 +51,10 @@ class Project:
         for item in compilation_db:
             item['directory'] = join(self.dir, item['directory'])
             item['file'] = join(self.dir, item['file'])
+            # this is a temporary hack. It general case, we need (probably) a different workflow:
+            wrong_dir = realpath(join(self.dir, '..', 'validation'))
+            item['command'] = item['command'].replace(wrong_dir, self.dir)
+            
             item['command'] = item['command'] + ' -I' + os.environ['LLVM3_INCLUDE_PATH']
             # this is a hack to skip output expressions when perform transformation:
             item['command'] = item['command'] + ' -include ' + os.environ['ANGELIX_RUNTIME_H']

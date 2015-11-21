@@ -33,7 +33,8 @@ SYNTHESIS_LEVELS = ['alternatives',
                     'extended-arithmetic',
                     'extended-logic',
                     'extended-inequalities',
-                    'mixed-conditional']
+                    'mixed-conditional',
+                    'conditional-arithmetic']
 
 
 DEFECT_CLASSES = ['if-conditions',
@@ -125,6 +126,7 @@ class Angelix:
         self.frontend_src.configure()
         self.instrument_for_localization(self.frontend_src)
         self.frontend_src.build()
+        return None
         logger.info('running positive tests for debugging')
         for test in positive:
             self.trace += test
