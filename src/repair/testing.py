@@ -11,9 +11,10 @@ logger = logging.getLogger(__name__)
 
 class Tester:
 
-    def __init__(self, config, oracle):
+    def __init__(self, config, oracle, workdir):
         self.config = config
         self.oracle = oracle
+        self.workdir = workdir
 
     def __call__(self, project, test, dump=None, trace=None, klee=False, env=os.environ):
         src = basename(project.dir)
@@ -35,6 +36,8 @@ class Tester:
             environment['ANGELIX_RUN'] = 'angelix-run-klee'
             # using stub library to make lli work
             environment['LLVMINTERP'] = 'lli -load {}/libkleeRuntest.so'.format(os.environ['KLEE_LIBRARY_PATH'])
+        environment['ANGELIX_WORKDIR'] = self.workdir
+        environment['ANGELIX_TEST_ID'] = test
 
         if self.config['verbose']:
             subproc_output = sys.stderr

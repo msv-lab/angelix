@@ -70,7 +70,7 @@ class Angelix:
 
         angelic_forest_file = join(working_dir, 'last-angelic-forest.json')
 
-        tester = Tester(config, oracle)
+        tester = Tester(config, oracle, abspath(working_dir))
         self.run_test = tester
         self.get_suspicious_groups = Localizer(config, lines)
         self.reduce = Reducer(config)
@@ -126,7 +126,6 @@ class Angelix:
         self.frontend_src.configure()
         self.instrument_for_localization(self.frontend_src)
         self.frontend_src.build()
-        return None
         logger.info('running positive tests for debugging')
         for test in positive:
             self.trace += test
