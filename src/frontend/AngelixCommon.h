@@ -13,6 +13,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/Lex/Preprocessor.h"
 
 
 using namespace clang;
@@ -34,6 +35,20 @@ unsigned getDeclExpandedLine(const clang::Decl* decl, SourceManager &srcMgr) {
   }
 
   return srcMgr.getExpansionLineNumber(startLoc);
+}
+
+
+bool insideMacro(const clang::Stmt* expr, SourceManager &srcMgr, const LangOptions &langOpts) {
+  SourceLocation startLoc = expr->getLocStart();
+  SourceLocation endLoc = expr->getLocEnd();
+
+  if(startLoc.isMacroID() && !Lexer::isAtStartOfMacroExpansion(startLoc, srcMgr, langOpts))
+    return true;
+  
+  if(endLoc.isMacroID() && !Lexer::isAtEndOfMacroExpansion(endLoc, srcMgr, langOpts))
+    return true;
+
+  return false;
 }
 
 

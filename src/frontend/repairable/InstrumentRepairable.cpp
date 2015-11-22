@@ -11,6 +11,10 @@ public:
   virtual void run(const MatchFinder::MatchResult &Result) {
     if (const Expr *expr = Result.Nodes.getNodeAs<clang::Expr>("repairable")) {
       SourceManager &srcMgr = Rewrite.getSourceMgr();
+      const LangOptions &langOpts = Rewrite.getLangOpts();
+
+      if (insideMacro(expr, srcMgr, langOpts))
+        return;
 
       SourceRange expandedLoc = getExpandedLoc(expr, srcMgr);
 
@@ -49,6 +53,11 @@ public:
   virtual void run(const MatchFinder::MatchResult &Result) {
     if (const Stmt *stmt = Result.Nodes.getNodeAs<clang::Stmt>("repairable")) {
       SourceManager &srcMgr = Rewrite.getSourceMgr();
+      const LangOptions &langOpts = Rewrite.getLangOpts();
+
+      if (insideMacro(stmt, srcMgr, langOpts))
+        return;
+      
 
       SourceRange expandedLoc = getExpandedLoc(stmt, srcMgr);
 
