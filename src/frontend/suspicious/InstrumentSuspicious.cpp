@@ -452,7 +452,8 @@ public:
   void EndSourceFileAction() override {
     FileID ID = TheRewriter.getSourceMgr().getMainFileID();
     if (INPLACE_MODIFICATION) {
-      TheRewriter.overwriteChangedFiles();
+      overwriteMainChangedFile(TheRewriter);      
+      //      TheRewriter.overwriteChangedFiles();
     } else {
       TheRewriter.getEditBuffer(ID).write(llvm::outs());
     }

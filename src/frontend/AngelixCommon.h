@@ -88,6 +88,18 @@ std::string toString(const clang::Stmt* stmt) {
 }
 
 
+bool overwriteMainChangedFile(Rewriter &TheRewriter) {
+  bool AllWritten = true;
+  FileID id = TheRewriter.getSourceMgr().getMainFileID();
+  const FileEntry *Entry = TheRewriter.getSourceMgr().getFileEntryForID(id);
+  std::error_code err_code;  
+  llvm::raw_fd_ostream out(Entry->getName(), err_code, llvm::sys::fs::F_None);
+  TheRewriter.getRewriteBufferFor(id)->write(out);
+  out.close();
+  return !AllWritten;
+}
+
+
 // Matchers for repairable expressions:
 
 StatementMatcher RepairableNode =
