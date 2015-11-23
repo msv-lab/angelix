@@ -59,7 +59,7 @@ public:
     else StmtVisitor<StmtToSMTLIB2>::Visit(S);
   }
 
-  void VisitBinaryOperator(BinaryOperator *Node) {  
+  void VisitBinaryOperator(BinaryOperator *Node) {
     std::string opcode_str = BinaryOperator::getOpcodeStr(Node->getOpcode()).lower();
     if (opcode_str == "!=") {
       OS << "(not (= ";
@@ -93,6 +93,10 @@ public:
   }
 
   void VisitImplicitCastExpr(ImplicitCastExpr *Node) {
+    PrintExpr(Node->getSubExpr());
+  }
+
+  void VisitParenExpr(ParenExpr *Node) {
     PrintExpr(Node->getSubExpr());
   }
 
