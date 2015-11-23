@@ -114,6 +114,10 @@ public:
     Collect(Node->getSubExpr());
   }
 
+  void VisitParenExpr(ParenExpr *Node) {
+    Collect(Node->getSubExpr());
+  }
+
   void VisitIntegerLiteral(IntegerLiteral *Node) {
   }
 
