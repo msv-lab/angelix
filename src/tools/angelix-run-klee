@@ -3,6 +3,10 @@
 exe="$1"
 shift
 
+if [ -n "$ANGELIX_RUN_EXECUTIONS" ]; then
+    echo -n 1 >> "$ANGELIX_RUN_EXECUTIONS"
+fi
+
 rm -rf "$ANGELIX_KLEE_WORKDIR"/klee-out-*
 rm -rf "$(dirname "$exe")"/klee-out-*
 

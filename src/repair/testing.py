@@ -1,9 +1,10 @@
 import os
-from os.path import basename, join
+from os.path import basename, join, exists
 from utils import cd
 import subprocess
 import logging
 import sys
+import tempfile
 
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,11 @@ class Tester:
         environment['ANGELIX_WORKDIR'] = self.workdir
         environment['ANGELIX_TEST_ID'] = test
 
+        dirpath = tempfile.mkdtemp()
+        executions = join(dirpath, 'executions')
+        
+        environment['ANGELIX_RUN_EXECUTIONS'] = executions
+
         if self.config['verbose']:
             subproc_output = sys.stderr
         else:
@@ -54,5 +60,14 @@ class Tester:
                 code = proc.wait()  
             else:
                 code = proc.wait(timeout=self.config['test_timeout'])
+
+        if dump is not None or trace is not None or klee:
+            if exists(executions):
+                with open(executions) as file:
+                    content = file.read()
+                    if len(content) > 1:
+                        logger.warning("ANGELIX_RUN is executed multiple times by test {}".format(test))
+            else:
+                logger.warning("ANGELIX_RUN is not executed by test {}".format(test))
                 
         return code == 0
