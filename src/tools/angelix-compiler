@@ -88,7 +88,6 @@ sub filter_non_comp_args {
 }
 
 sub fix_llvm_script {
-    use strict;
     my $file = $_[0];
 
     open(FILE, "<", $file) || die "File not found";
@@ -183,9 +182,9 @@ if ($compilation_mode eq "test") {
         debug($call_llvm_ld);
         system($call_llvm_ld);
 
-        fix_llvm_script($target);
+        fix_llvm_script($target) if -e $target;
 
-        system("angelix-patch-bitcode ${target}.bc");
+        system("angelix-patch-bitcode ${target}.bc") if -e "${target}.bc";
 
         my $return_code = $?;
         if ($return_code != 0 && $target) {
