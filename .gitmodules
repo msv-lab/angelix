@@ -1,3 +1,6 @@
 [submodule "src/synthesis"]
 	path = src/synthesis
 	url = https://github.com/mechtaev/repair-synthesis.git
+[submodule "src/klee"]
+	path = src/klee
+	url = https://github.com/mechtaev/klee.git
