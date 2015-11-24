@@ -40,7 +40,6 @@ CLANG_TOOLS_EXTRA_URL=http://llvm.org/git/clang-tools-extra.git
 STP_URL=https://github.com/stp/stp.git
 MINISAT_URL=https://github.com/niklasso/minisat.git
 Z3_URL=https://github.com/Z3Prover/z3.git
-KLEE_URL=https://github.com/klee/klee.git
 KLEE_UCLIBC_URL=https://github.com/klee/klee-uclibc.git
 BEAR_URL=https://github.com/rizsotto/Bear.git
 MAXSMT_URL=https://github.com/mechtaev/maxsmt-playground.git
@@ -111,11 +110,8 @@ clean-klee-uclibc:
 
 # KLEE #
 
-klee: $(KLEE_DIR)
+klee:
 	cd $(KLEE_DIR) && ./configure --with-llvm=$(LLVM2_DIR) --with-stp=$(STP_DIR)/build --with-uclibc=$(KLEE_UCLIBC_DIR) --enable-posix-runtime && make ENABLE_OPTIMIZED=1
-
-$(KLEE_DIR):
-	cd build && git clone --depth=1 $(KLEE_URL)
 
 clean-klee:
 	cd $(KLEE_DIR) && make clean

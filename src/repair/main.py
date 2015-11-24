@@ -330,6 +330,8 @@ if __name__ == "__main__":
                         help='KLEE solver timeout (default: %(default)s)')
     parser.add_argument('--klee-debug', action='store_true',
                         help='print instructions executed by KLEE (default: %(default)s)')
+    parser.add_argument('--klee-disable-memory-error', action='store_true',
+                        help='Don\'t terminate when encounter memory error (default: %(default)s)')
     parser.add_argument('--synthesis-timeout', metavar='MS', type=int, default=30000, # 30 sec
                         help='synthesis timeout (default: %(default)s)')
     parser.add_argument('--synthesis-levels', metavar='LEVEL', nargs='+',
@@ -396,28 +398,29 @@ if __name__ == "__main__":
             logger.warning('--dump-only disables --assert option')
 
     config = dict()
-    config['initial_tests']         = args.initial_tests
-    config['semfix']                = args.semfix
-    config['defect']                = args.defect
-    config['test_timeout']          = args.test_timeout
-    config['group_size']            = args.group_size
-    config['group_by_score']        = args.group_by_score
-    config['suspicious']            = args.suspicious
-    config['localization']          = args.localization
-    config['ignore_trivial']        = args.ignore_trivial
-    config['max_angelic_paths']     = args.max_angelic_paths
-    config['klee_max_forks']        = args.klee_max_forks
-    config['klee_max_depth']        = args.klee_max_depth
-    config['klee_search']           = args.klee_search
-    config['klee_timeout']          = args.klee_timeout
-    config['klee_solver_timeout']   = args.klee_solver_timeout
-    config['klee_debug']            = args.klee_debug
-    config['synthesis_timeout']     = args.synthesis_timeout
-    config['synthesis_levels']      = args.synthesis_levels
-    config['synthesis_max_vars']    = args.synthesis_max_vars
-    config['synthesis_global_vars'] = args.synthesis_global_vars
-    config['synthesis_func_params'] = args.synthesis_func_params
-    config['verbose']               = args.verbose
+    config['initial_tests']             = args.initial_tests
+    config['semfix']                    = args.semfix
+    config['defect']                    = args.defect
+    config['test_timeout']              = args.test_timeout
+    config['group_size']                = args.group_size
+    config['group_by_score']            = args.group_by_score
+    config['suspicious']                = args.suspicious
+    config['localization']              = args.localization
+    config['ignore_trivial']            = args.ignore_trivial
+    config['max_angelic_paths']         = args.max_angelic_paths
+    config['klee_max_forks']            = args.klee_max_forks
+    config['klee_max_depth']            = args.klee_max_depth
+    config['klee_search']               = args.klee_search
+    config['klee_timeout']              = args.klee_timeout
+    config['klee_solver_timeout']       = args.klee_solver_timeout
+    config['klee_debug']                = args.klee_debug
+    config['klee_disable_memory_error'] = args.klee_disable_memory_error
+    config['synthesis_timeout']         = args.synthesis_timeout
+    config['synthesis_levels']          = args.synthesis_levels
+    config['synthesis_max_vars']        = args.synthesis_max_vars
+    config['synthesis_global_vars']     = args.synthesis_global_vars
+    config['synthesis_func_params']     = args.synthesis_func_params
+    config['verbose']                   = args.verbose
 
     if args.verbose:
         for key, value in config.items():
