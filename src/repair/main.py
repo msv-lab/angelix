@@ -136,6 +136,7 @@ class Angelix:
                 self.run_test(self.frontend_src, test, trace=self.trace[test])
 
         golden_is_built = False
+        excluded = []
 
         logger.info('running negative tests for debugging')
         for test in negative:
@@ -151,7 +152,14 @@ class Angelix:
                     golden_is_built = True
                 self.dump += test
                 logger.info('running golden version with test {}'.format(test))
-                self.run_test(self.golden_src, test, dump=self.dump[test])
+                result = self.run_test(self.golden_src, test, dump=self.dump[test])
+                if not result:           
+                    excluded.append(test)
+
+        for test in excluded:
+            logger.warning('excluding test {} because it fails in golden version'.format(test))
+            negative.remove(test)
+            self.test_suite.remove(test)
 
         positive_traces = [(test, self.trace.parse(test)) for test in positive]
         negative_traces = [(test, self.trace.parse(test)) for test in negative]
@@ -228,7 +236,11 @@ class Angelix:
         logger.info('running tests for dumping')
         for test in self.test_suite:
             self.dump += test
-            self.run_test(self.frontend_src, test, dump=self.dump[test])
+            result = self.run_test(self.frontend_src, test, dump=self.dump[test])
+            if result:
+                logger.info('test passed')
+            else:
+                logger.info('test failed')
         return self.dump.export()
 
     def synthesize_from(self, af_file):
