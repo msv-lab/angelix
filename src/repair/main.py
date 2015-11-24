@@ -344,6 +344,8 @@ if __name__ == "__main__":
                         help='use global program variables for synthesis (default: %(default)s)')
     parser.add_argument('--synthesis-func-params', action='store_true',
                         help='use function parameters as variables for synthesis (default: %(default)s)')
+    parser.add_argument('--synthesis-used-vars', action='store_true',
+                        help='use variables that are used in scope for synthesis (default: %(default)s)')
     parser.add_argument('--semfix', action='store_true',
                         help='enable SemFix mode (default: %(default)s)')
     parser.add_argument('--dump-only', action='store_true',
@@ -420,6 +422,7 @@ if __name__ == "__main__":
     config['synthesis_max_vars']        = args.synthesis_max_vars
     config['synthesis_global_vars']     = args.synthesis_global_vars
     config['synthesis_func_params']     = args.synthesis_func_params
+    config['synthesis_used_vars']       = args.synthesis_used_vars
     config['verbose']                   = args.verbose
 
     if args.verbose:

@@ -9,72 +9,6 @@
 #include "SMTLIB2.h"
 
 
-std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynTypedNode node, ASTContext* context, unsigned line) {
-  const FunctionDecl* fd;
-  if ((fd = node.get<FunctionDecl>()) != NULL) {
-    std::unordered_set<VarDecl*> set;
-    if (getenv("ANGELIX_FUNCTION_PARAMETERS")) {
-      for (auto it = fd->param_begin(); it != fd->param_end(); ++it) {
-        auto vd = cast<VarDecl>(*it);
-        set.insert(vd);
-      }
-    }
-
-    if (getenv("ANGELIX_GLOBAL_VARIABLES")) {
-      ArrayRef<ast_type_traits::DynTypedNode> parents = context->getParents(node);
-      if (parents.size() > 0) {
-        const ast_type_traits::DynTypedNode parent = *(parents.begin()); // TODO: for now only first
-        const TranslationUnitDecl* tu;
-        if ((tu = parent.get<TranslationUnitDecl>()) != NULL) {
-          for (auto it = tu->decls_begin(); it != tu->decls_end(); ++it) {
-            if (isa<VarDecl>(*it)) {
-              VarDecl* vd = cast<VarDecl>(*it);
-              unsigned beginLine = getDeclExpandedLine(vd, context->getSourceManager());
-              if (line > beginLine && vd->getType().getTypePtr()->isIntegerType()) set.insert(vd);
-            }
-          }
-        }
-      }
-    }
-    
-    return set;
-    
-  } else {
-
-    std::unordered_set<VarDecl*> set;
-
-    const CompoundStmt* cstmt;
-    if ((cstmt = node.get<CompoundStmt>()) != NULL) {
-      for (auto it = cstmt->body_begin(); it != cstmt->body_end(); ++it) {
-        if (isa<BinaryOperator>(*it)) {
-          BinaryOperator* op = cast<BinaryOperator>(*it);
-          SourceRange expandedLoc = getExpandedLoc(op, context->getSourceManager());
-          unsigned beginLine = context->getSourceManager().getExpansionLineNumber(expandedLoc.getBegin());          
-          if (line > beginLine &&                
-              BinaryOperator::getOpcodeStr(op->getOpcode()).lower() == "=" &&
-              isa<DeclRefExpr>(op->getLHS())) {
-            DeclRefExpr* dref = cast<DeclRefExpr>(op->getLHS());
-            VarDecl* vd;
-            if ((vd = cast<VarDecl>(dref->getDecl())) != NULL && vd->getType().getTypePtr()->isIntegerType()) {
-              set.insert(vd);
-            }
-          }
-        }
-      }
-    }
-    
-    ArrayRef<ast_type_traits::DynTypedNode> parents = context->getParents(node);
-    if (parents.size() > 0) {
-      const ast_type_traits::DynTypedNode parent = *(parents.begin()); // TODO: for now only first
-      std::unordered_set<VarDecl*> parent_set = collectVarsFromScope(parent, context, line);
-      set.insert(parent_set.cbegin(), parent_set.cend());
-    }
-
-    return set;
-  }
-}
-
-
 bool isBooleanExpr(const Expr* expr) {
   if (isa<BinaryOperator>(expr)) {
     const BinaryOperator* op = cast<BinaryOperator>(expr);
@@ -101,7 +35,7 @@ public:
     StmtVisitor<CollectVariables>::Visit(S);
   }
 
-  void VisitBinaryOperator(BinaryOperator *Node) {  
+  void VisitBinaryOperator(BinaryOperator *Node) {
     Collect(Node->getLHS());
     Collect(Node->getRHS());
   }
@@ -141,6 +75,7 @@ public:
 
 };
 
+
 std::unordered_set<VarDecl*> collectVarsFromExpr(const Stmt* stmt) {
   std::unordered_set<VarDecl*> set;
   CollectVariables T(&set, NULL);
@@ -148,12 +83,87 @@ std::unordered_set<VarDecl*> collectVarsFromExpr(const Stmt* stmt) {
   return set;
 }
 
+
 std::unordered_set<MemberExpr*> collectMemberExprFromExpr(const Stmt* stmt) {
   std::unordered_set<MemberExpr*> set;
   CollectVariables T(NULL, &set);
   T.Visit(const_cast<Stmt*>(stmt));
   return set;
 }
+
+
+std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynTypedNode node, ASTContext* context, unsigned line) {
+  const FunctionDecl* fd;
+  if ((fd = node.get<FunctionDecl>()) != NULL) {
+    std::unordered_set<VarDecl*> set;
+    if (getenv("ANGELIX_FUNCTION_PARAMETERS")) {
+      for (auto it = fd->param_begin(); it != fd->param_end(); ++it) {
+        auto vd = cast<VarDecl>(*it);
+        set.insert(vd);
+      }
+    }
+
+    if (getenv("ANGELIX_GLOBAL_VARIABLES")) {
+      ArrayRef<ast_type_traits::DynTypedNode> parents = context->getParents(node);
+      if (parents.size() > 0) {
+        const ast_type_traits::DynTypedNode parent = *(parents.begin()); // TODO: for now only first
+        const TranslationUnitDecl* tu;
+        if ((tu = parent.get<TranslationUnitDecl>()) != NULL) {
+          for (auto it = tu->decls_begin(); it != tu->decls_end(); ++it) {
+            if (isa<VarDecl>(*it)) {
+              VarDecl* vd = cast<VarDecl>(*it);
+              unsigned beginLine = getDeclExpandedLine(vd, context->getSourceManager());
+              if (line > beginLine && vd->getType().getTypePtr()->isIntegerType()) set.insert(vd);
+            }
+          }
+        }
+      }
+    }
+    
+    return set;
+    
+  } else {
+
+    std::unordered_set<VarDecl*> set;
+
+    const CompoundStmt* cstmt;
+    if ((cstmt = node.get<CompoundStmt>()) != NULL) {
+      for (auto it = cstmt->body_begin(); it != cstmt->body_end(); ++it) {
+
+        if (isa<BinaryOperator>(*it)) {
+          BinaryOperator* op = cast<BinaryOperator>(*it);
+          SourceRange expandedLoc = getExpandedLoc(op, context->getSourceManager());
+          unsigned beginLine = context->getSourceManager().getExpansionLineNumber(expandedLoc.getBegin());          
+          if (line > beginLine &&                
+              BinaryOperator::getOpcodeStr(op->getOpcode()).lower() == "=" &&
+              isa<DeclRefExpr>(op->getLHS())) {
+            DeclRefExpr* dref = cast<DeclRefExpr>(op->getLHS());
+            VarDecl* vd;
+            if ((vd = cast<VarDecl>(dref->getDecl())) != NULL && vd->getType().getTypePtr()->isIntegerType()) {
+              set.insert(vd);
+            }
+          }
+        }
+
+        if (getenv("ANGELIX_USED_VARIABLES")) {
+          std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(*it);
+          set.insert(varsFromExpr.begin(), varsFromExpr.end());
+        }
+        
+      }
+    }
+    
+    ArrayRef<ast_type_traits::DynTypedNode> parents = context->getParents(node);
+    if (parents.size() > 0) {
+      const ast_type_traits::DynTypedNode parent = *(parents.begin()); // TODO: for now only first
+      std::unordered_set<VarDecl*> parent_set = collectVarsFromScope(parent, context, line);
+      set.insert(parent_set.cbegin(), parent_set.cend());
+    }
+
+    return set;
+  }
+}
+
 
 bool isSuspicious(int beginLine, int beginColumn, int endLine, int endColumn) {
   std::string line;
