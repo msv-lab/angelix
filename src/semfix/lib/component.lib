@@ -1,0 +1,152 @@
+% Library of components
+
+fun ifelse:1
+in x1:(Bool)
+in x2:(INT)
+in x3:(INT)
+out x4:(INT)
+impl int ifelse(int x1, int x2, int x3) {\n\tif(x1) {\n\t\treturn x2;\n\t} else {\n\t\treturn x3;\n\t}\n}
+model (= x4 (ite x1 x2 x3))
+
+fun add:1
+in x1:(INT)
+in x2:(INT)
+out x3:(INT)
+impl int add(int x1, int x2) {\n\treturn x1 + x2;\n}
+model (= (concat (select x3 (_ bv3 32)) (concat (select x3 (_ bv2 32)) (concat (select x3 (_ bv1 32)) (select x3 (_ bv0 32))))) (bvadd (concat (select x1 (_ bv3 32)) (concat (select x1 (_ bv2 32)) (concat (select x1 (_ bv1 32)) (select x1 (_ bv0 32))))) (concat (select x2 (_ bv3 32)) (concat (select x2 (_ bv2 32)) (concat (select x2 (_ bv1 32)) (select x2 (_ bv0 32)))))))
+
+fun sub:1
+in x1:(INT)
+in x2:(INT)
+out x3:(INT)
+impl int sub(int x1, int x2) {\n\treturn x1 - x2;\n}
+model (= (concat (select x3 (_ bv3 32)) (concat (select x3 (_ bv2 32)) (concat (select x3 (_ bv1 32)) (select x3 (_ bv0 32))))) (bvsub (concat (select x1 (_ bv3 32)) (concat (select x1 (_ bv2 32)) (concat (select x1 (_ bv1 32)) (select x1 (_ bv0 32))))) (concat (select x2 (_ bv3 32)) (concat (select x2 (_ bv2 32)) (concat (select x2 (_ bv1 32)) (select x2 (_ bv0 32)))))))
+
+fun lt:1
+in x1:(INT)
+in x2:(INT)
+out x3:(Bool)
+impl int LT(int x1, int x2) {\n\tif(x1 < x2) {\n\t\treturn 1;\n\t} else {\n\t\treturn 0;\n\t}\n}
+model (= x3 (bvslt (concat (select x1 (_ bv3 32)) (concat (select x1 (_ bv2 32)) (concat (select x1 (_ bv1 32)) (select x1 (_ bv0 32))))) (concat (select x2 (_ bv3 32)) (concat (select x2 (_ bv2 32)) (concat (select x2 (_ bv1 32)) (select x2 (_ bv0 32)))))))
+
+fun le:1
+in x1:(INT)
+in x2:(INT)
+out x3:(Bool)
+impl int LE(int x1, int x2) {\n\tif(x1 <= x2) {\n\t\treturn 1;\n\t} else {\n\t\treturn 0;\n\t}\n}
+model (= x3 (bvsle (concat (select x1 (_ bv3 32)) (concat (select x1 (_ bv2 32)) (concat (select x1 (_ bv1 32)) (select x1 (_ bv0 32))))) (concat (select x2 (_ bv3 32)) (concat (select x2 (_ bv2 32)) (concat (select x2 (_ bv1 32)) (select x2 (_ bv0 32)))))))
+
+fun eq:1
+in x1:(INT)
+in x2:(INT)
+out x3:(Bool)
+impl int EQ(int x1, int x2) {\n\treturn (x1 == x2);\n}
+model (= x3 (= (concat (select x1 (_ bv3 32)) (concat (select x1 (_ bv2 32)) (concat (select x1 (_ bv1 32)) (select x1 (_ bv0 32))))) (concat (select x2 (_ bv3 32)) (concat (select x2 (_ bv2 32)) (concat (select x2 (_ bv1 32)) (select x2 (_ bv0 32)))))))
+
+fun neq:1
+in x1:(INT)
+in x2:(INT)
+out x3:(Bool)
+impl int NEQ(int x1, int x2) {\n\treturn (x1 != x2);\n}
+model (not (= x3 (= (concat (select x1 (_ bv3 32)) (concat (select x1 (_ bv2 32)) (concat (select x1 (_ bv1 32)) (select x1 (_ bv0 32))))) (concat (select x2 (_ bv3 32)) (concat (select x2 (_ bv2 32)) (concat (select x2 (_ bv1 32)) (select x2 (_ bv0 32))))))))
+
+fun and:1
+in x1:(Bool)
+in x2:(Bool)
+out x3:(Bool)
+impl int AND(int x1, int x2) {\n\tif(x1 && x2) {\n\t\treturn 1;\n\t} else {\n\t\treturn 0;\n\t}\n}
+model (= x3 (and x1 x2))
+
+fun or:1
+in x1:(Bool)
+in x2:(Bool)
+out x3:(Bool)
+impl int OR(int x1, int x2) {\n\tif(x1 || x2) {\n\t\treturn 1;\n\t} else {\n\t\treturn 0;\n\t}\n}
+model (= x3 (or x1 x2))
+
+fun boolc:1
+out x0:(Bool)
+impl int boolc(){\n\treturn p_boolc_y0;\n} 
+param y0:(Bool)
+model (= y0 x0)
+
+%fun intIdent:1
+%in x1:(INT)
+%out x2:(INT)
+%impl char intIdent(char x1) {\n\treturn x1;\n}
+%model (= (concat (select x1 (_ bv3 32)) (concat (select x1 (_ bv2 32)) (concat (select x1 (_ bv1 32)) (select x1 (_ bv0 32))))) (concat (select x2 (_ bv3 32)) (concat (select x2 (_ bv2 32)) (concat (select x2 (_ bv1 32)) (select x2 (_ bv0 32))))))
+
+fun intAt:1
+in x1:(AII)
+in x2:(INT)
+out x3:(INT)
+impl char intAt(int* x1, int x2) {\n\treturn x1[x2];\n}
+model (let ((?v_0 (concat ((_ extract 29 0) (concat (select x2 (_ bv3 32)) (concat (select x2 (_ bv2 32)) (concat (select x2 (_ bv1 32)) (select x2 (_ bv0 32)))))) (_ bv0 2))) (?v_2 (concat (select x2 (_ bv3 32)) (concat (select x2 (_ bv2 32)) (concat (select x2 (_ bv1 32)) (select x2 (_ bv0 32)))))) (?v_3 (concat (select x3 (_ bv3 32)) (concat (select x3 (_ bv2 32)) (concat (select x3 (_ bv1 32)) (select x3 (_ bv0 32))))))) (and (= ?v_3 (concat (select x1 (bvadd (_ bv3 32) ?v_0)) (concat (select x1 (bvadd (_ bv2 32) ?v_0)) (concat (select x1 (bvadd (_ bv1 32) ?v_0)) (select x1 ?v_0))))) (bvslt ?v_2 (concat (select x1_len (_ bv3 32)) (concat (select x1_len (_ bv2 32)) (concat (select x1_len (_ bv1 32)) (select x1_len (_ bv0 32)))))) (bvsge ?v_2 (_ bv0 32))))
+
+fun consta:1
+out x0:(INT)
+impl int consta(){\n\treturn p_consta_y0;\n} 
+param y0:(INT)
+model (and (= y0 x0) (bvslt (concat (select y0 (_ bv3 32)) (concat (select y0 (_ bv2 32)) (concat (select y0 (_ bv1 32)) (select y0 (_ bv0 32))))) (_ bv1024 32)) (bvsgt (concat (select y0 (_ bv3 32)) (concat (select y0 (_ bv2 32)) (concat (select y0 (_ bv1 32)) (select y0 (_ bv0 32))))) (_ bv4294966272 32)))
+
+fun constb:1
+out x0:(INT)
+impl int constb(){\n\treturn p_constb_y0;\n} 
+param y0:(INT)
+model (and (= y0 x0) (bvslt (concat (select y0 (_ bv3 32)) (concat (select y0 (_ bv2 32)) (concat (select y0 (_ bv1 32)) (select y0 (_ bv0 32))))) (_ bv1024 32)) (bvsgt (concat (select y0 (_ bv3 32)) (concat (select y0 (_ bv2 32)) (concat (select y0 (_ bv1 32)) (select y0 (_ bv0 32))))) (_ bv4294966272 32)))
+
+%fun constc:1
+%out x0:(INT)
+%impl int constc(){\n\treturn p_constc_y0;\n} 
+%param y0:(INT)
+%model (and (= y0 x0) (bvslt (concat (select y0 (_ bv3 32)) (concat (select y0 (_ bv2 32)) (concat (select y0 (_ bv1 32)) (select y0 (_ bv0 32))))) (_ bv1024 32)) (bvsgt (concat (select y0 (_ bv3 32)) (concat (select y0 (_ bv2 32)) (concat (select y0 (_ bv1 32)) (select y0 (_ bv0 32))))) (_ bv4294966272 32)))
+
+%fun charAt:1
+%in x1:(AIC)
+%in x2:(INT)
+%out x3:(CHAR)
+%impl char charAt(char* x1, int x2) {\n\treturn x1[x2];\n}
+%model (and (= (select x1 (concat (select x2 (_ bv3 32)) (concat (select x2 (_ bv2 32)) (concat (select x2 (_ bv1 32)) (select x2 (_ bv0 32)))))) (select x3 (_ bv0 32))) (bvslt (concat (select x2 (_ bv3 32)) (concat (select x2 (_ bv2 32)) (concat (select x2 (_ bv1 32)) (select x2 (_ bv0 32))))) (concat (select x1_len (_ bv3 32)) (concat (select x1_len (_ bv2 32)) (concat (select x1_len (_ bv1 32)) (select x1_len (_ bv0 32)))))) (bvsge (concat (select x2 (_ bv3 32)) (concat (select x2 (_ bv2 32)) (concat (select x2 (_ bv1 32)) (select x2 (_ bv0 32))))) (_ bv0 32)))
+
+fun charEq:1
+in x1:(CHAR)
+in x2:(CHAR)
+out x3:(Bool)
+impl int charEq(char x1, char x2) {\n\treturn x1 == x2;\n}
+model (= x3 (= (select x1 (_ bv0 32)) (select x2 (_ bv0 32))))
+
+fun stringIdent:1
+in x1:(AIC)
+out x2:(AIC)
+impl char *stringIdent(char* x1) {\n\treturn x1;\n}
+model (= x2 x1)
+
+%fun int2char:1
+%in x1:(INT)
+%out x2:(CHAR)
+%impl char int2char(int x1) {\n\treturn (char)x1;\n}
+%model (= (select x2 (_ bv0 32)) (select x1 (_ bv0 32)))
+
+%fun charIdent:1
+%in x1:(CHAR)
+%out x2:(CHAR)
+%impl char charIdent(char x1) {\n\treturn x1;\n}
+%model (= (select x2 (_ bv0 32)) (select x1 (_ bv0 32)))
+
+fun charca:1
+out x0:(CHAR)
+impl char charca(){\n\treturn p_charca_y0;\n}
+param y0:(CHAR)
+model (= (select y0 (_ bv0 32)) (select x0 (_ bv0 32)))
+
+fun charcb:1
+out x0:(CHAR)
+impl char charcb(){\n\treturn p_charcb_y0;\n}
+param y0:(CHAR)
+model (= (select y0 (_ bv0 32)) (select x0 (_ bv0 32)))
+
+%fun charcc:1
+%out x0:(CHAR)
+%impl char charcc(){\n\treturn p_charcc_y0;\n}
+%param y0:(CHAR)
+%model (= (select y0 (_ bv0 32)) (select x0 (_ bv0 32)))

@@ -75,3 +75,5 @@ instr-sus () {
     ANGELIX_EXTRACTED='./extracted' instrument-suspicious "$1" -- "-I$LLVM3_DIR/build/lib/clang/3.7.0/include"
 }
 
+# environment for SEMFIX
+export SEMFIX_ROOT="$ANGELIX_ROOT/src/semfix"

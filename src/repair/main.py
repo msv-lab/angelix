@@ -18,6 +18,7 @@ from localization import Localizer
 from reduction import Reducer
 from inference import Inferrer, InferenceError
 from synthesis import Synthesizer
+from semfix_synthesis import Semfix_Synthesizer
 
 
 logger = logging.getLogger("repair")
@@ -74,8 +75,11 @@ class Angelix:
         self.run_test = tester
         self.get_suspicious_groups = Localizer(config, lines)
         self.reduce = Reducer(config)
-        self.infer_spec = Inferrer(config, tester)
-        self.synthesize_fix = Synthesizer(config, extracted, angelic_forest_file)
+        self.infer_spec = Inferrer(config, tester)        
+        if self.config['use_semfix_syn']:
+            self.synthesize_fix = Semfix_Synthesizer(config, extracted, angelic_forest_file)
+        else:
+            self.synthesize_fix = Synthesizer(config, extracted, angelic_forest_file)                
         self.instrument_for_localization = RepairableTransformer(config)
         self.instrument_for_inference = SuspiciousTransformer(config, extracted)
         self.apply_patch = FixInjector(config)
@@ -348,6 +352,8 @@ if __name__ == "__main__":
                         help='use variables that are used in scope for synthesis (default: %(default)s)')
     parser.add_argument('--semfix', action='store_true',
                         help='enable SemFix mode (default: %(default)s)')
+    parser.add_argument('--use-semfix-synthesizer', action='store_true',
+                        help='use SemFix synthesizer (default: %(default)s)')
     parser.add_argument('--dump-only', action='store_true',
                         help='dump actual outputs for given tests (default: %(default)s)')
     parser.add_argument('--synthesis-only', metavar="FILE", default=None,
@@ -402,6 +408,7 @@ if __name__ == "__main__":
     config = dict()
     config['initial_tests']             = args.initial_tests
     config['semfix']                    = args.semfix
+    config['use_semfix_syn']            = args.use_semfix_synthesizer
     config['defect']                    = args.defect
     config['test_timeout']              = args.test_timeout
     config['group_size']                = args.group_size
