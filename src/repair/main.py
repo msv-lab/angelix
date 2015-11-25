@@ -85,25 +85,25 @@ class Angelix:
         self.apply_patch = FixInjector(config)
 
         validation_dir = join(working_dir, "validation")
-        shutil.copytree(src, validation_dir)
+        shutil.copytree(src, validation_dir, symlinks=True)
         self.validation_src = Validation(config, validation_dir, buggy, build, configure)
         self.validation_src.configure()
         compilation_db = self.validation_src.export_compilation_db()
         self.validation_src.import_compilation_db(compilation_db)
 
         frontend_dir = join(working_dir, "frontend")
-        shutil.copytree(src, frontend_dir)
+        shutil.copytree(src, frontend_dir, symlinks=True)
         self.frontend_src = Frontend(config, frontend_dir, buggy, build, configure)
         self.frontend_src.import_compilation_db(compilation_db)
 
         backend_dir = join(working_dir, "backend")
-        shutil.copytree(src, backend_dir)
+        shutil.copytree(src, backend_dir, symlinks=True)
         self.backend_src = Backend(config, backend_dir, buggy, build, configure)
         self.backend_src.import_compilation_db(compilation_db)
 
         if golden is not None:
             golden_dir = join(working_dir, "golden")
-            shutil.copytree(golden, golden_dir)
+            shutil.copytree(golden, golden_dir, symlinks=True)
             self.golden_src = Frontend(config, golden_dir, buggy, build, configure)
             self.golden_src.import_compilation_db(compilation_db)
         else:
