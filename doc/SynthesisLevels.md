@@ -13,6 +13,7 @@ Synthesis levels are sets of primitive components that are used to repair buggy 
 * extended-logic
 * extended-inequalities
 * mixed-conditional
+* conditional-arithmetic
 
 ## alternatives ##
 
@@ -71,5 +72,5 @@ Additional visible variables, integer constant, `>`, `>=`, `||`, `&&`, `+`, `-`.
 
 ## conditional-arithmetic ##
 
-Additional visible variables, integer constant, `>`, `>=`, `+`, `-`, 'ite'.
+Additional visible variables, integer constant, `>`, `>=`, `+`, `-`, `ite`.
 

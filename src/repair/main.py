@@ -330,22 +330,22 @@ if __name__ == "__main__":
                         help='KLEE solver timeout (default: %(default)s)')
     parser.add_argument('--klee-debug', action='store_true',
                         help='print instructions executed by KLEE (default: %(default)s)')
-    parser.add_argument('--klee-disable-memory-error', action='store_true',
-                        help='Don\'t terminate when encounter memory error (default: %(default)s)')
+    parser.add_argument('--klee-ignore-errors', action='store_true',
+                        help='Don\'t terminate on memory errors (default: %(default)s)')
     parser.add_argument('--synthesis-timeout', metavar='MS', type=int, default=30000, # 30 sec
                         help='synthesis timeout (default: %(default)s)')
     parser.add_argument('--synthesis-levels', metavar='LEVEL', nargs='+',
                         choices=SYNTHESIS_LEVELS,
                         default=['alternatives', 'integer-constants', 'boolean-constants'],
                         help='component levels (default: %(default)s). choices: ' + ', '.join(SYNTHESIS_LEVELS))
-    parser.add_argument('--synthesis-max-vars', metavar='NUM', type=int, default=None,
-                        help='max number of program variables used for synthesis (default: %(default)s)')
     parser.add_argument('--synthesis-global-vars', action='store_true',
                         help='use global program variables for synthesis (default: %(default)s)')
     parser.add_argument('--synthesis-func-params', action='store_true',
                         help='use function parameters as variables for synthesis (default: %(default)s)')
     parser.add_argument('--synthesis-used-vars', action='store_true',
                         help='use variables that are used in scope for synthesis (default: %(default)s)')
+    parser.add_argument('--synthesis-ptr-vars', action='store_true',
+                        help='use pointer variables for synthesis (default: %(default)s)')
     parser.add_argument('--semfix', action='store_true',
                         help='enable SemFix mode (default: %(default)s)')
     parser.add_argument('--dump-only', action='store_true',
@@ -380,10 +380,6 @@ if __name__ == "__main__":
         logger.error('\'guards\' and \'assignments\' defect classes are currently incompatible')
         exit(1)
 
-    if args.synthesis_max_vars is not None:
-        logger.error('--synthesis-max-vars is not implemented')
-        exit(1)
-
     if args.semfix:
         if not (args.defect == DEFAULT_DEFECTS):
             logger.warning('--semfix disables --defect option')
@@ -400,30 +396,30 @@ if __name__ == "__main__":
             logger.warning('--dump-only disables --assert option')
 
     config = dict()
-    config['initial_tests']             = args.initial_tests
-    config['semfix']                    = args.semfix
-    config['defect']                    = args.defect
-    config['test_timeout']              = args.test_timeout
-    config['group_size']                = args.group_size
-    config['group_by_score']            = args.group_by_score
-    config['suspicious']                = args.suspicious
-    config['localization']              = args.localization
-    config['ignore_trivial']            = args.ignore_trivial
-    config['max_angelic_paths']         = args.max_angelic_paths
-    config['klee_max_forks']            = args.klee_max_forks
-    config['klee_max_depth']            = args.klee_max_depth
-    config['klee_search']               = args.klee_search
-    config['klee_timeout']              = args.klee_timeout
-    config['klee_solver_timeout']       = args.klee_solver_timeout
-    config['klee_debug']                = args.klee_debug
-    config['klee_disable_memory_error'] = args.klee_disable_memory_error
-    config['synthesis_timeout']         = args.synthesis_timeout
-    config['synthesis_levels']          = args.synthesis_levels
-    config['synthesis_max_vars']        = args.synthesis_max_vars
-    config['synthesis_global_vars']     = args.synthesis_global_vars
-    config['synthesis_func_params']     = args.synthesis_func_params
-    config['synthesis_used_vars']       = args.synthesis_used_vars
-    config['verbose']                   = args.verbose
+    config['initial_tests']         = args.initial_tests
+    config['semfix']                = args.semfix
+    config['defect']                = args.defect
+    config['test_timeout']          = args.test_timeout
+    config['group_size']            = args.group_size
+    config['group_by_score']        = args.group_by_score
+    config['suspicious']            = args.suspicious
+    config['localization']          = args.localization
+    config['ignore_trivial']        = args.ignore_trivial
+    config['max_angelic_paths']     = args.max_angelic_paths
+    config['klee_max_forks']        = args.klee_max_forks
+    config['klee_max_depth']        = args.klee_max_depth
+    config['klee_search']           = args.klee_search
+    config['klee_timeout']          = args.klee_timeout
+    config['klee_solver_timeout']   = args.klee_solver_timeout
+    config['klee_debug']            = args.klee_debug
+    config['klee_ignore_errors']    = args.klee_ignore_errors
+    config['synthesis_timeout']     = args.synthesis_timeout
+    config['synthesis_levels']      = args.synthesis_levels
+    config['synthesis_global_vars'] = args.synthesis_global_vars
+    config['synthesis_func_params'] = args.synthesis_func_params
+    config['synthesis_used_vars']   = args.synthesis_used_vars
+    config['synthesis_ptr_vars']    = args.synthesis_ptr_vars
+    config['verbose']               = args.verbose
 
     if args.verbose:
         for key, value in config.items():
