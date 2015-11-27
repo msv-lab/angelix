@@ -9,6 +9,21 @@
 #include "SMTLIB2.h"
 
 
+enum VarTypes { ALL, INT, INT_AND_PTR };
+
+
+bool suitableVarDecl(VarDecl* vd, VarTypes collectedTypes) {
+  return (collectedTypes == ALL ||
+          (collectedTypes == INT &&
+           (vd->getType().getTypePtr()->isIntegerType() ||
+            vd->getType().getTypePtr()->isCharType())) ||
+          (collectedTypes == INT_AND_PTR &&
+           (vd->getType().getTypePtr()->isIntegerType() ||
+            vd->getType().getTypePtr()->isCharType() ||
+            vd->getType().getTypePtr()->isPointerType())));
+}
+
+
 bool isBooleanExpr(const Expr* expr) {
   if (isa<BinaryOperator>(expr)) {
     const BinaryOperator* op = cast<BinaryOperator>(expr);
@@ -22,9 +37,10 @@ bool isBooleanExpr(const Expr* expr) {
 class CollectVariables : public StmtVisitor<CollectVariables> {
   std::unordered_set<VarDecl*> *VSet;
   std::unordered_set<MemberExpr*> *MSet;
+  VarTypes Types;
   
 public:
-  CollectVariables(std::unordered_set<VarDecl*> *vset, std::unordered_set<MemberExpr*> *mset): VSet(vset), MSet(mset) {}
+  CollectVariables(std::unordered_set<VarDecl*> *vset, std::unordered_set<MemberExpr*> *mset, VarTypes t): VSet(vset), MSet(mset), Types(t) {}
 
   void Collect(Expr *E) {
     if (E)
@@ -60,7 +76,7 @@ public:
 
   void VisitMemberExpr(MemberExpr *Node) {
     if (MSet) {
-      MSet->insert(Node);
+      MSet->insert(Node); // TODO: check memeber type?
     }
   }
 
@@ -68,7 +84,9 @@ public:
     if (VSet) {
       VarDecl* vd;
       if ((vd = cast<VarDecl>(Node->getDecl())) != NULL) { // TODO: other kinds of declarations?
-        VSet->insert(vd);
+        if (suitableVarDecl(vd, Types)) {
+          VSet->insert(vd);
+        }
       }
     }
   }
@@ -76,9 +94,9 @@ public:
 };
 
 
-std::unordered_set<VarDecl*> collectVarsFromExpr(const Stmt* stmt) {
+std::unordered_set<VarDecl*> collectVarsFromExpr(const Stmt* stmt, VarTypes t) {
   std::unordered_set<VarDecl*> set;
-  CollectVariables T(&set, NULL);
+  CollectVariables T(&set, NULL, t);
   T.Visit(const_cast<Stmt*>(stmt));
   return set;
 }
@@ -86,20 +104,28 @@ std::unordered_set<VarDecl*> collectVarsFromExpr(const Stmt* stmt) {
 
 std::unordered_set<MemberExpr*> collectMemberExprFromExpr(const Stmt* stmt) {
   std::unordered_set<MemberExpr*> set;
-  CollectVariables T(NULL, &set);
+  CollectVariables T(NULL, &set, ALL);
   T.Visit(const_cast<Stmt*>(stmt));
   return set;
 }
 
 
 std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynTypedNode node, ASTContext* context, unsigned line) {
+  VarTypes collectedTypes;
+  if (getenv("ANGELIX_POINTER_VARIABLES")) {
+    collectedTypes = INT_AND_PTR;
+  } else {
+    collectedTypes = INT;
+  }
   const FunctionDecl* fd;
   if ((fd = node.get<FunctionDecl>()) != NULL) {
     std::unordered_set<VarDecl*> set;
     if (getenv("ANGELIX_FUNCTION_PARAMETERS")) {
       for (auto it = fd->param_begin(); it != fd->param_end(); ++it) {
         auto vd = cast<VarDecl>(*it);
-        set.insert(vd);
+        if (suitableVarDecl(vd, collectedTypes)) {
+          set.insert(vd);
+        }
       }
     }
 
@@ -113,7 +139,9 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
             if (isa<VarDecl>(*it)) {
               VarDecl* vd = cast<VarDecl>(*it);
               unsigned beginLine = getDeclExpandedLine(vd, context->getSourceManager());
-              if (line > beginLine && vd->getType().getTypePtr()->isIntegerType()) set.insert(vd);
+              if (line > beginLine && suitableVarDecl(vd, collectedTypes)) {
+                set.insert(vd);
+              }
             }
           }
         }
@@ -133,20 +161,35 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
         if (isa<BinaryOperator>(*it)) {
           BinaryOperator* op = cast<BinaryOperator>(*it);
           SourceRange expandedLoc = getExpandedLoc(op, context->getSourceManager());
-          unsigned beginLine = context->getSourceManager().getExpansionLineNumber(expandedLoc.getBegin());          
-          if (line > beginLine &&                
+          unsigned beginLine = context->getSourceManager().getExpansionLineNumber(expandedLoc.getBegin());
+          if (line > beginLine &&
               BinaryOperator::getOpcodeStr(op->getOpcode()).lower() == "=" &&
               isa<DeclRefExpr>(op->getLHS())) {
             DeclRefExpr* dref = cast<DeclRefExpr>(op->getLHS());
             VarDecl* vd;
-            if ((vd = cast<VarDecl>(dref->getDecl())) != NULL && vd->getType().getTypePtr()->isIntegerType()) {
+            if ((vd = cast<VarDecl>(dref->getDecl())) != NULL && suitableVarDecl(vd, collectedTypes)) {
               set.insert(vd);
             }
           }
         }
 
+        if (isa<DeclStmt>(*it)) {
+          DeclStmt* dstmt = cast<DeclStmt>(*it);
+          SourceRange expandedLoc = getExpandedLoc(dstmt, context->getSourceManager());
+          unsigned beginLine = context->getSourceManager().getExpansionLineNumber(expandedLoc.getBegin());
+          if (dstmt->isSingleDecl()) {
+            Decl* d = dstmt->getSingleDecl();
+            if (isa<VarDecl>(d)) {
+              VarDecl* vd = cast<VarDecl>(d);
+              if (line > beginLine && vd->hasInit() && suitableVarDecl(vd, collectedTypes)) {
+                set.insert(vd);
+              }
+            }
+          }
+        }
+
         if (getenv("ANGELIX_USED_VARIABLES")) {
-          std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(*it);
+          std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(*it, collectedTypes);
           set.insert(varsFromExpr.begin(), varsFromExpr.end());
         }
         
@@ -214,7 +257,7 @@ public:
 
       const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*expr);
       std::unordered_set<VarDecl*> varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
-      std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(expr);
+      std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(expr, ALL);
       std::unordered_set<MemberExpr*> memberFromExpr = collectMemberExprFromExpr(expr);
       std::unordered_set<VarDecl*> vars;
       vars.insert(varsFromScope.begin(), varsFromScope.end());
