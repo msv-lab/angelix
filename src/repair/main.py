@@ -229,6 +229,7 @@ class Angelix:
                 positive, negative = pos, neg
 
         if len(negative) > 0:
+            logger.warning("tests {} not repaired".format(negative))            
             return None
         else:
             return self.validation_src.diff_buggy()
@@ -280,6 +281,7 @@ class Angelix:
             return None
 
         if len(negative) > 0:
+            logger.warning("tests {} not repaired".format(negative))
             return None
         else:
             return self.validation_src.diff_buggy()
