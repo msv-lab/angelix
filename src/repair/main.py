@@ -378,7 +378,7 @@ if __name__ == "__main__":
         shutil.rmtree(working_dir)
     os.mkdir(working_dir)
 
-    if vars(args)['assert'] is not None:
+    if vars(args)['assert'] is not None and not args.dump_only:
         with open(vars(args)['assert']) as output_file:
             asserts = json.load(output_file)
     else:
