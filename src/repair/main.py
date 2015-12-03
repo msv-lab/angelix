@@ -130,7 +130,8 @@ class Angelix:
         self.frontend_src.configure()
         self.instrument_for_localization(self.frontend_src)
         self.frontend_src.build()
-        logger.info('running positive tests for debugging')
+        if len(positive) > 0:
+            logger.info('running positive tests for debugging')
         for test in positive:
             self.trace += test
             if test not in self.dump:
@@ -142,7 +143,8 @@ class Angelix:
         golden_is_built = False
         excluded = []
 
-        logger.info('running negative tests for debugging')
+        if len(negative) > 0:
+            logger.info('running negative tests for debugging')
         for test in negative:
             self.trace += test
             self.run_test(self.frontend_src, test, trace=self.trace[test])
@@ -155,7 +157,6 @@ class Angelix:
                     self.golden_src.build()
                     golden_is_built = True
                 self.dump += test
-                logger.info('running golden version with test {}'.format(test))
                 result = self.run_test(self.golden_src, test, dump=self.dump[test])
                 if not result:           
                     excluded.append(test)
@@ -173,8 +174,7 @@ class Angelix:
 
         while len(negative) > 0 and len(suspicious) > 0:
             expressions = suspicious.pop(0)
-            for e in expressions:
-                logger.info('considering suspicious expression {}'.format(e))
+            logger.info('considering suspicious expressions {}'.format(expressions))
             repair_suite = self.reduce(positive_traces, negative_traces, expressions)
             self.backend_src.restore_buggy()
             self.backend_src.configure()
@@ -281,7 +281,7 @@ class Angelix:
             return None
 
         if len(negative) > 0:
-            logger.warning("tests {} not repaired".format(negative))
+            logger.info("tests {} fail".format(negative))
             return None
         else:
             return self.validation_src.diff_buggy()

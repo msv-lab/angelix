@@ -112,9 +112,8 @@ class Localizer:
         sorted_groups = sorted(groups_with_score, key=lambda r: r[1], reverse=True)
 
         groups = []
-        for (i, (group, score)) in enumerate(sorted_groups):
+        for (group, score) in sorted_groups:
             groups.append(group)
-            for expr in group:
-                logger.info("selected expression {} with score {:.5} in group {}".format(expr, score, i))
+            logger.info("selected expressions {} with group score {:.5} ".format(group, score))
         
         return groups
