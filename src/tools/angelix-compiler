@@ -31,17 +31,29 @@ sub message {
 }
 
 
-# Assume that command has "-o *.o" if and only if it is not linking
+# Assume that command has "-o *.o" or "-c *.c" if and only if it is not linking
 # TODO: maybe using -c is better?
 sub get_target() {
     my $last_o = 0;
+    my $last_c = 0;
     foreach (@ARGV) {
         if ($last_o) {
             return $_;
         }
+        if ($last_c) {
+            if (/\.c$/) {
+                (my $target = $_) =~ s/\.c$/.o/g;
+                return $target;
+            } else {
+                return $_ . ".o";
+            }
+        }        
         if (/^-o$/) {
             $last_o = 1;
         }
+        if (/^-c$/) {
+            $last_c = 1;
+        }        
     }
     return "";
 }
