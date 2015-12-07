@@ -48,7 +48,8 @@ else
     debug_arg="-debug-print-instructions"
 fi
 
-klee $search_arg $forks_arg $depth_arg $time_arg $solver_time_arg $debug_arg \
+klee -watchdog \
+     $search_arg $forks_arg $depth_arg $time_arg $solver_time_arg $debug_arg \
      -write-smt2s \
      -smtlib-human-readable \
      --libc=uclibc \

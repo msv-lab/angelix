@@ -332,7 +332,7 @@ if __name__ == "__main__":
                         help='KLEE max symbolic branches (default: %(default)s)')
     parser.add_argument('--klee-timeout', metavar='SEC', type=int, default=None,
                         help='KLEE timeout (default: %(default)s)')
-    parser.add_argument('--klee-solver-timeout', metavar='MS', type=int, default=None,
+    parser.add_argument('--klee-solver-timeout', metavar='SEC', type=int, default=None,
                         help='KLEE solver timeout (default: %(default)s)')
     parser.add_argument('--klee-debug', action='store_true',
                         help='print instructions executed by KLEE (default: %(default)s)')
