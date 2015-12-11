@@ -199,6 +199,7 @@ StatementMatcher NonTrivialRepairableLoopCondition =
 #define isTopLevelStatement        \
   anyOf(hasParent(compoundStmt()), \
         hasParent(ifStmt()),       \
+        hasParent(labelStmt()),    \
         hasParent(whileStmt()),    \
         hasParent(forStmt()))
 
