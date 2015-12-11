@@ -12,6 +12,16 @@ my $libs_klee = $ENV{'ANGELIX_LIBRARY_PATH_KLEE'};
 my $libs_test = $ENV{'ANGELIX_LIBRARY_PATH_TEST'};
 my $klee_libs = $ENV{'KLEE_LIBRARY_PATH'};
 
+my $custom_klee_flags = "";
+my $custom_test_flags = "";
+
+if ($ENV{'ANGELIX_COMPILER_CUSTOM_KLEE'}) {
+    $custom_klee_flags = $ENV{'ANGELIX_COMPILER_CUSTOM_KLEE'};
+}
+
+if ($ENV{'ANGELIX_COMPILER_CUSTOM_TEST'}) {
+    $custom_test_flags = $ENV{'ANGELIX_COMPILER_CUSTOM_TEST'};
+}
 
 sub debug {
     print STDERR "[angelix-compiler] @_\n";
@@ -146,7 +156,8 @@ if ($compilation_mode eq "test") {
                 "-langelix",
 # in this generic build, runtime component requires this stub library:                
                 "-L$klee_libs",
-                "-lkleeRuntest"
+                "-lkleeRuntest",
+                $custom_test_flags
                 );
     my $call_gcc = join(' ', @args);
     debug($call_gcc);
@@ -170,7 +181,8 @@ if ($compilation_mode eq "test") {
                     "-g",
                     "-O0",
                     "-D ANGELIX_SYMBOLIC_RUNTIME",
-                    wrap_args(@klee_comp_args));
+                    wrap_args(@klee_comp_args),
+                    $custom_klee_flags);
         my $call_llvm_gcc = join(' ', @args);
         debug($call_llvm_gcc);
         system($call_llvm_gcc);
@@ -189,7 +201,7 @@ if ($compilation_mode eq "test") {
                     wrap_args(@link_args),
                     "-L$libs_klee",
                     "-langelix",
-                    );
+                    $custom_klee_flags);
         my $call_llvm_ld = join(' ', @args);
         debug($call_llvm_ld);
         system($call_llvm_ld);
