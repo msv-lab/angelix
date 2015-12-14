@@ -21,7 +21,7 @@ This tutorial demonstrates how Angelix can be used to repair a simple program. S
     }
 
     int main(int argc, char *argv[]) {
-        int a, b;
+        int x1, y1, x2, y2;
         x1 = atoi(argv[1]);
         y1 = atoi(argv[2]);
         x2 = atoi(argv[3]);
@@ -41,7 +41,7 @@ This program produces the computes the following values:
     $ ./distance 3 1 2 5
     1
 
-The last value is wrong. The expected distance is 4, but because of the bug in `dy` computation, the program outputs dx. Let's apply Angelix to fix the bug automatically using the above tests.
+The last value is wrong. The expected distance is 4, but because of the bug in `dy` computation, the program outputs `dx`. Let's apply Angelix to fix the bug automatically using the above tests.
 
 In order to Angelix can analyse the program, you need to provide an interface to the build system and testing framework used by you program. In this example, we will use a simple Makefile. For more detailed information, please read the [manual](Manual.md).
 
@@ -95,18 +95,18 @@ Oracle script must execute the test using `ANGELIX_RUN` command if it is defined
     #!/bin/bash
 
     assert-equal () {
-        diff -q <("${ANGELIX_RUN:-eval}" $1) <(echo -ne "$2") > /dev/null
+        diff -q <(${ANGELIX_RUN:-eval} $1) <(echo -ne "$2") > /dev/null
     }
 
     case "$1" in
         1)
-            assert-equal "./test 2 3 1 1" '2\n'
+            assert-equal "./distance 2 3 1 1" '2\n'
             ;;
         2)
-            assert-equal "./test 3 2 5 1" '2\n'
+            assert-equal "./distance 3 2 5 1" '2\n'
             ;;
         3)
-            assert-equal "./test 3 1 2 5" '4\n'
+            assert-equal "./distance 3 1 2 5" '4\n'
             ;;
     esac
 
@@ -122,7 +122,73 @@ Now we can run Angelix to generate a patch for that make all test pass:
 
     angelix /path/to/src distance.c oracle 1 2 3 --assert assert.json
 
-Angelix will generate the following patch:
+Angelix should produce the following output:
 
-    --++
+    INFO     project         configuring validation source
+    INFO     project         building json compilation database from validation source
+    INFO     testing         running test '1' of validation source
+    INFO     testing         running test '2' of validation source
+    INFO     testing         running test '3' of validation source
+    INFO     project         configuring frontend source
+    INFO     transformation  instrumenting repairable of frontend source
+    INFO     project         building frontend source
+    INFO     repair          running positive tests for debugging
+    INFO     testing         running test '1' of frontend source
+    INFO     testing         running test '2' of frontend source
+    INFO     repair          running negative tests for debugging
+    INFO     testing         running test '3' of frontend source
+    INFO     localization    selected expressions [(14, 10, 14, 15), (16, 10, 16, 15)] with group score 1.0
+    INFO     localization    selected expressions [(9, 7, 9, 12), (10, 10, 10, 15)] with group score 0.83333
+    INFO     localization    selected expressions [(12, 10, 12, 15), (13, 7, 13, 12)] with group score 0.33333
+    INFO     localization    selected expressions [(17, 7, 17, 12)] with group score 0.33333 
+    INFO     repair          considering suspicious expressions [(14, 10, 14, 15), (16, 10, 16, 15)]
+    INFO     reduction       selected 2 tests
+    INFO     reduction       selected passing tests: ['1']
+    INFO     reduction       selected failing tests: ['3']
+    INFO     project         configuring backend source
+    INFO     transformation  instrumenting suspicious of backend source
+    INFO     project         building backend source
+    INFO     inference       inferring specification for test '3'
+    INFO     testing         running test '3' of backend source with KLEE
+    INFO     inference       solving path .angelix/backend/klee-out-0/test000001.smt2
+    INFO     inference       expression (16, 10, 16, 15)[0]: angelic = 4, original = -4
+    INFO     inference       solving path .angelix/backend/klee-out-0/test000002.smt2
+    INFO     inference       UNSAT
+    INFO     inference       found 1 angelic paths for test '3'
+    INFO     inference       inferring specification for test '1'
+    INFO     testing         running test '1' of backend source with KLEE
+    INFO     inference       solving path .angelix/backend/klee-out-0/test000001.smt2
+    INFO     inference       expression (14, 10, 14, 15)[0]: angelic = 2, original = 2
+    INFO     inference       solving path .angelix/backend/klee-out-0/test000002.smt2
+    INFO     inference       UNSAT
+    INFO     inference       found 1 angelic paths for test '1'
+    INFO     synthesis       synthesizing patch with component level 'alternatives'
+    INFO     synthesis       fixing expression (16, 10, 16, 15): (y1 - y2) ---> (y2 - y1)
+    INFO     synthesis       fixing expression (14, 10, 14, 15): (y1 - y2) ---> (y1 - y2)
+    INFO     repair          candidate fix synthesized
+    INFO     transformation  applying patch to validation source
+    INFO     project         building validation source
+    INFO     testing         running test '1' of validation source
+    INFO     testing         running test '2' of validation source
+    INFO     testing         running test '3' of validation source
+    INFO     repair          patch successfully generated in 6s (see AngelixTutorial-2015-Dec14-164504.patch)
+    SUCCESS
 
+You can review the patch stored in AngelixTutorial-2015-Dec14-164504.patch (the name depends on current time):
+
+    --- a/distance.c
+    +++ b/distance.c
+    @@ -11,9 +11,9 @@
+       else
+         dx = x2 - x1;
+       if (y1 > y2)
+    -    dy = y1 - y2;
+    +    dy = (y1 - y2);
+       else
+    -    dy = y1 - y2;
+    +    dy = (y2 - y1);
+       if (dx > dy)
+          return dx;
+       else
+
+Since the patch is correct, it can applied to the source code using the `patch` tool.
