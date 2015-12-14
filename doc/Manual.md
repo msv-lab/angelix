@@ -18,6 +18,8 @@
 
 Angelix uses symbolic execution and program synthesis to search for a patch. It can add guards for program statements and modify simple program expressions. To analyze program test executions, Angelix requires interface to test running and test assertions.
 
+![workflow](workflow.png)
+
 ## Build System ##
 
 Angelix is designed to support Makefile-based projects. The following is required for successful execution:
