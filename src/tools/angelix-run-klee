@@ -48,9 +48,17 @@ else
     debug_arg="-debug-print-instructions"
 fi
 
-klee $search_arg $forks_arg $depth_arg $time_arg $solver_time_arg $debug_arg \
+# synthesizer specific args
+if [ -z $ANGELIX_USE_SEMFIX_SYN ]; then
+    # angelix
+    syn_arg="-smtlib-human-readable"
+else
+    # semfix
+    syn_arg=""
+fi
+
+klee $search_arg $forks_arg $depth_arg $time_arg $solver_time_arg $debug_arg $syn_arg \
      -write-smt2s \
-     -smtlib-human-readable \
      --libc=uclibc \
      --posix-runtime \
      -allow-external-sym-calls \

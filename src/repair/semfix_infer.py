@@ -4,6 +4,7 @@ import subprocess
 import logging
 from glob import glob
 import os
+import shutil
 from pprint import pprint
 
 import z3
@@ -35,7 +36,7 @@ def askey(n):
 def get_vars(f):
     r = set()
     def collect(f):
-      if z3.is_const(f): 
+      if z3.is_const(f):
           if f.decl().kind() == z3.Z3_OP_UNINTERPRETED and not askey(f) in r:
               r.add(askey(f))
       else:
@@ -61,7 +62,7 @@ def parse_variables(vars):
     choices: expr -> type * num of instances * env-name list
     constants: expr list
     reachable: set of strings
-    
+
     Note: assume environment variables are always int
     '''
     output_type = dict()
@@ -108,7 +109,7 @@ def parse_variables(vars):
                     raise InferenceError()
             elif kind == 'const':
                 logger.error('constant choices are not supported')
-                raise InferenceError()                
+                raise InferenceError()
                 if type == 'int':
                     logger.error('integer constant choices are not supported')
                     raise InferenceError()
@@ -129,6 +130,9 @@ def parse_variables(vars):
     for expr, type in choice_type.items():
         for i in range(0, len(choice_instances[expr])):
             if i not in choice_instances[expr]:
+                # logger.info('i: {}'.format(i))
+                # logger.info('choice_instances[expr]: {}'.format(choice_instances[expr]))
+                # logger.info('expr: {}'.format(expr))
                 logger.error('inconsistent variables')
                 raise InferenceError()
         choices[expr] = (type, len(choice_instances[expr]), list(choice_env[expr]))
@@ -136,9 +140,10 @@ def parse_variables(vars):
     return outputs, choices, constants, reachable
 
 
-class Inferrer:
+class Semfix_Inferrer:
 
-    def __init__(self, config, tester):
+    def __init__(self, working_dir, config, tester):
+        self.working_dir = working_dir
         self.config = config
         self.run_test = tester
 
@@ -173,8 +178,17 @@ class Inferrer:
 
         self.run_test(project, test, klee=True, env=environment)
 
+        # store smt2 files
+        test_dir = self.get_test_dir(test)
+        shutil.rmtree(test_dir, ignore_errors='true')
+        klee_dir = join(test_dir, 'klee')
+        os.makedirs(klee_dir)
+
         smt_glob = join(project.dir, 'klee-out-0', '*.smt2')
         smt_files = glob(smt_glob)
+
+        for smt in smt_files:
+            shutil.copy(smt, klee_dir)
 
         # loading dump
 
@@ -235,7 +249,7 @@ class Inferrer:
                 if len(s) != 1:
                     raise InferenceError()
                 return s[0]
-    
+
             dump_parser_by_type = dict()
             dump_parser_by_type['int'] = str_to_int
             dump_parser_by_type['bool'] = str_to_bool
@@ -302,7 +316,7 @@ class Inferrer:
                     oracle_constraints[expected_variable].append(value)
 
             if not matching_path:
-                continue        
+                continue
 
             solver.reset()
             solver.add(path)
@@ -312,25 +326,6 @@ class Inferrer:
                               Select(array, BitVecVal(2, 32)),
                               Select(array, BitVecVal(1, 32)),
                               Select(array, BitVecVal(0, 32)))
-
-            def angelic_variable(type, expr, instance):
-                pattern = '{}!choice!{}!{}!{}!{}!{}!angelic'
-                s = pattern.format(type, expr[0], expr[1], expr[2], expr[3], instance)
-                return Array(s, BitVecSort(32), BitVecSort(8))
-        
-            def original_variable(type, expr, instance):
-                pattern = '{}!choice!{}!{}!{}!{}!{}!original'
-                s = pattern.format(type, expr[0], expr[1], expr[2], expr[3], instance)
-                return Array(s, BitVecSort(32), BitVecSort(8))
-
-            def env_variable(expr, instance, name):
-                pattern = 'int!choice!{}!{}!{}!{}!{}!env!{}'
-                s = pattern.format(expr[0], expr[1], expr[2], expr[3], instance, name)
-                return Array(s, BitVecSort(32), BitVecSort(8))
-
-            def output_variable(type, name, instance):
-                s = '{}!output!{}!{}'.format(type, name, instance)
-                return Array(s, BitVecSort(32), BitVecSort(8))
 
             def angelic_selector(expr, instance):
                 s = 'angelic!{}!{}!{}!{}!{}'.format(expr[0], expr[1], expr[2], expr[3], instance)
@@ -347,7 +342,7 @@ class Inferrer:
             for name, values in oracle_constraints.items():
                 type, _ = outputs[name]
                 for i, value in enumerate(values):
-                    array = output_variable(type, name, i)
+                    array = self.output_variable(type, name, i)
                     bv_value = to_bv32_converter_by_type[type](value)
                     solver.add(bv_value == array_to_bv32(array))
 
@@ -355,24 +350,27 @@ class Inferrer:
                 type, instances, env = item
                 for instance in range(0, instances):
                     selector = angelic_selector(expr, instance)
-                    array = angelic_variable(type, expr, instance)
+                    array = self.angelic_variable(type, expr, instance)
                     solver.add(selector == array_to_bv32(array))
 
                     selector = original_selector(expr, instance)
-                    array = original_variable(type, expr, instance)
+                    array = self.original_variable(type, expr, instance)
                     solver.add(selector == array_to_bv32(array))
 
                     for name in env:
                         selector = env_selector(expr, instance, name)
-                        array = env_variable(expr, instance, name)
+                        env_type = 'int' #FIXME
+                        array = self.env_variable(env_type, expr, instance, name)
                         solver.add(selector == array_to_bv32(array))
-                        
-            
+
             result = solver.check()
             if result != z3.sat:
                 logger.info('UNSAT')
                 continue
             model = solver.model()
+
+            # generate IO file
+            self.generate_IO_file(test, choices, oracle_constraints, outputs)
 
             # expr -> (angelic * original * env) list
             angelic_path = dict()
@@ -383,13 +381,14 @@ class Inferrer:
                 for instance in range(0, instances):
                     bv_angelic = model[angelic_selector(expr, instance)]
                     angelic = from_bv32_converter_by_type[type](bv_angelic)
-                    bv_original = model[original_selector(expr, instance)]
-                    original = from_bv32_converter_by_type[type](bv_original)
                     if self.config['semfix']:
+                        original = _
                         logger.info('expression {}[{}]: angelic = {}'.format(expr,
                                                                              instance,
                                                                              angelic))
                     else:
+                        bv_original = model[original_selector(expr, instance)]
+                        original = from_bv32_converter_by_type[type](bv_original)
                         logger.info('expression {}[{}]: angelic = {}, original = {}'.format(expr,
                                                                                             instance,
                                                                                             angelic,
@@ -411,5 +410,83 @@ class Inferrer:
             angelic_paths = self._reduce_angelic_forest(angelic_paths)
         else:
             logger.info('found {} angelic paths for test \'{}\''.format(len(angelic_paths), test))
-        
+
         return angelic_paths
+
+    def angelic_variable_name(self, type, expr, instance):
+        pattern = '{}!choice!{}!{}!{}!{}!{}!angelic'
+        s = pattern.format(type, expr[0], expr[1], expr[2], expr[3], instance)
+        return s
+
+    def angelic_variable(self, type, expr, instance):
+        return Array(self.angelic_variable_name(type, expr, instance),
+                     BitVecSort(32), BitVecSort(8))
+
+    def original_variable_name(self, type, expr, instance):
+        pattern = '{}!choice!{}!{}!{}!{}!{}!original'
+        s = pattern.format(type, expr[0], expr[1], expr[2], expr[3], instance)
+        return s
+
+    def original_variable(self, type, expr, instance):
+        return Array(self.original_variable_name(type, expr, instance),
+                     BitVecSort(32), BitVecSort(8))
+
+    def env_variable_name(self, type, expr, instance, name):
+       pattern = '{}!choice!{}!{}!{}!{}!{}!env!{}'
+       s = pattern.format(type, expr[0], expr[1], expr[2], expr[3], instance, name)
+       return s
+
+    def env_variable(self, type, expr, instance, name):
+       return Array(self.env_variable_name(type, expr, instance, name),
+                    BitVecSort(32), BitVecSort(8))
+
+    def output_variable_name(self, type, name, instance):
+       s = '{}!output!{}!{}'.format(type, name, instance)
+       return s
+
+    def output_variable(self, type, name, instance):
+      return Array(self.output_variable_name(type, name, instance),
+                   BitVecSort(32), BitVecSort(8))
+
+    def get_test_dir(self, test):
+        return join(self.working_dir, 'semfix-syn-input', 'tests', test)
+
+    def generate_IO_file(self, test, choices, oracle_constraints, outputs):
+        for choice_id, (expr, item) in enumerate(choices.items()):
+            angel_type, instances, env = item
+            for instance in range(0, instances):
+                test_dir = self.get_test_dir(test)
+                IO_file = open(join(test_dir,
+                                    "choice" + '.{}.IO'.format(instance)), 'w')
+                for name in env:
+                    IO_file.write('@input\n')
+                    input_type = 'int' # FIXME
+                    IO_file.write('name {}\n'.
+                                  format(self.env_variable_name(input_type, expr, instance, name)))
+                    IO_file.write('init -\n')
+                    IO_file.write('type {}\n'.format(input_type))
+                    IO_file.write('\n')
+
+                # logger.info('angelic type: {}'.format(angel_type))
+                IO_file.write('@output\n')
+                IO_file.write('name {}\n'.
+                              format(self.angelic_variable_name(angel_type, expr, instance)))
+                IO_file.write('type {}\n'.format(angel_type))
+                IO_file.write('\n')
+
+                IO_file.write('@output\n')
+                IO_file.write('name {}\n'.
+                                  format(self.original_variable_name(angel_type, expr, instance)))
+                IO_file.write('type {}\n'.format(angel_type))
+                IO_file.write('\n')
+
+                for name, values in oracle_constraints.items():
+                    constraint_type, _ = outputs[name]
+                    for i, value in enumerate(values):
+                        IO_file.write('@output\n')
+                        IO_file.write('name {}\n'.
+                                      format(self.output_variable_name(constraint_type, name, i)))
+                        IO_file.write('type {}\n'.format(constraint_type))
+                        IO_file.write('\n')
+
+                IO_file.close()

@@ -14,8 +14,9 @@ logger = logging.getLogger(__name__)
 
 class Semfix_Synthesizer(Synthesizer):
 
-    def __init__(self, config, extracted, angelic_forest_file):
+    def __init__(self, working_dir, config, extracted, angelic_forest_file):
         Synthesizer.__init__(self, config, extracted, angelic_forest_file)
+        self.working_dir = working_dir
 
     def dump_angelic_forest(self, angelic_forest):
         '''
@@ -36,9 +37,11 @@ class Semfix_Synthesizer(Synthesizer):
                         context = []
                         for name, value in environment.items():
                             context.append({'name': name,
+                                            'type': 'int', # FIXME: always int?
                                             'value': value})
                         dumpable_path.append({ 'context': context,
                                                'value': { 'name': 'angelic',
+                                                          'type': 'int', # FIXME: always int?
                                                           'value': angelic },
                                                'expression': id(expr),
                                                'instId': instance })
@@ -49,8 +52,6 @@ class Semfix_Synthesizer(Synthesizer):
             json.dump(dumpable_angelic_forest, file, indent=2)
 
     def __call__(self, angelic_forest):
-        logger.info('use semfix synthesizer')
-
         if type(angelic_forest) == str:
             # angelic_forest is a file
             shutil.copyfile(angelic_forest, self.angelic_forest_file)
@@ -64,7 +65,8 @@ class Semfix_Synthesizer(Synthesizer):
 
         for level in self.config['synthesis_levels']:
 
-            logger.info('synthesizing patch with component level \'{}\''.format(level))
+            # FIXME: Currently, we do not use synthesis-level.
+            # logger.info('synthesizing patch with component level \'{}\''.format(level))
 
             # TODO: add synthesis-max-variables
 
@@ -88,23 +90,33 @@ class Semfix_Synthesizer(Synthesizer):
             with open(config_file, 'w') as file:
                 json.dump(config, file)
 
-            semfix_root = os.environ['SEMFIX_ROOT']            
+            semfix_root = os.environ['SEMFIX_ROOT']
 
             if self.config['verbose']:
                 stderr = None
             else:
                 stderr = subprocess.DEVNULL
 
-            args = [self.angelic_forest_file, self.extracted, patch_file, config_file]
+            # logger.info('angelic_forest: {}'.format(angelic_forest))
 
+            cwd = os.getcwd()
+            # logger.info('cwd: {}'.format(cwd))
             try:
-                cwd = os.getcwd()
                 os.chdir(semfix_root)
-                result = subprocess.check_output(['./interpret.pl', '--spec-file=./lib/component.lib', '--synfunc-file=./tmp/synfunc.info', '--input-file=./tmp/z3.res', '--loc-prefix=l', '--c-code'], stderr=stderr)
-                os.chdir(cwd)
-            except subprocess.CalledProcessError:        
+                max_z3_trials = self.config['max_z3_trials']
+                # logger.info('max_z3_trials: {}'.format(self.config['max_z3_trials']))
+                result = subprocess.check_output(['./solve.pl',
+                                                  '--no-log',
+                                                  '--spec-file=./lib/component.lib',
+                                                  '--patch-file=' + patch_file,
+                                                  '--work-dir={}'.format(join(self.working_dir)),
+                                                  '--max-z3-trials={}'.format(max_z3_trials)
+                                              ], stderr=stderr)
+            except subprocess.CalledProcessError:
                 logger.warning("synthesis returned non-zero code")
                 continue
+            finally:
+                os.chdir(cwd)
 
             if str(result, 'UTF-8').strip() == 'TIMEOUT':
                 logger.warning('timeout when synthesizing fix')
@@ -113,6 +125,7 @@ class Semfix_Synthesizer(Synthesizer):
             elif str(result, 'UTF-8').strip() == 'SUCCESS':
                 with open(patch_file) as file:
                     content = file.readlines()
+                # logger.info('content: {}'.format(content))
                 patch = dict()
                 while len(content) > 0:
                     line = content.pop(0)
@@ -130,6 +143,9 @@ class Semfix_Synthesizer(Synthesizer):
             else:
                 raise Exception('result: ' + str(result, 'UTF-8'))
 
+            # FIXME: Currently, we do not use synthesis-level.
+            break
+
         shutil.rmtree(dirpath)
-        
+
         return None

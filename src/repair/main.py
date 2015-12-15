@@ -17,8 +17,9 @@ from testing import Tester
 from localization import Localizer
 from reduction import Reducer
 from inference import Inferrer, InferenceError
+from semfix_infer import Semfix_Inferrer, InferenceError
 from synthesis import Synthesizer
-from semfix_synthesis import Semfix_Synthesizer
+from semfix_syn import Semfix_Synthesizer
 
 
 logger = logging.getLogger("repair")
@@ -64,6 +65,7 @@ sys.setrecursionlimit(10000)  # Otherwise inference.get_vars fails
 class Angelix:
 
     def __init__(self, working_dir, src, buggy, oracle, tests, golden, asserts, lines, build, configure, config):
+        self.working_dir = working_dir
         self.config = config
         self.test_suite = tests
         extracted = join(working_dir, 'extracted')
@@ -75,11 +77,13 @@ class Angelix:
         self.run_test = tester
         self.get_suspicious_groups = Localizer(config, lines)
         self.reduce = Reducer(config)
-        self.infer_spec = Inferrer(config, tester)        
         if self.config['use_semfix_syn']:
-            self.synthesize_fix = Semfix_Synthesizer(config, extracted, angelic_forest_file)
+            self.synthesize_fix = Semfix_Synthesizer(working_dir,
+                                                     config, extracted, angelic_forest_file)
+            self.infer_spec = Semfix_Inferrer(working_dir, config, tester)
         else:
-            self.synthesize_fix = Synthesizer(config, extracted, angelic_forest_file)                
+            self.synthesize_fix = Synthesizer(config, extracted, angelic_forest_file)
+            self.infer_spec = Inferrer(config, tester)
         self.instrument_for_localization = RepairableTransformer(config)
         self.instrument_for_inference = SuspiciousTransformer(config, extracted)
         self.apply_patch = FixInjector(config)
@@ -122,7 +126,7 @@ class Angelix:
             else:
                 negative.append(test)
         return positive, negative
-        
+
 
     def generate_patch(self):
         positive, negative = self.evaluate(self.validation_src)
@@ -157,7 +161,7 @@ class Angelix:
                 self.dump += test
                 logger.info('running golden version with test {}'.format(test))
                 result = self.run_test(self.golden_src, test, dump=self.dump[test])
-                if not result:           
+                if not result:
                     excluded.append(test)
 
         for test in excluded:
@@ -172,6 +176,11 @@ class Angelix:
             logger.warning('no suspicious expressions localized')
 
         while len(negative) > 0 and len(suspicious) > 0:
+            if self.config['use_semfix_syn']:
+                # prepare a clean directory
+                shutil.rmtree(join(self.working_dir, 'semfix-syn-input'),
+                              ignore_errors='true')
+
             expressions = suspicious.pop(0)
             for e in expressions:
                 logger.info('considering suspicious expression {}'.format(e))
@@ -183,8 +192,12 @@ class Angelix:
             angelic_forest = dict()
             inference_failed = False
             for test in repair_suite:
-                angelic_forest[test] = self.infer_spec(self.backend_src, test, self.dump[test])
-                if len(angelic_forest[test]) == 0:
+                try:
+                    angelic_forest[test] = self.infer_spec(self.backend_src, test, self.dump[test])
+                    if len(angelic_forest[test]) == 0:
+                        inference_failed = True
+                        break
+                except InferenceError:
                     inference_failed = True
                     break
             if inference_failed:
@@ -263,7 +276,7 @@ class Angelix:
         self.backend_src.restore_buggy()
         self.backend_src.configure()
         self.instrument_for_inference(self.backend_src, list(expressions))
-        
+
         fix = self.synthesize_fix(af_file)
         if fix is None:
             logger.info('cannot synthesize fix')
@@ -354,6 +367,8 @@ if __name__ == "__main__":
                         help='enable SemFix mode (default: %(default)s)')
     parser.add_argument('--use-semfix-synthesizer', action='store_true',
                         help='use SemFix synthesizer (default: %(default)s)')
+    parser.add_argument('--max-z3-trials', metavar='NUM', type=int, default=2,
+                        help='maxium Z3 trials when using SemFix synthesizer (default: %(default)s)')
     parser.add_argument('--dump-only', action='store_true',
                         help='dump actual outputs for given tests (default: %(default)s)')
     parser.add_argument('--synthesis-only', metavar="FILE", default=None,
@@ -409,6 +424,7 @@ if __name__ == "__main__":
     config['initial_tests']             = args.initial_tests
     config['semfix']                    = args.semfix
     config['use_semfix_syn']            = args.use_semfix_synthesizer
+    config['max_z3_trials']             = args.max_z3_trials
     config['defect']                    = args.defect
     config['test_timeout']              = args.test_timeout
     config['group_size']                = args.group_size
