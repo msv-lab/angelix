@@ -150,7 +150,7 @@ my $target = get_target();
 if ($compilation_mode eq "test") {
 
     my @test_comp_args = filter_non_comp_args(\@ARGV, 1);
-    my @args = ("llvm-gcc",
+    my @args = ("gcc",
                 "-include $angelix_header",                
                 wrap_args(@test_comp_args),
                 "-L$libs_test",
