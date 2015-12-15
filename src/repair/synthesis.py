@@ -67,8 +67,6 @@ class Synthesizer:
 
             logger.info('synthesizing patch with component level \'{}\''.format(level))
 
-            # TODO: add synthesis-max-variables
-
             config = {
                 "encodingConfig": {
                     "componentsMultipleOccurrences": True,
@@ -100,7 +98,7 @@ class Synthesizer:
 
             try:
                 result = subprocess.check_output(['java', '-jar', jar] + args, stderr=stderr)
-            except subprocess.CalledProcessError:        
+            except subprocess.CalledProcessError:
                 logger.warning("synthesis returned non-zero code")
                 continue
 
@@ -129,5 +127,5 @@ class Synthesizer:
                 raise Exception('result: ' + str(result, 'UTF-8'))
 
         shutil.rmtree(dirpath)
-        
+
         return None

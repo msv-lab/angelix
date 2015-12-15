@@ -10,7 +10,8 @@ Clone repository recursively:
 
 Install dependencies:
 
-    sudo apt-get install g++ curl dejagnu subversion bison flex bc libcap-dev
+    sudo apt-get install git wget xz-utils build-essential
+    sudo apt-get install curl dejagnu subversion bison flex bc libcap-dev
     sudo apt-get install cmake libncurses5-dev libboost-all-dev
     sudo apt-get install default-jdk sbt
 
@@ -28,27 +29,13 @@ Run tests:
 
 Tested on Ubuntu 14.04 64-bit.
 
-## Usage ##
+## Documentation ##
 
-Angelix uses symbolic execution and program synthesis to search for a patch. It can add guards for program statements and modify simple program expressions (see supported [defect classes](doc/DefectClasses.md) and [synthesis levels](doc/SynthesisLevels.md)).
-
-To analyze program test executions, Angelix requires interface to test running and test assertions (see [test framework abstraction](doc/TestAbstraction.md)).
-
-Angelix is designed to support Makefile-based projects. The following is required for successful execution:
-
-* Compiler used by the build system can be substituted by redefining `CC` environment variable.
-* Compilation and linking are done by separate compiler calls.
-* Project is configured to use static linking.
-* All executables and object files are removed (e.g. run `make clean`).
-* Angelix environment is set as shown above.
-
-Angelix is hygienic (it does not modify original project files), however, it also assumes that the source code only uses relative references to the source tree. All intermediate data is stored in the `.angelix` directory.
+* [Tutorial](doc/Tutorial.md)
+* [Manual](doc/Manual.md)
+* [Troubleshooting](doc/Troubleshooting.md)
 
 Run `angelix --help` to see the list of available options.
-
-## Known Issues
-
-* If you use multiarch on Ubuntu, there can be a library path problem: https://stackoverflow.com/questions/6329887/compiling-problems-cannot-find-crt1-o
 
 ## Contributors ##
 

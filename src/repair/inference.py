@@ -165,7 +165,7 @@ class Inferrer:
             environment['ANGELIX_KLEE_MAX_SOLVER_TIME'] = str(self.config['klee_solver_timeout'])
         if self.config['klee_debug']:
             environment['ANGELIX_KLEE_DEBUG'] = 'YES'
-        if self.config['klee_disable_memory_error']:
+        if self.config['klee_ignore_errors']:
             environment['KLEE_DISABLE_MEMORY_ERROR'] = 'YES'
         if self.config['use_semfix_syn']:
             environment['ANGELIX_USE_SEMFIX_SYN'] = 'YES'

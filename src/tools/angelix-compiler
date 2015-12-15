@@ -12,6 +12,16 @@ my $libs_klee = $ENV{'ANGELIX_LIBRARY_PATH_KLEE'};
 my $libs_test = $ENV{'ANGELIX_LIBRARY_PATH_TEST'};
 my $klee_libs = $ENV{'KLEE_LIBRARY_PATH'};
 
+my $custom_klee_flags = "";
+my $custom_test_flags = "";
+
+if ($ENV{'ANGELIX_COMPILER_CUSTOM_KLEE'}) {
+    $custom_klee_flags = $ENV{'ANGELIX_COMPILER_CUSTOM_KLEE'};
+}
+
+if ($ENV{'ANGELIX_COMPILER_CUSTOM_TEST'}) {
+    $custom_test_flags = $ENV{'ANGELIX_COMPILER_CUSTOM_TEST'};
+}
 
 sub debug {
     print STDERR "[angelix-compiler] @_\n";
@@ -31,8 +41,7 @@ sub message {
 }
 
 
-# Assume that command has "-o *.o" if and only if it is not linking
-# TODO: maybe using -c is better?
+# Assume that command has "-o *.o" or "-c" if and only if it is not linking
 sub get_target() {
     my $last_o = 0;
     foreach (@ARGV) {
@@ -42,8 +51,22 @@ sub get_target() {
         if (/^-o$/) {
             $last_o = 1;
         }
+        if (/^-c$/) {
+            return "";
+        }        
     }
-    return "";
+    return undef;
+}
+
+
+sub get_source {
+    if ($_[0] =~ /\s(\S+\.c)$/) {
+        return $1;
+    }
+    if ($_[0] =~ /\s(\S+\.c)\s/) {
+        return $1;
+    }    
+    return "<unknown>";
 }
 
 
@@ -127,69 +150,81 @@ my $target = get_target();
 if ($compilation_mode eq "test") {
 
     my @test_comp_args = filter_non_comp_args(\@ARGV, 1);
-    my @args = ("llvm-gcc",
+    my @args = ("gcc",
                 "-include $angelix_header",                
                 wrap_args(@test_comp_args),
                 "-L$libs_test",
                 "-langelix",
 # in this generic build, runtime component requires this stub library:                
                 "-L$klee_libs",
-                "-lkleeRuntest"
+                "-lkleeRuntest",
+                $custom_test_flags
                 );
     my $call_gcc = join(' ', @args);
     debug($call_gcc);
     system($call_gcc);
 
     my $return_code = $?;
-    if ($return_code != 0 && $target) {
-        message($target);
+    if ($return_code != 0 && defined($target)) {
+        if ($target) {
+            message($target);
+        } else {
+            message(get_source(join(' ', @test_comp_args)));
+        }
+    } elsif ($return_code != 0) {
+        message("<linking>");
     }
     exit($return_code);
     
 } elsif ($compilation_mode eq "klee") {
 
-    if ($target =~ m/\.o$/) {
-
+    if (defined($target) && ($target =~ m/\.o$/ || ! $target)) {
+        
         my @klee_comp_args = filter_non_comp_args(\@ARGV, 0);
         my @args = ("llvm-gcc",
-# it breaks compilation of .s files on openssl:
+                    # it breaks compilation of .s files on openssl:
                     "-include $angelix_header",
                     "-emit-llvm",
                     "-g",
                     "-O0",
                     "-D ANGELIX_SYMBOLIC_RUNTIME",
-                    wrap_args(@klee_comp_args));
+                    wrap_args(@klee_comp_args),
+                    $custom_klee_flags);
         my $call_llvm_gcc = join(' ', @args);
         debug($call_llvm_gcc);
         system($call_llvm_gcc);
-
+        
         my $return_code = $?;
         if ($return_code != 0 && $target) {
             message($target);
+        } elsif ($return_code != 0) {
+            message(get_source(join(' ', @klee_comp_args)));
         }
         exit($return_code);
-
+        
     } else {
-
+        
         my @link_args = filter_non_link_args(@ARGV);
         my @args = ("llvm-ld",
                     "--disable-opt",
                     wrap_args(@link_args),
                     "-L$libs_klee",
                     "-langelix",
-                    );
+                    $custom_klee_flags);
         my $call_llvm_ld = join(' ', @args);
         debug($call_llvm_ld);
         system($call_llvm_ld);
 
-        fix_llvm_script($target) if -e $target;
-
-        system("angelix-patch-bitcode ${target}.bc") if -e "${target}.bc";
-
         my $return_code = $?;
-        if ($return_code != 0 && $target) {
+        if (defined($target) && $return_code != 0) {
             message($target);
         }
+
+        if (defined($target) && -e $target) {
+            fix_llvm_script($target) if -e $target;
+            system("angelix-patch-bitcode ${target}.bc") if -e "${target}.bc";
+        }
+        
         exit($return_code);
 
     }

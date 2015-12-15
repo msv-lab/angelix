@@ -28,7 +28,7 @@ while( <$in> ) {
 		} elsif (/%(\d+)\s=\scall\s(\w+)\s\@llvm\.atomic\.load\.(\w+)\..*\(\w+\*\s(%?\w+),\s\w+\s(%?-?\w+)\)/) {
 				print $out "; [begin] $_";
 				my ($var, $type, $op, $ptr, $delta) = ($1, $2, $3, $4, $5);
-				print "patching llvm.atomic.load.${op} at line $linenumber\n";
+				print "[angelix] patching llvm.atomic.load.${op} at line $linenumber\n";
 				print $out "  %${var} = load ${type}* ${ptr}\n";
 				print $out "  %aux${var} = ${op} ${type} %${var}, ${delta}\n";
 				print $out "  store ${type} %aux${var}, ${type}* ${ptr}\n";

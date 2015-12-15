@@ -31,6 +31,9 @@ class Dump:
                     with open(file) as f:
                         content = f.read()
                     json[test][var].append(content)
+                if var == 'reachable':
+                    json[test][var] = list(set(json[test][var]))
+                    
         return json
 
     def __init__(self, working_dir, correct_output):
