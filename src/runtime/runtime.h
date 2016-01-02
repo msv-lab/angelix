@@ -34,7 +34,7 @@
 #define ANGELIX_REACHABLE(name)                 \
   angelix_dump_reachable(name)
 
-#endif // ANGELIX_SYMBOLIC_RUNTIME
+#endif /* ANGELIX_SYMBOLIC_RUNTIME */
 
 int angelix_symbolic_output_int(int expr, char* id);
 int angelix_symbolic_output_bool(int expr, char* id);
@@ -55,10 +55,10 @@ int angelix_choose_const_bool(int expr, int bl, int bc, int el, int ec);
 void angelix_dump_reachable(char* id);
 void angelix_symbolic_reachable(char* id);
 
-// For fault localization
+/* For fault localization */
 void angelix_trace(int bl, int bc, int el, int ec);
 
-// Stub
+/* Stub */
 int angelix_ignore();
 
 #endif

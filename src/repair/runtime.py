@@ -1,6 +1,8 @@
 import os
 from os.path import join, exists
+import logging
 
+logger = logging.getLogger(__name__)
 
 class Dump:
 
@@ -33,7 +35,7 @@ class Dump:
                     json[test][var].append(content)
                 if var == 'reachable':
                     json[test][var] = list(set(json[test][var]))
-                    
+
         return json
 
     def __init__(self, working_dir, correct_output):
