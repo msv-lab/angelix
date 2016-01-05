@@ -79,7 +79,7 @@ Output values are specified by wrapping them with `ANGELIX_OUTPUT` macro. In out
     }
 
     int main(int argc, char *argv[]) {
-        int a, b;
+        int x1, y1, x2, y2;
         x1 = atoi(argv[1]);
         y1 = atoi(argv[2]);
         x2 = atoi(argv[3]);
