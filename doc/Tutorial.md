@@ -32,7 +32,7 @@ This tutorial demonstrates how Angelix can be used to repair a simple program. S
 
 Notice that `dy` is assigned to `y1 - y2` in both branches of the if statement, while it is supposed to be `y2 - y1` in the second branch. This is a typical mistake caused by copy-pasting.
 
-This program produces the computes the following values:
+This program produces the following values:
 
     $ ./distance 2 3 1 1
     2
@@ -43,7 +43,7 @@ This program produces the computes the following values:
 
 The last value is wrong. The expected distance is 4, but because of the bug in `dy` computation, the program outputs `dx`. Let's apply Angelix to fix the bug automatically using the above tests.
 
-In order to Angelix can analyse the program, you need to provide an interface to the build system and testing framework used by you program. In this example, we will use a simple Makefile. For more detailed information, please read the [manual](Manual.md).
+In order for Angelix to analyse the program, you need to provide an interface to the build system and testing framework used by you program. In this example, we will use a simple Makefile. For more detailed information, please read the [manual](Manual.md).
 
     CC=gcc
     CFLAGS=-I.
