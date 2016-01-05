@@ -207,14 +207,16 @@ StatementMatcher NonTrivialRepairableLoopCondition =
 StatementMatcher RepairableAssignment =
   binaryOperator(isTopLevelStatement,
                  hasOperatorName("="),
-                 hasLHS(ignoringParenImpCasts(declRefExpr())),
+                 anyOf(hasLHS(ignoringParenImpCasts(declRefExpr())),
+                       hasLHS(ignoringParenImpCasts(memberExpr()))),
                  hasRHS(ignoringParenImpCasts(RepairableExpression)));
 
 
 StatementMatcher NonTrivialRepairableAssignment =
   binaryOperator(isTopLevelStatement,
                  hasOperatorName("="),
-                 hasLHS(ignoringParenImpCasts(declRefExpr())),
+                 anyOf(hasLHS(ignoringParenImpCasts(declRefExpr())),
+                       hasLHS(ignoringParenImpCasts(memberExpr()))),
                  hasRHS(ignoringParenImpCasts(NonTrivialRepairableExpression)));
 
 //TODO: currently these selectors are not completely orthogonal
@@ -247,7 +249,8 @@ StatementMatcher InterestingCondition =
 StatementMatcher InterestingIntegerAssignment =
   binaryOperator(isTopLevelStatement,
                  hasOperatorName("="),
-                 hasLHS(ignoringParenImpCasts(declRefExpr(hasType(isInteger())))),
+                 anyOf(hasLHS(ignoringParenImpCasts(declRefExpr(hasType(isInteger())))),
+                       hasLHS(ignoringParenImpCasts(memberExpr(hasType(isInteger()))))),
                  hasRHS(expr().bind("repairable")),
                  unless(hasAngelixOutput));
 
@@ -255,7 +258,8 @@ StatementMatcher InterestingIntegerAssignment =
 StatementMatcher InterestingAssignment =
   binaryOperator(isTopLevelStatement,
                  hasOperatorName("="),
-                 hasLHS(ignoringParenImpCasts(declRefExpr())),
+                 anyOf(hasLHS(ignoringParenImpCasts(declRefExpr())),
+                       hasLHS(ignoringParenImpCasts(memberExpr()))),
                  unless(hasAngelixOutput)).bind("repairable");
 
 
