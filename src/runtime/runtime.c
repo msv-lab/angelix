@@ -328,28 +328,24 @@ DUMP_PROTO(str)
 
 #undef WRITE_TO_FILE_PROTO
 
-#define SYMBOLIC_OUTPUT_PROTO(type, typestr)                    \
-  int angelix_symbolic_output_##type(type expr, char* id) {     \
-    if (getenv("ANGELIX_SYMBOLIC_RUNTIME")) {                   \
-      if (!output_instances)                                    \
-        init_tables();                                          \
-      int previous = ht_get(output_instances, id);              \
-      int instance;                                             \
-      if (table_miss) {                                         \
-        instance = 0;                                           \
-      } else {                                                  \
-        instance = previous + 1;                                \
-      }                                                         \
-      ht_set(output_instances, id, instance);                   \
-      char name[MAX_NAME_LENGTH];                               \
-      sprintf(name, "%s!output!%s!%d", typestr, id, instance);  \
-      type s;                                                   \
-      klee_make_symbolic(&s, sizeof(s), name);                  \
-      klee_assume(s == expr);                                   \
-      return s;                                                 \
-    } else {                                                    \
-      return expr;                                              \
-    }                                                           \
+#define SYMBOLIC_OUTPUT_PROTO(type, typestr)                  \
+  int angelix_symbolic_output_##type(type expr, char* id) {   \
+    if (!output_instances)                                    \
+      init_tables();                                          \
+    int previous = ht_get(output_instances, id);              \
+    int instance;                                             \
+    if (table_miss) {                                         \
+      instance = 0;                                           \
+    } else {                                                  \
+      instance = previous + 1;                                \
+    }                                                         \
+    ht_set(output_instances, id, instance);                   \
+    char name[MAX_NAME_LENGTH];                               \
+    sprintf(name, "%s!output!%s!%d", typestr, id, instance);  \
+    type s;                                                   \
+    klee_make_symbolic(&s, sizeof(s), name);                  \
+    klee_assume(s == expr);                                   \
+    return s;                                                 \
   }
 
 SYMBOLIC_OUTPUT_PROTO(int, "int")
@@ -361,24 +357,21 @@ SYMBOLIC_OUTPUT_PROTO(char, "char")
 
 //TODO: later I need to express it through angelix_symbolic_output_str
 void angelix_symbolic_reachable(char* id) {
-  if (getenv("ANGELIX_SYMBOLIC_RUNTIME")) {
-    if (!output_instances)
-      init_tables();
-    int previous = ht_get(output_instances, "reachable");
-    int instance;
-    if (table_miss) {
-      instance = 0;
-    } else {
-      instance = previous + 1;
-    }
-    ht_set(output_instances, "reachable", instance);
-    char name[MAX_NAME_LENGTH];
-    sprintf(name, "reachable!%s!%d", id, instance);
-    int s;
-    klee_make_symbolic(&s, sizeof(int), name);
-    klee_assume(s);
+  if (!output_instances)
+    init_tables();
+  int previous = ht_get(output_instances, "reachable");
+  int instance;
+  if (table_miss) {
+    instance = 0;
+  } else {
+    instance = previous + 1;
   }
-  return;
+  ht_set(output_instances, "reachable", instance);
+  char name[MAX_NAME_LENGTH];
+  sprintf(name, "reachable!%s!%d", id, instance);
+  int s;
+  klee_make_symbolic(&s, sizeof(int), name);
+  klee_assume(s);
 }
 
 
@@ -428,82 +421,115 @@ void angelix_dump_reachable(char* id) {
 }
 
 
-#define CHOOSE_PROTO(type, typestr)                                     \
-  int angelix_choose_##type(int expr,                                   \
-                            int bl, int bc, int el, int ec,             \
-                            char** env_ids,                             \
-                            int* env_vals,                              \
-                            int env_size) {                             \
-    if (getenv("ANGELIX_SYMBOLIC_RUNTIME")) {                           \
-      if (!choice_instances)                                            \
-        init_tables();                                                  \
-      char str_id[INT_LENGTH * 4 + 4 + 1];                              \
-      sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);                   \
-      int previous = ht_get(choice_instances, str_id);                  \
-      int instance;                                                     \
-      if (table_miss) {                                                 \
-        instance = 0;                                                   \
-      } else {                                                          \
-        instance = previous + 1;                                        \
-      }                                                                 \
-      ht_set(choice_instances, str_id, instance);                       \
-      int i;                                                            \
-      for (i = 0; i < env_size; i++) {                                  \
-        char name[MAX_NAME_LENGTH];                                     \
-        char* env_fmt = "int!choice!%d!%d!%d!%d!%d!env!%s";             \
-        sprintf(name, env_fmt, bl, bc, el, ec, instance, env_ids[i]);   \
-        int sv;                                                         \
-        klee_make_symbolic(&sv, sizeof(sv), name);                      \
-        klee_assume(sv == env_vals[i]);                                 \
-      }                                                                 \
-                                                                        \
-      char name_orig[MAX_NAME_LENGTH];                                  \
-      char* orig_fmt = "%s!choice!%d!%d!%d!%d!%d!original";             \
-      sprintf(name_orig, orig_fmt, typestr, bl, bc, el, ec, instance);  \
-      int so;                                                           \
-      klee_make_symbolic(&so, sizeof(so), name_orig);                   \
-      klee_assume(so == expr);                                          \
-                                                                        \
-      char name[MAX_NAME_LENGTH];                                       \
-      char* angelic_fmt = "%s!choice!%d!%d!%d!%d!%d!angelic";           \
-      sprintf(name, angelic_fmt, typestr, bl, bc, el, ec, instance);    \
-      int s;                                                            \
-      klee_make_symbolic(&s, sizeof(s), name);                          \
-                                                                        \
-      return s;                                                         \
+#define CHOOSE_WITH_DEPS_PROTO(type, typestr)                           \
+  int angelix_choose_##type##_with_deps(int expr,                       \
+                                        int bl, int bc, int el, int ec, \
+                                        char** env_ids,                 \
+                                        int* env_vals,                  \
+                                        int env_size) {                 \
+    if (!choice_instances)                                              \
+      init_tables();                                                    \
+    char str_id[INT_LENGTH * 4 + 4 + 1];                                \
+    sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);                     \
+    int previous = ht_get(choice_instances, str_id);                    \
+    int instance;                                                       \
+    if (table_miss) {                                                   \
+      instance = 0;                                                     \
     } else {                                                            \
-      return expr;                                                      \
+      instance = previous + 1;                                          \
     }                                                                   \
+    ht_set(choice_instances, str_id, instance);                         \
+    int i;                                                              \
+    for (i = 0; i < env_size; i++) {                                    \
+      char name[MAX_NAME_LENGTH];                                       \
+      char* env_fmt = "int!choice!%d!%d!%d!%d!%d!env!%s";               \
+      sprintf(name, env_fmt, bl, bc, el, ec, instance, env_ids[i]);     \
+      int sv;                                                           \
+      klee_make_symbolic(&sv, sizeof(sv), name);                        \
+      klee_assume(sv == env_vals[i]);                                   \
+    }                                                                   \
+                                                                        \
+    char name_orig[MAX_NAME_LENGTH];                                    \
+    char* orig_fmt = "%s!choice!%d!%d!%d!%d!%d!original";               \
+    sprintf(name_orig, orig_fmt, typestr, bl, bc, el, ec, instance);    \
+    int so;                                                             \
+    klee_make_symbolic(&so, sizeof(so), name_orig);                     \
+    klee_assume(so == expr);                                            \
+                                                                        \
+    char name[MAX_NAME_LENGTH];                                         \
+    char* angelic_fmt = "%s!choice!%d!%d!%d!%d!%d!angelic";             \
+    sprintf(name, angelic_fmt, typestr, bl, bc, el, ec, instance);      \
+    int s;                                                              \
+    klee_make_symbolic(&s, sizeof(s), name);                            \
+                                                                        \
+    return s;                                                           \
+  }
+
+CHOOSE_WITH_DEPS_PROTO(int, "int")
+CHOOSE_WITH_DEPS_PROTO(bool, "bool")
+
+#undef CHOOSE_WITH_DEPS_PROTO
+
+
+#define CHOOSE_PROTO(type, typestr)                                 \
+  int angelix_choose_##type(int bl, int bc, int el, int ec,         \
+                            char** env_ids,                         \
+                            int* env_vals,                          \
+                            int env_size) {                         \
+    if (!choice_instances)                                          \
+      init_tables();                                                \
+    char str_id[INT_LENGTH * 4 + 4 + 1];                            \
+    sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);                 \
+    int previous = ht_get(choice_instances, str_id);                \
+    int instance;                                                   \
+    if (table_miss) {                                               \
+      instance = 0;                                                 \
+    } else {                                                        \
+      instance = previous + 1;                                      \
+    }                                                               \
+    ht_set(choice_instances, str_id, instance);                     \
+    int i;                                                          \
+    for (i = 0; i < env_size; i++) {                                \
+      char name[MAX_NAME_LENGTH];                                   \
+      char* env_fmt = "int!choice!%d!%d!%d!%d!%d!env!%s";           \
+      sprintf(name, env_fmt, bl, bc, el, ec, instance, env_ids[i]); \
+      int sv;                                                       \
+      klee_make_symbolic(&sv, sizeof(sv), name);                    \
+      klee_assume(sv == env_vals[i]);                               \
+    }                                                               \
+                                                                    \
+    char name[MAX_NAME_LENGTH];                                     \
+    char* angelic_fmt = "%s!choice!%d!%d!%d!%d!%d!angelic";         \
+    sprintf(name, angelic_fmt, typestr, bl, bc, el, ec, instance);  \
+    int s;                                                          \
+    klee_make_symbolic(&s, sizeof(s), name);                        \
+                                                                    \
+    return s;                                                       \
   }
 
 CHOOSE_PROTO(int, "int")
 CHOOSE_PROTO(bool, "bool")
 
+#undef CHOOSE_PROTO
 
-#undef CHOOSE_CONST_PROTO
 
 #define CHOOSE_CONST_PROTO(type, typestr)                           \
-  int angelix_choose_const_##type(int expr,                         \
-                                  int bl, int bc, int el, int ec) { \
-    if (getenv("ANGELIX_SYMBOLIC_RUNTIME")) {                       \
-      if (!const_choices)                                           \
-        init_tables();                                              \
-      char str_id[INT_LENGTH * 4 + 4 + 1];                          \
-      sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);               \
-      int choice = ht_get(const_choices, str_id);                   \
-      if (table_miss) {                                             \
-        char name[MAX_NAME_LENGTH];                                 \
-        char* angelic_fmt = "%s!const!%d!%d!%d!%d";                 \
-        sprintf(name, angelic_fmt, typestr, bl, bc, el, ec);        \
-        int s;                                                      \
-        klee_make_symbolic(&s, sizeof(s), name);                    \
-        ht_set(const_choices, str_id, s);                           \
-        return s;                                                   \
-      } else {                                                      \
-        return choice;                                              \
-      }                                                             \
+  int angelix_choose_const_##type(int bl, int bc, int el, int ec) { \
+    if (!const_choices)                                             \
+      init_tables();                                                \
+    char str_id[INT_LENGTH * 4 + 4 + 1];                            \
+    sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);                 \
+    int choice = ht_get(const_choices, str_id);                     \
+    if (table_miss) {                                               \
+      char name[MAX_NAME_LENGTH];                                   \
+      char* angelic_fmt = "%s!const!%d!%d!%d!%d";                   \
+      sprintf(name, angelic_fmt, typestr, bl, bc, el, ec);          \
+      int s;                                                        \
+      klee_make_symbolic(&s, sizeof(s), name);                      \
+      ht_set(const_choices, str_id, s);                             \
+      return s;                                                     \
     } else {                                                        \
-      return expr;                                                  \
+      return choice;                                                \
     }                                                               \
   }
 

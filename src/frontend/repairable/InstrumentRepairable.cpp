@@ -18,6 +18,10 @@ public:
 
       SourceRange expandedLoc = getExpandedLoc(expr, srcMgr);
 
+      std::pair<FileID, unsigned> decLoc = srcMgr.getDecomposedExpansionLoc(expandedLoc.getBegin());
+      if (srcMgr.getMainFileID() != decLoc.first)
+        return;
+
       unsigned beginLine = srcMgr.getExpansionLineNumber(expandedLoc.getBegin());
       unsigned beginColumn = srcMgr.getExpansionColumnNumber(expandedLoc.getBegin());
       unsigned endLine = srcMgr.getExpansionLineNumber(expandedLoc.getEnd());
@@ -58,8 +62,11 @@ public:
       if (insideMacro(stmt, srcMgr, langOpts))
         return;
       
-
       SourceRange expandedLoc = getExpandedLoc(stmt, srcMgr);
+
+      std::pair<FileID, unsigned> decLoc = srcMgr.getDecomposedExpansionLoc(expandedLoc.getBegin());
+      if (srcMgr.getMainFileID() != decLoc.first)
+        return;
 
       unsigned beginLine = srcMgr.getExpansionLineNumber(expandedLoc.getBegin());
       unsigned beginColumn = srcMgr.getExpansionColumnNumber(expandedLoc.getBegin());
@@ -138,8 +145,8 @@ public:
   void EndSourceFileAction() override {
     FileID ID = TheRewriter.getSourceMgr().getMainFileID();
     if (INPLACE_MODIFICATION) {
-      overwriteMainChangedFile(TheRewriter);
-      //      TheRewriter.overwriteChangedFiles();
+      //overwriteMainChangedFile(TheRewriter);
+      TheRewriter.overwriteChangedFiles();
     } else {
       TheRewriter.getEditBuffer(ID).write(llvm::outs());
     }

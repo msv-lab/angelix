@@ -55,12 +55,13 @@ def parse_variables(vars):
     <type> ! output ! <name> ! <instance>
     reachable ! <name> ! <instance>
 
-    returns outputs, choices, constants, reachable
+    returns outputs, choices, constants, reachable, original
 
     outputs: name -> type * num of instances
     choices: expr -> type * num of instances * env-name list
     constants: expr list
     reachable: set of strings
+    original: if original available
     
     Note: assume environment variables are always int
     '''
@@ -71,6 +72,7 @@ def parse_variables(vars):
     choice_env = dict()
     reachable = set()
     constants = set()
+    original = False
     for v in vars:
         tokens = v.split('!')
         first = tokens.pop(0)
@@ -98,7 +100,7 @@ def parse_variables(vars):
                         choice_instances[expr] = []
                     choice_instances[expr].append(instance)
                 elif value == 'original':
-                    pass
+                    original = True
                 elif value == 'env':
                     name = tokens.pop(0)
                     if expr not in choice_env:
@@ -133,7 +135,7 @@ def parse_variables(vars):
                 raise InferenceError()
         choices[expr] = (type, len(choice_instances[expr]), list(choice_env[expr]))
 
-    return outputs, choices, constants, reachable
+    return outputs, choices, constants, reachable, original
 
 
 class Inferrer:
@@ -216,7 +218,7 @@ class Inferrer:
                          or str(var).startswith('char!')
                          or str(var).startswith('reachable!')]
 
-            outputs, choices, constants, reachable = parse_variables(variables)
+            outputs, choices, constants, reachable, original_available = parse_variables(variables)
 
             # name -> value list (parsed)
             oracle_constraints = dict()
@@ -385,22 +387,25 @@ class Inferrer:
                     angelic = from_bv32_converter_by_type[type](bv_angelic)
                     bv_original = model[original_selector(expr, instance)]
                     original = from_bv32_converter_by_type[type](bv_original)
-                    if self.config['semfix']:
-                        logger.info('expression {}[{}]: angelic = {}'.format(expr,
-                                                                             instance,
-                                                                             angelic))
-                    else:
+                    if original_available:
                         logger.info('expression {}[{}]: angelic = {}, original = {}'.format(expr,
                                                                                             instance,
                                                                                             angelic,
                                                                                             original))
+                    else:
+                        logger.info('expression {}[{}]: angelic = {}'.format(expr,
+                                                                             instance,
+                                                                             angelic))
                     env_values = dict()
                     for name in env:
                         bv_env = model[env_selector(expr, instance, name)]
                         value = from_bv32_converter_by_type['int'](bv_env)
                         env_values[name] = value
 
-                    angelic_path[expr].append((angelic, original, env_values))
+                    if original_available:
+                        angelic_path[expr].append((angelic, original, env_values))
+                    else:
+                        angelic_path[expr].append((angelic, None, env_values))
 
             # TODO: add constants to angelic path
 
