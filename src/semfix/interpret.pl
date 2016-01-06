@@ -352,7 +352,8 @@ sub construct_fix {
         }
         $func = $loc2func{$loc};
         if ( ! defined $func) {
-                $logger->logdie("function is not defined in construct_fix!");
+            $logger->debug("loc: " . $loc);
+            $logger->logdie("function is not defined in construct_fix!");
         }
         my $funcname = $func->{_func_name};
 

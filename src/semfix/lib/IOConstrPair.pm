@@ -151,7 +151,7 @@ sub parseOutput {
     my $p_output_lines = shift;
 
     my @output_lines = @{$p_output_lines};
-    $logger->debug("output lines: " . Dumper(@output_lines));
+    # $logger->debug("output lines: " . Dumper(@output_lines));
     my $out_var = new Var();
 
     foreach ( @output_lines ) {
@@ -391,6 +391,7 @@ sub get_out_decl {
 
                 my $var_name = "$var\_io$io_index";
                 my $var_decl = Utility::getDeclare($var_name, $var_type);
+                $logger->debug("var_decl: " . $var_decl);
 
                 push( @decl, $var_decl );
         }

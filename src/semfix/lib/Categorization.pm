@@ -360,7 +360,7 @@ sub select_funcs {
         die "stmt_kind is not handle in select_funcs!\n";
     }
 
-    $logger->debug("select_funcs: " . Dumper(@select_funcs));
+    # $logger->debug("select_funcs: " . Dumper(@select_funcs));
     return \@select_funcs;
 }
 

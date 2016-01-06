@@ -25,11 +25,11 @@ sub parse {  # @hoang parse the smt2 file
     while ( defined ( $line = <SMT2> ) )
     {
         chomp($line);
-        $logger->debug("smt file line: $line");
+        # $logger->debug("smt file line: $line");
 
         # @hoang variable declaration
         if ( $line =~ /^\(declare-fun\s+(\S+)\s+/ ) {
-            $logger->debug("line: $line");
+            # $logger->debug("line: $line");
             my $temp_var = $1;
             $temp_var =~ s/(\S+)\_0x\S+$/$1/g; # @hoang remove address suffix;
 
@@ -94,7 +94,7 @@ sub add_constr {
     my $self   = shift;
     my $constr = shift;
 
-    $logger->debug("add constraint: $constr");
+    # $logger->debug("add constraint: $constr");
     push ( @{ $self->{_constr} }, $constr);
 }
 
