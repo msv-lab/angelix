@@ -423,7 +423,7 @@ sub create_io_connection {       # ($io_behavior, $io_index)
                 my $junk;
                 return $junk;
             }
-            $logger->debug("tmp_constr: $tmp_constr");
+            # $logger->debug("tmp_constr: $tmp_constr");
             push (@constr, $tmp_constr);
         }
 

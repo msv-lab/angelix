@@ -6,6 +6,7 @@ from glob import glob
 import os
 import shutil
 from pprint import pprint
+import re
 
 import z3
 from z3 import Select, Concat, Array, BitVecSort, BitVecVal, Solver, BitVec
@@ -56,12 +57,13 @@ def parse_variables(vars):
     <type> ! output ! <name> ! <instance>
     reachable ! <name> ! <instance>
 
-    returns outputs, choices, constants, reachable
+    returns outputs, choices, constants, reachable, original
 
     outputs: name -> type * num of instances
     choices: expr -> type * num of instances * env-name list
     constants: expr list
     reachable: set of strings
+    original: if original available
 
     Note: assume environment variables are always int
     '''
@@ -72,6 +74,7 @@ def parse_variables(vars):
     choice_env = dict()
     reachable = set()
     constants = set()
+    original = False
     for v in vars:
         tokens = v.split('!')
         first = tokens.pop(0)
@@ -99,7 +102,7 @@ def parse_variables(vars):
                         choice_instances[expr] = []
                     choice_instances[expr].append(instance)
                 elif value == 'original':
-                    pass
+                    original = True
                 elif value == 'env':
                     name = tokens.pop(0)
                     if expr not in choice_env:
@@ -130,14 +133,11 @@ def parse_variables(vars):
     for expr, type in choice_type.items():
         for i in range(0, len(choice_instances[expr])):
             if i not in choice_instances[expr]:
-                # logger.info('i: {}'.format(i))
-                # logger.info('choice_instances[expr]: {}'.format(choice_instances[expr]))
-                # logger.info('expr: {}'.format(expr))
                 logger.error('inconsistent variables')
                 raise InferenceError()
         choices[expr] = (type, len(choice_instances[expr]), list(choice_env[expr]))
 
-    return outputs, choices, constants, reachable
+    return outputs, choices, constants, reachable, original
 
 
 class Semfix_Inferrer:
@@ -176,19 +176,12 @@ class Semfix_Inferrer:
             environment['ANGELIX_USE_SEMFIX_SYN'] = 'YES'
         environment['ANGELIX_KLEE_WORKDIR'] = project.dir
 
-        self.run_test(project, test, klee=True, env=environment)
-
-        # store smt2 files
         test_dir = self.get_test_dir(test)
         shutil.rmtree(test_dir, ignore_errors='true')
         klee_dir = join(test_dir, 'klee')
         os.makedirs(klee_dir)
 
-        smt_glob = join(project.dir, 'klee-out-0', '*.smt2')
-        smt_files = glob(smt_glob)
-
-        for smt in smt_files:
-            shutil.copy(smt, klee_dir)
+        self.run_test(project, test, klee=True, env=environment)
 
         # loading dump
 
@@ -215,6 +208,8 @@ class Semfix_Inferrer:
 
         solver = Solver()
 
+        smt_glob = join(project.dir, 'klee-out-0', '*.smt2')
+        smt_files = glob(smt_glob)
         for smt in smt_files:
             logger.info('solving path {}'.format(relpath(smt)))
 
@@ -230,7 +225,7 @@ class Semfix_Inferrer:
                          or str(var).startswith('char!')
                          or str(var).startswith('reachable!')]
 
-            outputs, choices, constants, reachable = parse_variables(variables)
+            outputs, choices, constants, reachable, original_available = parse_variables(variables)
 
             # name -> value list (parsed)
             oracle_constraints = dict()
@@ -369,6 +364,9 @@ class Semfix_Inferrer:
                 continue
             model = solver.model()
 
+            # store smt2 files
+            shutil.copy(smt, klee_dir)
+
             # generate IO file
             self.generate_IO_file(test, choices, oracle_constraints, outputs)
 
@@ -381,29 +379,47 @@ class Semfix_Inferrer:
                 for instance in range(0, instances):
                     bv_angelic = model[angelic_selector(expr, instance)]
                     angelic = from_bv32_converter_by_type[type](bv_angelic)
-                    if self.config['semfix']:
-                        original = _
-                        logger.info('expression {}[{}]: angelic = {}'.format(expr,
-                                                                             instance,
-                                                                             angelic))
-                    else:
-                        bv_original = model[original_selector(expr, instance)]
-                        original = from_bv32_converter_by_type[type](bv_original)
+                    bv_original = model[original_selector(expr, instance)]
+                    original = from_bv32_converter_by_type[type](bv_original)
+                    if original_available:
                         logger.info('expression {}[{}]: angelic = {}, original = {}'.format(expr,
                                                                                             instance,
                                                                                             angelic,
                                                                                             original))
+                    else:
+                        logger.info('expression {}[{}]: angelic = {}'.format(expr,
+                                                                             instance,
+                                                                             angelic))
                     env_values = dict()
                     for name in env:
                         bv_env = model[env_selector(expr, instance, name)]
                         value = from_bv32_converter_by_type['int'](bv_env)
                         env_values[name] = value
 
-                    angelic_path[expr].append((angelic, original, env_values))
+                    if original_available:
+                        angelic_path[expr].append((angelic, original, env_values))
+                    else:
+                        angelic_path[expr].append((angelic, None, env_values))
 
             # TODO: add constants to angelic path
 
             angelic_paths.append(angelic_path)
+
+        # update IO files
+        for smt in glob(join(klee_dir, '*.smt2')):
+            with open(smt) as f_smt:
+                for line in f_smt.readlines():
+                    if re.search("declare-fun [a-z]+!output!", line):
+                        output_var = line.split(' ')[1]
+                        output_var_type = output_var.split('!')[0]
+                        for io_file in glob(join(test_dir, '*.IO')):
+                            if not output_var in open(io_file).read():
+                                with open(io_file, "a") as f_io:
+                                    f_io.write("\n")
+                                    f_io.write("@output\n")
+                                    f_io.write('name {}\n'.format(output_var))
+                                    f_io.write('type {}\n'.format(output_var_type))
+
 
         if self.config['max_angelic_paths'] is not None and \
            len(angelic_paths) > self.config['max_angelic_paths']:

@@ -32,6 +32,7 @@ sub parseAll {                   # @hoang parse the smt2 files
     my @expect_out = @{ $self->{_expect_var} };
     my $out_size = scalar @expect_out;
 
+    $logger->debug("smt_folder: " . $smt_folder);
     my @files = glob("$smt_folder/*.smt2");
 
     my $valid_flag = 0;
@@ -62,8 +63,8 @@ sub parseAll {                   # @hoang parse the smt2 files
                 # $logger->debug("VAR_NAME: $var_name");
             }
             push( @{ $self->{_constr} }, $out_constr->get_combined_constr() );
-            $logger->debug("out_constr: " . Dumper($out_constr));
-            $logger->debug("_constr: " . Dumper($self->{_constr}));
+            # $logger->debug("out_constr: " . Dumper($out_constr));
+            # $logger->debug("_constr: " . Dumper($self->{_constr}));
         }
     }
     if ($valid_flag == 0) { # @hoang FIXME: temporay disable this check
@@ -94,7 +95,7 @@ sub add_expect_var {
 
     $logger->debug("var: $var");
     push (@{ $self->{_expect_var} }, $var);
-    $logger->debug("_expect_var: " . Dumper($self->{_expect_var}));
+    # $logger->debug("_expect_var: " . Dumper($self->{_expect_var}));
 }
 
 sub set_out_vars {
@@ -130,7 +131,7 @@ sub get_or_constr { # @hoang get_or_constr($space_num)
     my $space_num = shift;
 
     my @constr = @{ $self->{_constr} };
-    $logger->debug("constr: " . Dumper(@constr));
+    # $logger->debug("constr: " . Dumper(@constr));
 
     my $or_constr;
     if ( defined $space_num ) {
@@ -201,7 +202,7 @@ sub get_final_constr {    # get_final_constr( $io_index )
 
     my @constr = @{ $self->{_constr} };
     my $or_constr = $self->get_or_constr(4);
-    $logger->debug("initial or_constr: $or_constr");
+    # $logger->debug("initial or_constr: $or_constr");
 
     my $out_size = scalar @{ $self->{_out_var} };
     # $logger->debug("GET_OUT_SIZE: $out_size");
@@ -212,11 +213,11 @@ sub get_final_constr {    # get_final_constr( $io_index )
         $logger->debug("var_name: $var_name");
         # $logger->debug("OR_CONSTR: $or_constr");
         $or_constr =~ s/(\s+)$var_name(\s+)/$1$var_name\_io$io_index$2/g;
-        $logger->debug("OR_CONSTR: $or_constr");
+        # $logger->debug("OR_CONSTR: $or_constr");
     }
 
     my @expect_value_constr = ();
-    $logger->debug("_expect_var: " . Dumper(@{ $self->{_expect_var} }));
+    # $logger->debug("_expect_var: " . Dumper(@{ $self->{_expect_var} }));
     foreach (@{ $self->{_expect_var} }) {
         my $var_name = $_->{_name};
         my $value    = $_->{_value};
@@ -258,8 +259,8 @@ sub get_final_constr {    # get_final_constr( $io_index )
     else {
         $all_expect_constr = "(and $all_expect_constr)";
     }
-    $logger->debug("or_constr: $or_constr");
-    $logger->debug("all_expect_constr: $all_expect_constr");
+    # $logger->debug("or_constr: $or_constr");
+    # $logger->debug("all_expect_constr: $all_expect_constr");
     $final_constr = "(assert (and $or_constr $all_expect_constr) )";
 
     return $final_constr;

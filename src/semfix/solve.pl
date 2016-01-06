@@ -360,7 +360,7 @@ sub generate_formula {
     #$logger->debug("func_decl: " . Dumper(@func_decl));
     foreach ( ( $syn_func, @func_decl ) ) {
         my $tmp_func   = $_;
-        $logger->debug("tmp_func: " . Dumper($tmp_func));
+        # $logger->debug("tmp_func: " . Dumper($tmp_func));
         my $pvars      = $tmp_func->get_all_var();
         my $pvars_type = $tmp_func->get_all_var_type();
         push( @all_vars,      @$pvars );
@@ -496,7 +496,7 @@ sub generate_formula {
             $logger->logdie("io connection not defined");
             return 1;
         }
-        $logger->debug("io_connection: $io_connection");
+        # $logger->debug("io_connection: $io_connection");
         print $fd $io_connection;
 
         # print output constraints
@@ -505,7 +505,7 @@ sub generate_formula {
         unless ( $skip_pc ) {
             print $fd "; PC \n";
             my $out_constr_formula = $out_constr->get_final_constr($i);
-            $logger->debug("OUT_CONSTR: $out_constr_formula\n");
+            # $logger->debug("OUT_CONSTR: $out_constr_formula\n");
             print $fd "$out_constr_formula\n";
         }
     }
