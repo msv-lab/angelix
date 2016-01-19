@@ -54,7 +54,7 @@ class Project:
             # this is a temporary hack. It general case, we need (probably) a different workflow:
             wrong_dir = realpath(join(self.dir, '..', 'validation'))
             item['command'] = item['command'].replace(wrong_dir, self.dir)
-            
+
             item['command'] = item['command'] + ' -I' + os.environ['LLVM3_INCLUDE_PATH']
             # this is a hack to skip output expressions when perform transformation:
             item['command'] = item['command'] + ' -include ' + os.environ['ANGELIX_RUNTIME_H']
@@ -90,7 +90,7 @@ def build_in_env(dir, cmd, subproc_output, env=os.environ):
                                       shell=True,
                                       stderr=subproc_output,
                                       stdout=subproc_output)
-    if return_code != 0:        
+    if return_code != 0:
         logger.warning("compilation of {} returned non-zero code".format(relpath(dir)))
 
     if exists(messages):
@@ -110,14 +110,17 @@ class Validation(Project):
 
     def build(self):
         logger.info('building {} source'.format(basename(self.dir)))
-        build_in_env(self.dir, self.build_cmd, self.subproc_output)
+        build_in_env(self.dir, self.build_cmd,
+                     subprocess.DEVNULL if self.config['mute_build_message']
+                     else self.subproc_output)
 
     def export_compilation_db(self):
         logger.info('building json compilation database from {} source'.format(basename(self.dir)))
 
         build_in_env(self.dir,
                      'bear ' + self.build_cmd,
-                     self.subproc_output)
+                     subprocess.DEVNULL if self.config['mute_build_message']
+                     else self.subproc_output)
 
         compilation_db_file = join(self.dir, 'compile_commands.json')
         with open(compilation_db_file) as file:
@@ -135,7 +138,8 @@ class Frontend(Project):
         logger.info('building {} source'.format(basename(self.dir)))
         build_with_cc(self.dir,
                       self.build_cmd,
-                      self.subproc_output,
+                      subprocess.DEVNULL if self.config['mute_build_message']
+                      else self.subproc_output,
                       'angelix-compiler --test')
 
 
@@ -145,5 +149,6 @@ class Backend(Project):
         logger.info('building {} source'.format(basename(self.dir)))
         build_with_cc(self.dir,
                       self.build_cmd,
-                      self.subproc_output,
+                      subprocess.DEVNULL if self.config['mute_build_message']
+                      else self.subproc_output,
                       'angelix-compiler --klee')

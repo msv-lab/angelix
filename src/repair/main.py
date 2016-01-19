@@ -242,7 +242,7 @@ class Angelix:
                 positive, negative = pos, neg
 
         if len(negative) > 0:
-            logger.warning("tests {} not repaired".format(negative))            
+            logger.warning("tests {} not repaired".format(negative))
             return None
         else:
             return self.validation_src.diff_buggy()
@@ -379,6 +379,8 @@ if __name__ == "__main__":
                         help='print compilation and KLEE messages (default: %(default)s)')
     parser.add_argument('--quiet', action='store_true',
                         help='print only errors (default: %(default)s)')
+    parser.add_argument('--mute-build-message', action='store_true',
+                        help='mute build message (default: %(default)s)')
 
     args = parser.parse_args()
 
@@ -421,7 +423,7 @@ if __name__ == "__main__":
     config = dict()
     config['initial_tests']         = args.initial_tests
     config['semfix']                = args.semfix
-    config['use_semfix_syn']        = args.use_semfix_synthesizer    
+    config['use_semfix_syn']        = args.use_semfix_synthesizer
     config['max_z3_trials']         = args.max_z3_trials
     config['defect']                = args.defect
     config['test_timeout']          = args.test_timeout
@@ -445,6 +447,7 @@ if __name__ == "__main__":
     config['synthesis_used_vars']   = args.synthesis_used_vars
     config['synthesis_ptr_vars']    = args.synthesis_ptr_vars
     config['verbose']               = args.verbose
+    config['mute_build_message']    = args.mute_build_message
 
     if args.verbose:
         for key, value in config.items():
