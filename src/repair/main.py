@@ -13,7 +13,7 @@ from utils import format_time, time_limit, TimeoutException
 from runtime import Dump, Trace
 from transformation import RepairableTransformer, SuspiciousTransformer, \
                            FixInjector, TransformationError
-from testing import Tester
+from testing import Tester, KleeError
 from localization import Localizer
 from reduction import Reducer
 from inference import Inferrer, InferenceError
@@ -195,9 +195,16 @@ class Angelix:
                 try:
                     angelic_forest[test] = self.infer_spec(self.backend_src, test, self.dump[test])
                     if len(angelic_forest[test]) == 0:
+                        logger.warning('inference failed (angelic forest was not found)')
                         inference_failed = True
                         break
                 except InferenceError:
+                    logger.warning('inference failed (error was raised)')
+                    inference_failed = True
+                    break
+                except KleeError:
+                    if test in positive:
+                        continue
                     inference_failed = True
                     break
             if inference_failed:
