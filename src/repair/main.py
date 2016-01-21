@@ -13,10 +13,10 @@ from utils import format_time, time_limit, TimeoutException
 from runtime import Dump, Trace
 from transformation import RepairableTransformer, SuspiciousTransformer, \
                            FixInjector, TransformationError
-from testing import Tester, KleeError
+from testing import Tester
 from localization import Localizer
 from reduction import Reducer
-from inference import Inferrer, InferenceError
+from inference import Inferrer, InferenceError, NoSmtError
 from semfix_infer import Semfix_Inferrer, InferenceError
 from synthesis import Synthesizer
 from semfix_syn import Semfix_Synthesizer
@@ -202,7 +202,7 @@ class Angelix:
                     logger.warning('inference failed (error was raised)')
                     inference_failed = True
                     break
-                except KleeError:
+                except NoSmtError:
                     if test in positive:
                         continue
                     inference_failed = True
@@ -224,13 +224,21 @@ class Angelix:
                 continue
             positive, negative = pos, neg
 
+            negative_idx = 0
             while len(negative) > 0:
-                counterexample = negative[0]
+                counterexample = negative[negative_idx]
                 logger.info('counterexample test is {}'.format(counterexample))
                 repair_suite.append(counterexample)
-                angelic_forest[counterexample] = self.infer_spec(self.backend_src,
-                                                                 counterexample,
-                                                                 self.dump[counterexample])
+                try:
+                    angelic_forest[counterexample] = self.infer_spec(self.backend_src,
+                                                                     counterexample,
+                                                                     self.dump[counterexample])
+                except NoSmtError:
+                    logger.warning("no smt file for test {}".format(counterexample))
+                    negative_idx = negative_idx + 1
+                    if len(negative) - negative_idx > 0:
+                        continue
+                    break
                 if len(angelic_forest[counterexample]) == 0:
                     break
                 fix = self.synthesize_fix(angelic_forest)
@@ -247,6 +255,7 @@ class Angelix:
                     logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
                     break
                 positive, negative = pos, neg
+                negative_idx = 0
 
         if len(negative) > 0:
             logger.warning("tests {} not repaired".format(negative))

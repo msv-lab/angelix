@@ -9,9 +9,6 @@ from glob import glob
 
 logger = logging.getLogger(__name__)
 
-class KleeError(Exception):
-    pass
-
 class Tester:
 
     def __init__(self, config, oracle, workdir):
@@ -44,7 +41,7 @@ class Tester:
 
         dirpath = tempfile.mkdtemp()
         executions = join(dirpath, 'executions')
-        
+
         environment['ANGELIX_RUN_EXECUTIONS'] = executions
 
         if self.config['verbose']:
@@ -59,7 +56,7 @@ class Tester:
                                     stderr=subproc_output,
                                     shell=True)
             if klee or self.config['test_timeout'] is None: # KLEE has its own timeout
-                code = proc.wait()  
+                code = proc.wait()
             else:
                 code = proc.wait(timeout=self.config['test_timeout'])
 
@@ -72,20 +69,4 @@ class Tester:
             else:
                 logger.warning("ANGELIX_RUN is not executed by test {}".format(test))
 
-        if klee:
-            backend_dir = join(self.workdir, "backend")
-            klee_log_file = join(backend_dir, 'klee.log')
-            with open(klee_log_file) as file:
-                klee_error = False
-                for line in file:
-                    if line.endswith("longjmp unsupported\n"):
-                        logger.warning('KLEE abrutply stopped because longjmp is not supported')
-                        klee_error = True
-            if klee_error:
-                smt_glob = join(backend_dir, 'klee-out-0', '*.smt2')
-                smt_files = glob(smt_glob)
-                for smt in smt_files:
-                    os.remove(smt)
-                raise KleeError()
-                
         return code == 0
