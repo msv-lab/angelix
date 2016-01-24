@@ -110,7 +110,7 @@ std::unordered_set<MemberExpr*> collectMemberExprFromExpr(const Stmt* stmt) {
 }
 
 
-std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynTypedNode node, ASTContext* context, unsigned line) {
+std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > collectVarsFromScope(const ast_type_traits::DynTypedNode node, ASTContext* context, unsigned line) {
   VarTypes collectedTypes;
   if (getenv("ANGELIX_POINTER_VARIABLES")) {
     collectedTypes = INT_AND_PTR;
@@ -119,12 +119,13 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
   }
   const FunctionDecl* fd;
   if ((fd = node.get<FunctionDecl>()) != NULL) {
-    std::unordered_set<VarDecl*> set;
+    std::unordered_set<VarDecl*> var_set;
+    std::unordered_set<MemberExpr*> member_set;
     if (getenv("ANGELIX_FUNCTION_PARAMETERS")) {
       for (auto it = fd->param_begin(); it != fd->param_end(); ++it) {
         auto vd = cast<VarDecl>(*it);
         if (suitableVarDecl(vd, collectedTypes)) {
-          set.insert(vd);
+          var_set.insert(vd);
         }
       }
     }
@@ -140,20 +141,20 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
               VarDecl* vd = cast<VarDecl>(*it);
               unsigned beginLine = getDeclExpandedLine(vd, context->getSourceManager());
               if (line > beginLine && suitableVarDecl(vd, collectedTypes)) {
-                set.insert(vd);
+                var_set.insert(vd);
               }
             }
           }
         }
       }
     }
-    
-    return set;
+    std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > result(var_set, member_set);
+    return result;
     
   } else {
 
-    std::unordered_set<VarDecl*> set;
-
+    std::unordered_set<VarDecl*> var_set;
+    std::unordered_set<MemberExpr*> member_set;
     const CompoundStmt* cstmt;
     if ((cstmt = node.get<CompoundStmt>()) != NULL) {
       for (auto it = cstmt->body_begin(); it != cstmt->body_end(); ++it) {
@@ -168,7 +169,7 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
             DeclRefExpr* dref = cast<DeclRefExpr>(op->getLHS());
             VarDecl* vd;
             if ((vd = cast<VarDecl>(dref->getDecl())) != NULL && suitableVarDecl(vd, collectedTypes)) {
-              set.insert(vd);
+              var_set.insert(vd);
             }
           }
         }
@@ -182,15 +183,34 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
             if (isa<VarDecl>(d)) {
               VarDecl* vd = cast<VarDecl>(d);
               if (line > beginLine && vd->hasInit() && suitableVarDecl(vd, collectedTypes)) {
-                set.insert(vd);
+                var_set.insert(vd);
               }
             }
           }
         }
 
         if (getenv("ANGELIX_USED_VARIABLES")) {
-          std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(*it, collectedTypes);
-          set.insert(varsFromExpr.begin(), varsFromExpr.end());
+          Stmt* stmt = cast<Stmt>(*it);
+          SourceRange expandedLoc = getExpandedLoc(stmt, context->getSourceManager());
+          unsigned beginLine = context->getSourceManager().getExpansionLineNumber(expandedLoc.getBegin());
+          if (line > beginLine) {
+            std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(*it, collectedTypes);
+            var_set.insert(varsFromExpr.begin(), varsFromExpr.end());
+
+            //TODO: should be generalized for other cases:
+            if (isa<IfStmt>(*it)) {
+              IfStmt* ifStmt = cast<IfStmt>(*it);
+              Stmt* thenStmt = ifStmt->getThen();
+              if (isa<CallExpr>(*thenStmt)) {
+                CallExpr* callExpr = cast<CallExpr>(thenStmt);
+                for (auto a = callExpr->arg_begin(); a != callExpr->arg_end(); ++a) {
+                  auto e = cast<Expr>(*a);
+                  std::unordered_set<MemberExpr*> membersFromArg = collectMemberExprFromExpr(e);
+                  member_set.insert(membersFromArg.begin(), membersFromArg.end());
+                }
+              }
+            }
+          }
         }
         
       }
@@ -199,11 +219,12 @@ std::unordered_set<VarDecl*> collectVarsFromScope(const ast_type_traits::DynType
     ArrayRef<ast_type_traits::DynTypedNode> parents = context->getParents(node);
     if (parents.size() > 0) {
       const ast_type_traits::DynTypedNode parent = *(parents.begin()); // TODO: for now only first
-      std::unordered_set<VarDecl*> parent_set = collectVarsFromScope(parent, context, line);
-      set.insert(parent_set.cbegin(), parent_set.cend());
+      std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > parent_vars = collectVarsFromScope(parent, context, line);
+      var_set.insert(parent_vars.first.cbegin(), parent_vars.first.cend());
+      member_set.insert(parent_vars.second.cbegin(), parent_vars.second.cend());
     }
-
-    return set;
+    std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > result(var_set, member_set);
+    return result;
   }
 }
 
@@ -256,12 +277,14 @@ public:
       fs << "(assert " << toSMTLIB2(expr) << ")\n";
 
       const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*expr);
-      std::unordered_set<VarDecl*> varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
+      std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
       std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(expr, ALL);
       std::unordered_set<MemberExpr*> memberFromExpr = collectMemberExprFromExpr(expr);
       std::unordered_set<VarDecl*> vars;
-      vars.insert(varsFromScope.begin(), varsFromScope.end());
+      vars.insert(varsFromScope.first.begin(), varsFromScope.first.end());
       vars.insert(varsFromExpr.begin(), varsFromExpr.end());
+      std::unordered_set<MemberExpr*> members;
+      members.insert(varsFromScope.second.begin(), varsFromScope.second.end());
       std::ostringstream exprStream;
       std::ostringstream nameStream;
       bool first = true;
@@ -276,7 +299,7 @@ public:
         exprStream << var->getName().str();
         nameStream << "\"" << var->getName().str() << "\"";
       }
-      for (auto it = memberFromExpr.begin(); it != memberFromExpr.end(); ++it) {
+      for (auto it = members.begin(); it != members.end(); ++it) {
         if (first) {
           first = false;
         } else {
@@ -288,7 +311,7 @@ public:
         nameStream << "\"" << toString(me) << "\"";
       }
 
-      int size = vars.size() + memberFromExpr.size();
+      int size = vars.size() + members.size();
 
       std::ostringstream stringStream;
       stringStream << "ANGELIX_CHOOSE("
@@ -344,9 +367,12 @@ public:
       fs << "(assert true)\n"; // this is a hack, but not dangerous
 
       const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*expr);
-      std::unordered_set<VarDecl*> varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
+      std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
+      std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(expr, ALL);
       std::unordered_set<VarDecl*> vars;
-      vars.insert(varsFromScope.begin(), varsFromScope.end());
+      vars.insert(varsFromScope.first.begin(), varsFromScope.first.end());
+      vars.insert(varsFromExpr.begin(), varsFromExpr.end());
+      //FIXME: why no members here?
       std::ostringstream exprStream;
       std::ostringstream nameStream;
       bool first = true;
@@ -423,9 +449,10 @@ public:
       fs << "(assert true)\n";
 
       const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*stmt);
-      std::unordered_set<VarDecl*> varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
+      std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
       std::unordered_set<VarDecl*> vars;
-      vars.insert(varsFromScope.begin(), varsFromScope.end());
+      vars.insert(varsFromScope.first.begin(), varsFromScope.first.end());
+      //FIXME: why no members here?
       std::ostringstream exprStream;
       std::ostringstream nameStream;
       bool first = true;
