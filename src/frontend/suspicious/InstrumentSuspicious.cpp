@@ -285,6 +285,7 @@ public:
       vars.insert(varsFromExpr.begin(), varsFromExpr.end());
       std::unordered_set<MemberExpr*> members;
       members.insert(varsFromScope.second.begin(), varsFromScope.second.end());
+      members.insert(memberFromExpr.begin(), memberFromExpr.end());
       std::ostringstream exprStream;
       std::ostringstream nameStream;
       bool first = true;
