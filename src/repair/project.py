@@ -38,9 +38,9 @@ class Project:
         shutil.copyfile(self._buggy_backup, join(self.dir, self.buggy))
 
     def diff_buggy(self):
-        with open(join(self.dir, self.buggy)) as buggy:
+        with open(join(self.dir, self.buggy), encoding='latin-1') as buggy:
             buggy_lines = buggy.readlines()
-        with open(self._buggy_backup) as backup:
+        with open(self._buggy_backup, encoding='latin-1') as backup:
             backup_lines = backup.readlines()
         return difflib.unified_diff(backup_lines, buggy_lines,
                                     fromfile=join('a', self.buggy),
