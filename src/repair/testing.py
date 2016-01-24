@@ -5,10 +5,9 @@ import subprocess
 import logging
 import sys
 import tempfile
-
+from glob import glob
 
 logger = logging.getLogger(__name__)
-
 
 class Tester:
 
@@ -42,7 +41,7 @@ class Tester:
 
         dirpath = tempfile.mkdtemp()
         executions = join(dirpath, 'executions')
-        
+
         environment['ANGELIX_RUN_EXECUTIONS'] = executions
 
         if self.config['verbose']:
@@ -57,7 +56,7 @@ class Tester:
                                     stderr=subproc_output,
                                     shell=True)
             if klee or self.config['test_timeout'] is None: # KLEE has its own timeout
-                code = proc.wait()  
+                code = proc.wait()
             else:
                 code = proc.wait(timeout=self.config['test_timeout'])
 
@@ -69,5 +68,5 @@ class Tester:
                         logger.warning("ANGELIX_RUN is executed multiple times by test {}".format(test))
             else:
                 logger.warning("ANGELIX_RUN is not executed by test {}".format(test))
-                
+
         return code == 0

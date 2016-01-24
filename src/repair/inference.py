@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 class InferenceError(Exception):
     pass
 
+class NoSmtError(Exception):
+    pass
 
 # Temporary solution to implement get_vars. In principle, it should be available in z3util.py
 class AstRefKey:
@@ -35,7 +37,7 @@ def askey(n):
 def get_vars(f):
     r = set()
     def collect(f):
-      if z3.is_const(f): 
+      if z3.is_const(f):
           if f.decl().kind() == z3.Z3_OP_UNINTERPRETED and not askey(f) in r:
               r.add(askey(f))
       else:
@@ -62,7 +64,7 @@ def parse_variables(vars):
     constants: expr list
     reachable: set of strings
     original: if original available
-    
+
     Note: assume environment variables are always int
     '''
     output_type = dict()
@@ -110,7 +112,7 @@ def parse_variables(vars):
                     raise InferenceError()
             elif kind == 'const':
                 logger.error('constant choices are not supported')
-                raise InferenceError()                
+                raise InferenceError()
                 if type == 'int':
                     logger.error('integer constant choices are not supported')
                     raise InferenceError()
@@ -178,6 +180,24 @@ class Inferrer:
         smt_glob = join(project.dir, 'klee-out-0', '*.smt2')
         smt_files = glob(smt_glob)
 
+        err_glob = join(project.dir, 'klee-out-0', '*.err')
+        err_files = glob(err_glob)
+
+        err_list = []
+        for err in err_files:
+            err_list.append(os.path.basename(err).split('.')[0])
+
+        non_error_smt_files = []
+        for smt in smt_files:
+            smt_id = os.path.basename(smt).split('.')[0]
+            if not smt_id in err_list:
+                non_error_smt_files.append(smt)
+        smt_files = non_error_smt_files
+
+        if len(smt_files) == 0:
+            logger.warning('No smt file exists.')
+            raise NoSmtError()
+
         # loading dump
 
         # name -> value list
@@ -237,7 +257,7 @@ class Inferrer:
                 if len(s) != 1:
                     raise InferenceError()
                 return s[0]
-    
+
             dump_parser_by_type = dict()
             dump_parser_by_type['int'] = str_to_int
             dump_parser_by_type['bool'] = str_to_bool
@@ -304,7 +324,7 @@ class Inferrer:
                     oracle_constraints[expected_variable].append(value)
 
             if not matching_path:
-                continue        
+                continue
 
             solver.reset()
             solver.add(path)
@@ -319,7 +339,7 @@ class Inferrer:
                 pattern = '{}!choice!{}!{}!{}!{}!{}!angelic'
                 s = pattern.format(type, expr[0], expr[1], expr[2], expr[3], instance)
                 return Array(s, BitVecSort(32), BitVecSort(8))
-        
+
             def original_variable(type, expr, instance):
                 pattern = '{}!choice!{}!{}!{}!{}!{}!original'
                 s = pattern.format(type, expr[0], expr[1], expr[2], expr[3], instance)
@@ -368,8 +388,8 @@ class Inferrer:
                         selector = env_selector(expr, instance, name)
                         array = env_variable(expr, instance, name)
                         solver.add(selector == array_to_bv32(array))
-                        
-            
+
+
             result = solver.check()
             if result != z3.sat:
                 logger.info('UNSAT')
@@ -416,5 +436,5 @@ class Inferrer:
             angelic_paths = self._reduce_angelic_forest(angelic_paths)
         else:
             logger.info('found {} angelic paths for test \'{}\''.format(len(angelic_paths), test))
-        
+
         return angelic_paths

@@ -16,7 +16,7 @@ from transformation import RepairableTransformer, SuspiciousTransformer, \
 from testing import Tester
 from localization import Localizer
 from reduction import Reducer
-from inference import Inferrer, InferenceError
+from inference import Inferrer, InferenceError, NoSmtError
 from semfix_infer import Semfix_Inferrer, InferenceError
 from synthesis import Synthesizer
 from semfix_syn import Semfix_Synthesizer
@@ -87,6 +87,32 @@ class Angelix:
         self.instrument_for_localization = RepairableTransformer(config)
         self.instrument_for_inference = SuspiciousTransformer(config, extracted)
         self.apply_patch = FixInjector(config)
+
+        # check build only options
+        if self.config['build_validation_only']:
+            validation_dir = join(working_dir, "validation")
+            shutil.copytree(src, validation_dir, symlinks=True)
+            self.validation_src = Validation(config, validation_dir, buggy, build, configure)
+            self.validation_src.configure()
+            compilation_db = self.validation_src.export_compilation_db()
+            self.validation_src.import_compilation_db(compilation_db)
+            sys.exit()
+
+        if self.config['build_golden_only']:
+            golden_dir = join(working_dir, "golden")
+            shutil.copytree(golden, golden_dir, symlinks=True)
+            self.golden_src = Frontend(config, golden_dir, buggy, build, configure)
+            self.golden_src.configure()
+            self.golden_src.build()
+            sys.exit()
+
+        if self.config['build_backend_only']:
+            backend_dir = join(working_dir, "backend")
+            shutil.copytree(src, backend_dir, symlinks=True)
+            self.backend_src = Backend(config, backend_dir, buggy, build, configure)
+            self.backend_src.configure()
+            self.backend_src.build()
+            sys.exit()
 
         validation_dir = join(working_dir, "validation")
         shutil.copytree(src, validation_dir, symlinks=True)
@@ -191,13 +217,25 @@ class Angelix:
             self.backend_src.build()
             angelic_forest = dict()
             inference_failed = False
+            repair_suite_valid = repair_suite
             for test in repair_suite:
                 try:
                     angelic_forest[test] = self.infer_spec(self.backend_src, test, self.dump[test])
                     if len(angelic_forest[test]) == 0:
+                        logger.warning('inference failed (angelic forest was not found)')
+                        if test in positive:
+                            repair_suite_valid.remove(test)
+                            continue
                         inference_failed = True
                         break
                 except InferenceError:
+                    logger.warning('inference failed (error was raised)')
+                    inference_failed = True
+                    break
+                except NoSmtError:
+                    if test in positive:
+                        repair_suite_valid.remove(test)
+                        continue
                     inference_failed = True
                     break
             if inference_failed:
@@ -211,19 +249,28 @@ class Angelix:
             self.apply_patch(self.validation_src, initial_fix)
             self.validation_src.build()
             pos, neg = self.evaluate(self.validation_src)
-            if not set(neg).isdisjoint(set(repair_suite)):
-                not_repaired = list(set(repair_suite) & set(neg))
+            if not set(neg).isdisjoint(set(repair_suite_valid)):
+                not_repaired = list(set(repair_suite_valid) & set(neg))
                 logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
                 continue
+            repair_suite = repair_suite_valid
             positive, negative = pos, neg
 
+            negative_idx = 0
             while len(negative) > 0:
-                counterexample = negative[0]
+                counterexample = negative[negative_idx]
                 logger.info('counterexample test is {}'.format(counterexample))
                 repair_suite.append(counterexample)
-                angelic_forest[counterexample] = self.infer_spec(self.backend_src,
-                                                                 counterexample,
-                                                                 self.dump[counterexample])
+                try:
+                    angelic_forest[counterexample] = self.infer_spec(self.backend_src,
+                                                                     counterexample,
+                                                                     self.dump[counterexample])
+                except NoSmtError:
+                    logger.warning("no smt file for test {}".format(counterexample))
+                    negative_idx = negative_idx + 1
+                    if len(negative) - negative_idx > 0:
+                        continue
+                    break
                 if len(angelic_forest[counterexample]) == 0:
                     break
                 fix = self.synthesize_fix(angelic_forest)
@@ -240,6 +287,7 @@ class Angelix:
                     logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
                     break
                 positive, negative = pos, neg
+                negative_idx = 0
 
         if len(negative) > 0:
             logger.warning("tests {} not repaired".format(negative))
@@ -380,7 +428,29 @@ if __name__ == "__main__":
     parser.add_argument('--quiet', action='store_true',
                         help='print only errors (default: %(default)s)')
     parser.add_argument('--mute-build-message', action='store_true',
-                        help='mute build message (default: %(default)s)')
+                        help='mute build message (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
+    parser.add_argument('--build-validation-only', action='store_true',
+                        help='build validation source and terminate (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
+    parser.add_argument('--build-golden-only', action='store_true',
+                        help='build golden source and terminate (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
+    parser.add_argument('--build-backend-only', action='store_true',
+                        help='build backend source and terminate (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
+    parser.add_argument('--ignore-lines', action='store_true',
+                        help='ignore --lines options (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
+    parser.add_argument('--localize-only', action='store_true',
+                        help='show all suspicious expressions and terminate (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
 
     args = parser.parse_args()
 
@@ -448,10 +518,17 @@ if __name__ == "__main__":
     config['synthesis_ptr_vars']    = args.synthesis_ptr_vars
     config['verbose']               = args.verbose
     config['mute_build_message']    = args.mute_build_message
+    config['build_validation_only'] = args.build_validation_only
+    config['build_golden_only']     = args.build_golden_only
+    config['build_backend_only']    = args.build_backend_only
+    config['localize_only']         = args.localize_only
 
     if args.verbose:
         for key, value in config.items():
             logger.info('option {} = {}'.format(key, value))
+
+    if args.ignore_lines:
+        args.lines = None
 
     tool = Angelix(working_dir,
                    src=args.src,

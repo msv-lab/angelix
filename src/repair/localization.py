@@ -1,3 +1,4 @@
+import sys
 from math import sqrt, ceil
 import logging
 
@@ -89,7 +90,7 @@ class Localizer:
             with_score.append((e, score))
 
         ranking = sorted(with_score, key=lambda r: r[1], reverse=True)
-        
+
         if self.config['group_by_score']:
             top = ranking[:suspicious]
         else:
@@ -110,10 +111,14 @@ class Localizer:
             groups_with_score.append((group, total_score))
 
         sorted_groups = sorted(groups_with_score, key=lambda r: r[1], reverse=True)
+        if self.config['localize_only']:
+            for idx, (group, score) in enumerate(sorted_groups):
+                logger.info('group {}: {}'.format(idx+1, group))
+            sys.exit()
 
         groups = []
         for (group, score) in sorted_groups:
             groups.append(group)
             logger.info("selected expressions {} with group score {:.5} ".format(group, score))
-        
+
         return groups
