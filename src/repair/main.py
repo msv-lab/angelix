@@ -191,11 +191,15 @@ class Angelix:
             self.backend_src.build()
             angelic_forest = dict()
             inference_failed = False
+            repair_suite_valid = repair_suite
             for test in repair_suite:
                 try:
                     angelic_forest[test] = self.infer_spec(self.backend_src, test, self.dump[test])
                     if len(angelic_forest[test]) == 0:
                         logger.warning('inference failed (angelic forest was not found)')
+                        if test in positive:
+                            repair_suite_valid.remove(test)
+                            continue
                         inference_failed = True
                         break
                 except InferenceError:
@@ -204,6 +208,7 @@ class Angelix:
                     break
                 except NoSmtError:
                     if test in positive:
+                        repair_suite_valid.remove(test)
                         continue
                     inference_failed = True
                     break
@@ -218,10 +223,11 @@ class Angelix:
             self.apply_patch(self.validation_src, initial_fix)
             self.validation_src.build()
             pos, neg = self.evaluate(self.validation_src)
-            if not set(neg).isdisjoint(set(repair_suite)):
-                not_repaired = list(set(repair_suite) & set(neg))
+            if not set(neg).isdisjoint(set(repair_suite_valid)):
+                not_repaired = list(set(repair_suite_valid) & set(neg))
                 logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
                 continue
+            repair_suite = repair_suite_valid
             positive, negative = pos, neg
 
             negative_idx = 0
