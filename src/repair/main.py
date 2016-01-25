@@ -88,6 +88,24 @@ class Angelix:
         self.instrument_for_inference = SuspiciousTransformer(config, extracted)
         self.apply_patch = FixInjector(config)
 
+        # check build only options
+        if self.config['build_validation_only']:
+            validation_dir = join(working_dir, "validation")
+            shutil.copytree(src, validation_dir, symlinks=True)
+            self.validation_src = Validation(config, validation_dir, buggy, build, configure)
+            self.validation_src.configure()
+            compilation_db = self.validation_src.export_compilation_db()
+            self.validation_src.import_compilation_db(compilation_db)
+            sys.exit()
+
+        if self.config['build_golden_only']:
+            golden_dir = join(working_dir, "golden")
+            shutil.copytree(golden, golden_dir, symlinks=True)
+            self.golden_src = Frontend(config, golden_dir, buggy, build, configure)
+            self.golden_src.configure()
+            self.golden_src.build()
+            sys.exit()
+
         validation_dir = join(working_dir, "validation")
         shutil.copytree(src, validation_dir, symlinks=True)
         self.validation_src = Validation(config, validation_dir, buggy, build, configure)
@@ -397,6 +415,10 @@ if __name__ == "__main__":
                         help='print only errors (default: %(default)s)')
     parser.add_argument('--mute-build-message', action='store_true',
                         help='mute build message (default: %(default)s)')
+    parser.add_argument('--build-validation-only', action='store_true',
+                        help='build validation source and terminate (default: %(default)s)')
+    parser.add_argument('--build-golden-only', action='store_true',
+                        help='build golden source and terminate (default: %(default)s)')
 
     args = parser.parse_args()
 
@@ -464,6 +486,8 @@ if __name__ == "__main__":
     config['synthesis_ptr_vars']    = args.synthesis_ptr_vars
     config['verbose']               = args.verbose
     config['mute_build_message']    = args.mute_build_message
+    config['build_validation_only'] = args.build_validation_only
+    config['build_golden_only']     = args.build_golden_only
 
     if args.verbose:
         for key, value in config.items():
