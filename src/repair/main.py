@@ -435,6 +435,8 @@ if __name__ == "__main__":
                         help='build golden source and terminate (default: %(default)s)')
     parser.add_argument('--build-backend-only', action='store_true',
                         help='build backend source and terminate (default: %(default)s)')
+    parser.add_argument('--ignore-lines', action='store_true',
+                        help='ignore --lines options (default: %(default)s)')
 
     args = parser.parse_args()
 
@@ -509,6 +511,9 @@ if __name__ == "__main__":
     if args.verbose:
         for key, value in config.items():
             logger.info('option {} = {}'.format(key, value))
+
+    if args.ignore_lines:
+        args.lines = None
 
     tool = Angelix(working_dir,
                    src=args.src,
