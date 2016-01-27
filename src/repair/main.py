@@ -106,6 +106,14 @@ class Angelix:
             self.golden_src.build()
             sys.exit()
 
+        if self.config['build_backend_only']:
+            backend_dir = join(working_dir, "backend")
+            shutil.copytree(src, backend_dir, symlinks=True)
+            self.backend_src = Backend(config, backend_dir, buggy, build, configure)
+            self.backend_src.configure()
+            self.backend_src.build()
+            sys.exit()
+
         validation_dir = join(working_dir, "validation")
         shutil.copytree(src, validation_dir, symlinks=True)
         self.validation_src = Validation(config, validation_dir, buggy, build, configure)
@@ -425,6 +433,8 @@ if __name__ == "__main__":
                         help='build validation source and terminate (default: %(default)s)')
     parser.add_argument('--build-golden-only', action='store_true',
                         help='build golden source and terminate (default: %(default)s)')
+    parser.add_argument('--build-backend-only', action='store_true',
+                        help='build backend source and terminate (default: %(default)s)')
 
     args = parser.parse_args()
 
@@ -494,6 +504,7 @@ if __name__ == "__main__":
     config['mute_build_message']    = args.mute_build_message
     config['build_validation_only'] = args.build_validation_only
     config['build_golden_only']     = args.build_golden_only
+    config['build_backend_only']    = args.build_backend_only
 
     if args.verbose:
         for key, value in config.items():
