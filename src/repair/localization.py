@@ -112,7 +112,8 @@ class Localizer:
 
         sorted_groups = sorted(groups_with_score, key=lambda r: r[1], reverse=True)
         if self.config['localize_only']:
-            logger.info('all suspicious expressions: {}'.format(sorted_groups))
+            for idx, (group, score) in enumerate(sorted_groups):
+                logger.info('group {}: {}'.format(idx+1, group))
             sys.exit()
 
         groups = []
