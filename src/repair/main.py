@@ -447,6 +447,10 @@ if __name__ == "__main__":
                         help='ignore --lines options (default: %(default)s)'
                         if "AF_DEBUG" in os.environ
                         else argparse.SUPPRESS)
+    parser.add_argument('--localize-only', action='store_true',
+                        help='show all suspicious expressions and terminate (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
 
     args = parser.parse_args()
 
@@ -517,6 +521,7 @@ if __name__ == "__main__":
     config['build_validation_only'] = args.build_validation_only
     config['build_golden_only']     = args.build_golden_only
     config['build_backend_only']    = args.build_backend_only
+    config['localize_only']         = args.localize_only
 
     if args.verbose:
         for key, value in config.items():
