@@ -428,15 +428,25 @@ if __name__ == "__main__":
     parser.add_argument('--quiet', action='store_true',
                         help='print only errors (default: %(default)s)')
     parser.add_argument('--mute-build-message', action='store_true',
-                        help='mute build message (default: %(default)s)')
+                        help='mute build message (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
     parser.add_argument('--build-validation-only', action='store_true',
-                        help='build validation source and terminate (default: %(default)s)')
+                        help='build validation source and terminate (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
     parser.add_argument('--build-golden-only', action='store_true',
-                        help='build golden source and terminate (default: %(default)s)')
+                        help='build golden source and terminate (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
     parser.add_argument('--build-backend-only', action='store_true',
-                        help='build backend source and terminate (default: %(default)s)')
+                        help='build backend source and terminate (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
     parser.add_argument('--ignore-lines', action='store_true',
-                        help='ignore --lines options (default: %(default)s)')
+                        help='ignore --lines options (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
 
     args = parser.parse_args()
 
