@@ -259,6 +259,12 @@ class Angelix:
             negative_idx = 0
             while len(negative) > 0:
                 counterexample = negative[negative_idx]
+
+                # make sure counterexample fails
+                if self.run_test(validation_src, counterexample):
+                    negative.remove(test)
+                    continue
+
                 logger.info('counterexample test is {}'.format(counterexample))
                 repair_suite.append(counterexample)
                 try:
