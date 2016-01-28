@@ -44,7 +44,7 @@ class Tester:
 
         environment['ANGELIX_RUN_EXECUTIONS'] = executions
 
-        if self.config['verbose']:
+        if self.config['verbose'] and not self.config['mute_test_message']:
             subproc_output = sys.stderr
         else:
             subproc_output = subprocess.DEVNULL

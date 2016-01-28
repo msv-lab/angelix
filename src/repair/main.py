@@ -431,6 +431,10 @@ if __name__ == "__main__":
                         help='mute build message (default: %(default)s)'
                         if "AF_DEBUG" in os.environ
                         else argparse.SUPPRESS)
+    parser.add_argument('--mute-test-message', action='store_true',
+                        help='mute test message (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
     parser.add_argument('--build-validation-only', action='store_true',
                         help='build validation source and terminate (default: %(default)s)'
                         if "AF_DEBUG" in os.environ
@@ -449,6 +453,10 @@ if __name__ == "__main__":
                         else argparse.SUPPRESS)
     parser.add_argument('--localize-only', action='store_true',
                         help='show all suspicious expressions and terminate (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
+    parser.add_argument('--term-when-syn-crashes', action='store_true',
+                        help='terminate when synthesis crashes (default: %(default)s)'
                         if "AF_DEBUG" in os.environ
                         else argparse.SUPPRESS)
 
@@ -518,10 +526,12 @@ if __name__ == "__main__":
     config['synthesis_ptr_vars']    = args.synthesis_ptr_vars
     config['verbose']               = args.verbose
     config['mute_build_message']    = args.mute_build_message
+    config['mute_test_message']     = args.mute_test_message
     config['build_validation_only'] = args.build_validation_only
     config['build_golden_only']     = args.build_golden_only
     config['build_backend_only']    = args.build_backend_only
     config['localize_only']         = args.localize_only
+    config['term_when_syn_crashes'] = args.term_when_syn_crashes
 
     if args.verbose:
         for key, value in config.items():
