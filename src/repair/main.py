@@ -288,11 +288,17 @@ class Angelix:
                 self.apply_patch(self.validation_src, fix)
                 self.validation_src.build()
                 pos, neg = self.evaluate(self.validation_src)
-                if not set(neg).isdisjoint(set(repair_suite)):
-                    not_repaired = list(set(repair_suite) & set(neg))
+                positive, negative = pos, neg
+
+                # make sure about test failure
+                for test in neg:
+                    if self.run_test(self.validation_src, test):
+                        negative.remove(test)
+
+                if not set(negative).isdisjoint(set(repair_suite)):
+                    not_repaired = list(set(repair_suite) & set(negative))
                     logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
                     break
-                positive, negative = pos, neg
                 negative_idx = 0
 
         if len(negative) > 0:
