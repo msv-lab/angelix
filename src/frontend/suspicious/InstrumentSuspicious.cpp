@@ -447,7 +447,7 @@ public:
       stmtId << beginLine << "-" << beginColumn << "-" << endLine << "-" << endColumn;
       std::string extractedDir(getenv("ANGELIX_EXTRACTED"));
       std::ofstream fs(extractedDir + "/" + stmtId.str() + ".smt2");
-      fs << "(assert true)\n";
+      fs << "(assert (not (= 1 0)))\n";
 
       const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*stmt);
       std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
