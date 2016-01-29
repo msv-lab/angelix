@@ -21,7 +21,8 @@ class Tester:
         if klee:
             logger.info('running test \'{}\' of {} source with KLEE'.format(test, src))
         else:
-            logger.info('running test \'{}\' of {} source'.format(test, src))
+            if not self.config['mute_test_message']:
+                logger.info('running test \'{}\' of {} source'.format(test, src))
         environment = dict(env)
 
         if dump is not None:
@@ -44,7 +45,7 @@ class Tester:
 
         environment['ANGELIX_RUN_EXECUTIONS'] = executions
 
-        if self.config['verbose']:
+        if self.config['verbose'] and not self.config['mute_test_message']:
             subproc_output = sys.stderr
         else:
             subproc_output = subprocess.DEVNULL

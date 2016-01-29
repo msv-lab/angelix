@@ -41,7 +41,7 @@ class StmtToSMTLIB2 : public StmtVisitor<StmtToSMTLIB2> {
   raw_ostream &OS;
   clang::PrinterHelper* Helper;
   PrintingPolicy Policy;
-  
+
 public:
   StmtToSMTLIB2(raw_ostream &os, PrinterHelper* helper, const PrintingPolicy &Policy):
     OS(os), Helper(helper), Policy(Policy) {}
@@ -73,7 +73,7 @@ public:
     replaceStr(opcode_str, "==", "=");
     replaceStr(opcode_str, "||", "or");
     replaceStr(opcode_str, "&&", "and");
-  
+
     OS << "(" << opcode_str << " ";
     PrintExpr(Node->getLHS());
     OS << " ";
@@ -168,7 +168,7 @@ public:
       break;
     default:
       if (value < 256 && isPrintable((unsigned char)value))
-        OS << "'" << (char)value << "'";
+        OS << value;
       else if (value < 256)
         OS << "'\\x" << llvm::format("%02x", value) << "'";
       else if (value <= 0xFFFF)

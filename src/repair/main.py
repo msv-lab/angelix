@@ -1,4 +1,4 @@
-import os
+import os, stat
 from os.path import join, exists, abspath, basename
 import shutil
 import argparse
@@ -151,6 +151,15 @@ class Angelix:
                 positive.append(test)
             else:
                 negative.append(test)
+
+        # make sure if failing tests really fail
+        if self.config['redundant_test']:
+            negative_copy = negative
+            for test in negative_copy:
+                if self.run_test(src, test):
+                    negative.remove(test)
+                    positive.append(test)
+
         return positive, negative
 
 
@@ -197,6 +206,14 @@ class Angelix:
             logger.warning('excluding test {} because it fails in golden version'.format(test))
             negative.remove(test)
             self.test_suite.remove(test)
+
+        # make sure if failing tests really fail
+        if self.config['redundant_test']:
+            negative_copy = negative
+            for test in negative_copy:
+                if self.run_test(self.validation_src, test):
+                    negative.remove(test)
+                    positive.append(test)
 
         positive_traces = [(test, self.trace.parse(test)) for test in positive]
         negative_traces = [(test, self.trace.parse(test)) for test in negative]
@@ -250,7 +267,11 @@ class Angelix:
                 continue
             logger.info('candidate fix synthesized')
             self.validation_src.restore_buggy()
-            self.apply_patch(self.validation_src, initial_fix)
+            try:
+                self.apply_patch(self.validation_src, initial_fix)
+            except TransformationError:
+                logger.info('cannot apply fix')
+                continue
             self.validation_src.build()
             pos, neg = self.evaluate(self.validation_src)
             if not set(neg).isdisjoint(set(repair_suite_valid)):
@@ -263,6 +284,13 @@ class Angelix:
             negative_idx = 0
             while len(negative) > 0:
                 counterexample = negative[negative_idx]
+
+                # make sure counterexample fails
+                if self.config['redundant_test']:
+                    if self.run_test(self.validation_src, counterexample):
+                        negative.remove(counterexample)
+                        continue
+
                 logger.info('counterexample test is {}'.format(counterexample))
                 repair_suite.append(counterexample)
                 try:
@@ -286,11 +314,18 @@ class Angelix:
                 self.apply_patch(self.validation_src, fix)
                 self.validation_src.build()
                 pos, neg = self.evaluate(self.validation_src)
-                if not set(neg).isdisjoint(set(repair_suite)):
-                    not_repaired = list(set(repair_suite) & set(neg))
+                positive, negative = pos, neg
+
+                # make sure about test failure
+                if self.config['redundant_test']:
+                    for test in neg:
+                        if self.run_test(self.validation_src, test):
+                            negative.remove(test)
+
+                if not set(negative).isdisjoint(set(repair_suite)):
+                    not_repaired = list(set(repair_suite) & set(negative))
                     logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
                     break
-                positive, negative = pos, neg
                 negative_idx = 0
 
         if len(negative) > 0:
@@ -433,12 +468,18 @@ if __name__ == "__main__":
                         help='dump actual outputs for given tests (default: %(default)s)')
     parser.add_argument('--synthesis-only', metavar="FILE", default=None,
                         help='synthesize and validate patch from angelic forest (default: %(default)s)')
+    parser.add_argument('--redundant-test', action='store_true',
+                        help='run tests redundantly (default: %(default)s)')
     parser.add_argument('--verbose', action='store_true',
                         help='print compilation and KLEE messages (default: %(default)s)')
     parser.add_argument('--quiet', action='store_true',
                         help='print only errors (default: %(default)s)')
     parser.add_argument('--mute-build-message', action='store_true',
                         help='mute build message (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
+    parser.add_argument('--mute-test-message', action='store_true',
+                        help='mute test message (default: %(default)s)'
                         if "AF_DEBUG" in os.environ
                         else argparse.SUPPRESS)
     parser.add_argument('--build-validation-only', action='store_true',
@@ -461,6 +502,10 @@ if __name__ == "__main__":
                         help='show all suspicious expressions and terminate (default: %(default)s)'
                         if "AF_DEBUG" in os.environ
                         else argparse.SUPPRESS)
+    parser.add_argument('--term-when-syn-crashes', action='store_true',
+                        help='terminate when synthesis crashes (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
 
     args = parser.parse_args()
 
@@ -470,9 +515,13 @@ if __name__ == "__main__":
     else:
         logging.basicConfig(level=logging.INFO, format=FORMAT)
 
+    def rm_force(action, name, exc):
+        os.chmod(name, stat.S_IREAD)
+        shutil.rmtree(name)
+
     working_dir = join(os.getcwd(), ".angelix")
     if exists(working_dir):
-        shutil.rmtree(working_dir)
+        shutil.rmtree(working_dir, onerror=rm_force)
     os.mkdir(working_dir)
 
     if vars(args)['assert'] is not None and not args.dump_only:
@@ -526,13 +575,16 @@ if __name__ == "__main__":
     config['synthesis_func_params'] = args.synthesis_func_params
     config['synthesis_used_vars']   = args.synthesis_used_vars
     config['synthesis_ptr_vars']    = args.synthesis_ptr_vars
+    config['redundant_test']        = args.redundant_test
     config['verbose']               = args.verbose
     config['build_before_instr']    = args.build_before_instr
     config['mute_build_message']    = args.mute_build_message
+    config['mute_test_message']     = args.mute_test_message
     config['build_validation_only'] = args.build_validation_only
     config['build_golden_only']     = args.build_golden_only
     config['build_backend_only']    = args.build_backend_only
     config['localize_only']         = args.localize_only
+    config['term_when_syn_crashes'] = args.term_when_syn_crashes
 
     if args.verbose:
         for key, value in config.items():
