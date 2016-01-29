@@ -196,6 +196,14 @@ class Angelix:
             negative.remove(test)
             self.test_suite.remove(test)
 
+        # make sure if failing tests really fail
+        if self.config['redundant_test']:
+            negative_copy = negative
+            for test in negative_copy:
+                if self.run_test(self.validation_src, test):
+                    negative.remove(test)
+                    positive.append(test)
+
         positive_traces = [(test, self.trace.parse(test)) for test in positive]
         negative_traces = [(test, self.trace.parse(test)) for test in negative]
         suspicious = self.get_suspicious_groups(positive_traces, negative_traces)
@@ -265,9 +273,10 @@ class Angelix:
                 counterexample = negative[negative_idx]
 
                 # make sure counterexample fails
-                if self.run_test(self.validation_src, counterexample):
-                    negative.remove(counterexample)
-                    continue
+                if self.config['redundant_test']:
+                    if self.run_test(self.validation_src, counterexample):
+                        negative.remove(counterexample)
+                        continue
 
                 logger.info('counterexample test is {}'.format(counterexample))
                 repair_suite.append(counterexample)
@@ -295,9 +304,10 @@ class Angelix:
                 positive, negative = pos, neg
 
                 # make sure about test failure
-                for test in neg:
-                    if self.run_test(self.validation_src, test):
-                        negative.remove(test)
+                if self.config['redundant_test']:
+                    for test in neg:
+                        if self.run_test(self.validation_src, test):
+                            negative.remove(test)
 
                 if not set(negative).isdisjoint(set(repair_suite)):
                     not_repaired = list(set(repair_suite) & set(negative))
@@ -439,6 +449,8 @@ if __name__ == "__main__":
                         help='dump actual outputs for given tests (default: %(default)s)')
     parser.add_argument('--synthesis-only', metavar="FILE", default=None,
                         help='synthesize and validate patch from angelic forest (default: %(default)s)')
+    parser.add_argument('--redundant-test', action='store_true',
+                        help='run tests redundantly (default: %(default)s)')
     parser.add_argument('--verbose', action='store_true',
                         help='print compilation and KLEE messages (default: %(default)s)')
     parser.add_argument('--quiet', action='store_true',
@@ -544,6 +556,7 @@ if __name__ == "__main__":
     config['synthesis_func_params'] = args.synthesis_func_params
     config['synthesis_used_vars']   = args.synthesis_used_vars
     config['synthesis_ptr_vars']    = args.synthesis_ptr_vars
+    config['redundant_test']        = args.redundant_test
     config['verbose']               = args.verbose
     config['mute_build_message']    = args.mute_build_message
     config['mute_test_message']     = args.mute_test_message
