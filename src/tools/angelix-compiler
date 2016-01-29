@@ -12,12 +12,17 @@ my $libs_klee = $ENV{'ANGELIX_LIBRARY_PATH_KLEE'};
 my $libs_test = $ENV{'ANGELIX_LIBRARY_PATH_TEST'};
 my $klee_libs = $ENV{'KLEE_LIBRARY_PATH'};
 
-my $custom_klee_flags = "";
+my $custom_klee_link_flags = "";
+my $custom_klee_compile_flags = "";
 my $custom_test_flags = "";
 
-if ($ENV{'ANGELIX_COMPILER_CUSTOM_KLEE'}) {
-    $custom_klee_flags = $ENV{'ANGELIX_COMPILER_CUSTOM_KLEE'};
+if ($ENV{'ANGELIX_COMPILER_CUSTOM_KLEE_LINK'}) {
+    $custom_klee_link_flags = $ENV{'ANGELIX_COMPILER_CUSTOM_KLEE_LINK'};
 }
+if ($ENV{'ANGELIX_COMPILER_CUSTOM_KLEE_COMPILE'}) {
+    $custom_klee_compile_flags = $ENV{'ANGELIX_COMPILER_CUSTOM_KLEE_COMPILE'};
+}
+
 
 if ($ENV{'ANGELIX_COMPILER_CUSTOM_TEST'}) {
     $custom_test_flags = $ENV{'ANGELIX_COMPILER_CUSTOM_TEST'};
@@ -77,7 +82,7 @@ sub wrap_args {
 
 sub filter_non_link_args {
     # The argument that llvm-ld does not understand:
-    my @keys = qw/-g -pthread -O -O1 -O2 -O3 -pedantic -std=gnu99 -m64 -mtune=k8 -march=k8 -prune-eh/;
+    my @keys = qw/-g -pthread -shared -O -O1 -O2 -O3 -pedantic -std=gnu99 -std=c99 -m64 -mtune=k8 -march=k8 -prune-eh/;
     my %non_link_args;
     @non_link_args{@keys} = ();
     my @link_args;
@@ -97,12 +102,12 @@ sub filter_non_comp_args {
     my $optimize = $_[1];
     my @comp_args;
     foreach (@args) {
-        if (/(^-DPLUGIN_DIR=)|(^-fvisibility=)|(^-fexcess-precision=)|(^-DPHP_ATOM_INC$)/) {
-            debug("filtering out non-compilaton option $_");
+        if (/(^-DPLUGIN_DIR=)|(^-fvisibility=)|(^-fexcess-precision=)|(^-DPHP_ATOM_INC$)|(^-W)/) {
+            #debug("filtering out non-compilaton option $_");
             next;
         }
         if (/(-O1)|(-O2)|(-O3)/ && not $optimize) {
-            debug("filtering out non-compilaton option $_");
+            #debug("filtering out non-compilaton option $_");
             next;
         }
         push @comp_args, $_;
@@ -112,6 +117,9 @@ sub filter_non_comp_args {
 
 sub fix_llvm_script {
     my $file = $_[0];
+    if ($file eq '[') {
+        return;
+    }
 
     open(FILE, "<", $file) || die "File not found";
     my @lines = <FILE>;
@@ -189,7 +197,7 @@ if ($compilation_mode eq "test") {
                     "-O0",
                     "-D ANGELIX_SYMBOLIC_RUNTIME",
                     wrap_args(@klee_comp_args),
-                    $custom_klee_flags);
+                    $custom_klee_compile_flags);
         my $call_llvm_gcc = join(' ', @args);
         debug($call_llvm_gcc);
         system($call_llvm_gcc);
@@ -210,7 +218,7 @@ if ($compilation_mode eq "test") {
                     wrap_args(@link_args),
                     "-L$libs_klee",
                     "-langelix",
-                    $custom_klee_flags);
+                    $custom_klee_link_flags);
         my $call_llvm_ld = join(' ', @args);
         debug($call_llvm_ld);
         system($call_llvm_ld);
