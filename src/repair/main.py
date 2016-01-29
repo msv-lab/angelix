@@ -265,8 +265,8 @@ class Angelix:
                 counterexample = negative[negative_idx]
 
                 # make sure counterexample fails
-                if self.run_test(validation_src, counterexample):
-                    negative.remove(test)
+                if self.run_test(self.validation_src, counterexample):
+                    negative.remove(counterexample)
                     continue
 
                 logger.info('counterexample test is {}'.format(counterexample))
