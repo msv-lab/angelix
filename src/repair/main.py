@@ -1,4 +1,4 @@
-import os
+import os, stat
 from os.path import join, exists, abspath, basename
 import shutil
 import argparse
@@ -246,7 +246,11 @@ class Angelix:
                 continue
             logger.info('candidate fix synthesized')
             self.validation_src.restore_buggy()
-            self.apply_patch(self.validation_src, initial_fix)
+            try:
+                self.apply_patch(self.validation_src, initial_fix)
+            except TransformationError:
+                logger.info('cannot apply fix')
+                continue
             self.validation_src.build()
             pos, neg = self.evaluate(self.validation_src)
             if not set(neg).isdisjoint(set(repair_suite_valid)):
@@ -474,9 +478,13 @@ if __name__ == "__main__":
     else:
         logging.basicConfig(level=logging.INFO, format=FORMAT)
 
+    def rm_force(action, name, exc):
+        os.chmod(name, stat.S_IREAD)
+        shutil.rmtree(name)
+
     working_dir = join(os.getcwd(), ".angelix")
     if exists(working_dir):
-        shutil.rmtree(working_dir)
+        shutil.rmtree(working_dir, onerror=rm_force)
     os.mkdir(working_dir)
 
     if vars(args)['assert'] is not None and not args.dump_only:
