@@ -151,6 +151,15 @@ class Angelix:
                 positive.append(test)
             else:
                 negative.append(test)
+
+        # make sure if failing tests really fail
+        if self.config['redundant_test']:
+            negative_copy = negative
+            for test in negative_copy:
+                if self.run_test(src, test):
+                    negative.remove(test)
+                    positive.append(test)
+
         return positive, negative
 
 
