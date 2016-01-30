@@ -59,6 +59,11 @@ class Localizer:
         for _, trace in negative:
             all |= set(trace)
 
+        # update suspcious
+        if self.config['localize_only']:
+            suspicious = len(all)
+            logger.info('trace size: {}'.format(suspicious))
+
         executed_positive = dict()
         executed_negative = dict()
 
@@ -113,7 +118,7 @@ class Localizer:
         sorted_groups = sorted(groups_with_score, key=lambda r: r[1], reverse=True)
         if self.config['localize_only']:
             for idx, (group, score) in enumerate(sorted_groups):
-                logger.info('group {}: {}'.format(idx+1, group))
+                logger.info('group {}: {} ({})'.format(idx+1, group, score))
             sys.exit()
 
         groups = []
