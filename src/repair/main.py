@@ -201,7 +201,8 @@ class Angelix:
                     excluded.append(test)
 
         for test in excluded:
-            logger.warning('excluding test {} because it fails in golden version'.format(test))
+            if not self.config['mute_test_message']:
+                logger.warning('excluding test {} because it fails in golden version'.format(test))
             negative.remove(test)
             self.test_suite.remove(test)
 
