@@ -167,6 +167,8 @@ class Angelix:
         positive, negative = self.evaluate(self.validation_src)
 
         self.frontend_src.configure()
+        if config['build_before_instr']:
+            self.frontend_src.build()
         self.instrument_for_localization(self.frontend_src)
         self.frontend_src.build()
         if len(positive) > 0:
@@ -231,6 +233,8 @@ class Angelix:
             repair_suite = self.reduce(positive_traces, negative_traces, expressions)
             self.backend_src.restore_buggy()
             self.backend_src.configure()
+            if config['build_before_instr']:
+                self.backend_src.build()
             self.instrument_for_inference(self.backend_src, expressions)
             self.backend_src.build()
             angelic_forest = dict()
@@ -333,6 +337,8 @@ class Angelix:
 
     def dump_outputs(self):
         self.frontend_src.configure()
+        if config['build_before_instr']:
+            self.frontend_src.build()
         self.instrument_for_localization(self.frontend_src)
         self.frontend_src.build()
         logger.info('running tests for dumping')
@@ -360,6 +366,8 @@ class Angelix:
         # we need this to extract buggy expressions:
         self.backend_src.restore_buggy()
         self.backend_src.configure()
+        if config['build_before_instr']:
+            self.backend_src.build()
         self.instrument_for_inference(self.backend_src, list(expressions))
 
         fix = self.synthesize_fix(af_file)
@@ -402,6 +410,8 @@ if __name__ == "__main__":
                         help='configure command in the form of shell command (default: %(default)s)')
     parser.add_argument('--build', metavar='CMD', default='make -e',
                         help='build command in the form of simple shell command (default: %(default)s)')
+    parser.add_argument('--build-before-instr', action='store_true',
+                        help='build source before (and after) instrumentation (default: %(default)s)')
     parser.add_argument('--timeout', metavar='MS', type=int, default=None,
                         help='total repair timeout (default: %(default)s)')
     parser.add_argument('--initial-tests', metavar='NUM', type=int, default=DEFAULT_INITIAL_TESTS,
@@ -568,6 +578,7 @@ if __name__ == "__main__":
     config['synthesis_ptr_vars']    = args.synthesis_ptr_vars
     config['redundant_test']        = args.redundant_test
     config['verbose']               = args.verbose
+    config['build_before_instr']    = args.build_before_instr
     config['mute_build_message']    = args.mute_build_message
     config['mute_test_message']     = args.mute_test_message
     config['build_validation_only'] = args.build_validation_only
