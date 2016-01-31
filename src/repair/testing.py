@@ -68,6 +68,7 @@ class Tester:
                     if len(content) > 1:
                         logger.warning("ANGELIX_RUN is executed multiple times by test {}".format(test))
             else:
-                logger.warning("ANGELIX_RUN is not executed by test {}".format(test))
+                if not self.config['mute_test_message']:
+                    logger.warning("ANGELIX_RUN is not executed by test {}".format(test))
 
         return code == 0
