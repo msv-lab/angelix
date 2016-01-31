@@ -205,14 +205,6 @@ class Angelix:
             negative.remove(test)
             self.test_suite.remove(test)
 
-        # make sure if failing tests really fail
-        if self.config['redundant_test']:
-            negative_copy = negative
-            for test in negative_copy:
-                if self.run_test(self.validation_src, test):
-                    negative.remove(test)
-                    positive.append(test)
-
         positive_traces = [(test, self.trace.parse(test)) for test in positive]
         negative_traces = [(test, self.trace.parse(test)) for test in negative]
         suspicious = self.get_suspicious_groups(positive_traces, negative_traces)
