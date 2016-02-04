@@ -1,4 +1,4 @@
-MODULES = llvm-gcc llvm2 minisat stp klee-uclibc klee z3 clang bear runtime frontend maxsmt synthesis
+MODULES = llvm-gcc llvm2 minisat stp klee-uclibc klee z3 z3_2 clang bear runtime frontend maxsmt synthesis
 CLEAN_MODULES = $(addprefix clean-, $(MODULES))
 
 help:
@@ -40,6 +40,8 @@ CLANG_TOOLS_EXTRA_URL=http://llvm.org/git/clang-tools-extra.git
 STP_URL=https://github.com/stp/stp.git
 MINISAT_URL=https://github.com/niklasso/minisat.git
 Z3_URL=https://github.com/Z3Prover/z3.git
+Z3_2_19_URL=http://research.microsoft.com/en-us/um/redmond/projects/z3/z3-2.19.tar.gz
+Z3_2_19_ARCHIVE=z3-2.19.tar.gz
 KLEE_UCLIBC_URL=https://github.com/klee/klee-uclibc.git
 BEAR_URL=https://github.com/rizsotto/Bear.git
 MAXSMT_URL=https://github.com/mechtaev/maxsmt-playground.git
@@ -140,6 +142,19 @@ $(Z3_DIR):
 
 clean-z3:
 	rm -rf $(Z3_DIR)/build
+
+# Z3_2 #
+
+z3_2: build/$(Z3_2_19_ARCHIVE)
+	cd build && mkdir -p z3_tmp && tar xzf $(Z3_2_19_ARCHIVE) --directory z3_tmp \
+	&& mv z3_tmp/z3 $(Z3_2_19_DIR) && rm -rf z3_tmp \
+	&& mv $(Z3_2_19_DIR)/bin/z3 $(Z3_2_19_DIR)/bin/z3_semfix
+
+build/$(Z3_2_19_ARCHIVE):
+	cd build && $(DOWNLOAD) $(Z3_2_19_URL)
+
+clean-z3_2:
+	rm -rf $(Z3_2_19_DIR)
 
 # MAX-SAT #
 
