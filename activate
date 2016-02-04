@@ -34,6 +34,7 @@ export MAXSMT_DIR="$ANGELIX_ROOT/build/maxsmt-playground"
 export MAXSMT_JAR="$MAXSMT_DIR/target/scala-2.10/maxsmt-playground_2.10-1.1.jar"
 export SYNTHESIS_DIR="$ANGELIX_ROOT/src/synthesis"
 export SYNTHESIS_JAR="$SYNTHESIS_DIR/target/scala-2.10/repair-maxsat-assembly-1.0.jar"
+export LOCAL_PERL_ROOT="$ANGELIX_ROOT/build/perl"
 
 # envorinment for building and execution:
 
@@ -79,3 +80,8 @@ instr-sus () {
 
 # environment for SEMFIX
 export SEMFIX_ROOT="$ANGELIX_ROOT/src/semfix"
+export PATH="$ANGELIX_ROOT/build/perl/bin${PATH+:}${PATH}"
+export PERL5LIB="$ANGELIX_ROOT/build/perl/lib/perl5${PERL5LIB+:}${PERL5LIB}"
+export PERL_LOCAL_LIB_ROOT="$ANGELIX_ROOT/build/perl${PERL_LOCAL_LIB_ROOT+:}${PERL_LOCAL_LIB_ROOT}"
+export PERL_MB_OPT="--install_base \"$ANGELIX_ROOT/build/perl\""
+export PERL_MM_OPT="INSTALL_BASE=$ANGELIX_ROOT/build/perl"

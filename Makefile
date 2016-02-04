@@ -45,6 +45,8 @@ Z3_2_19_ARCHIVE=z3-2.19.tar.gz
 KLEE_UCLIBC_URL=https://github.com/klee/klee-uclibc.git
 BEAR_URL=https://github.com/rizsotto/Bear.git
 MAXSMT_URL=https://github.com/mechtaev/maxsmt-playground.git
+LOCAL_LIB_URL=http://search.cpan.org/CPAN/authors/id/H/HA/HAARG/local-lib-2.000018.tar.gz
+LOCAL_LIB_ARCHIVE=local-lib-2.000018.tar.gz
 
 # Testing #
 
@@ -145,9 +147,11 @@ clean-z3:
 
 # Z3_2 #
 
-z3_2: build/$(Z3_2_19_ARCHIVE)
+z3_2: $(Z3_2_19_DIR)/bin/z3_semfix
+
+$(Z3_2_19_DIR)/bin/z3_semfix: build/$(Z3_2_19_ARCHIVE)
 	cd build && mkdir -p z3_tmp && tar xzf $(Z3_2_19_ARCHIVE) --directory z3_tmp \
-	&& mv z3_tmp/z3 $(Z3_2_19_DIR) && rm -rf z3_tmp \
+	&& rm -rf $(Z3_2_19_DIR) && mv -f z3_tmp/z3 $(Z3_2_19_DIR) && rm -rf z3_tmp \
 	&& mv $(Z3_2_19_DIR)/bin/z3 $(Z3_2_19_DIR)/bin/z3_semfix
 
 build/$(Z3_2_19_ARCHIVE):
@@ -156,10 +160,31 @@ build/$(Z3_2_19_ARCHIVE):
 clean-z3_2:
 	rm -rf $(Z3_2_19_DIR)
 
+# local::lib
+build/local-lib-2.000018/installed: build/$(LOCAL_LIB_ARCHIVE) $(LOCAL_PERL_ROOT)
+	cd build && tar xzf $(LOCAL_LIB_ARCHIVE) \
+	&& cd local-lib-2.000018 && perl Makefile.PL --bootstrap=$(LOCAL_PERL_ROOT) --no-manpages \
+	&& make test && make install && touch installed
+
+local_lib: build/local-lib-2.000018/installed
+
+$(LOCAL_PERL_ROOT):
+	mkdir -p $(LOCAL_PERL_ROOT)
+
+build/$(LOCAL_LIB_ARCHIVE):
+	cd build && $(DOWNLOAD) $(LOCAL_LIB_URL)
+
+clean-local-lib:
+	rm -rf build/local-lib-2.000018
+
 # semfix #
 
-semfix: z3_2
-	cpan Log::Log4perl && cpan XML::Simple
+semfix: local_lib z3_2
+	perl -MCPAN -Mlocal::lib=${LOCAL_PERL_ROOT} -e 'CPAN::install(Log::Log4perl)' \
+	&& perl -MCPAN -Mlocal::lib=${LOCAL_PERL_ROOT} -e 'CPAN::install(XML::Simple)'
+
+clean-semfix: clean-z3_2 clean-local-lib
+	rm -rf $(LOCAL_PERL_ROOT)
 
 # MAX-SAT #
 
