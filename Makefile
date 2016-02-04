@@ -1,4 +1,4 @@
-MODULES = llvm-gcc llvm2 minisat stp klee-uclibc klee z3 z3_2 clang bear runtime frontend maxsmt synthesis
+MODULES = llvm-gcc llvm2 minisat stp klee-uclibc klee z3 clang bear runtime frontend maxsmt synthesis semfix
 CLEAN_MODULES = $(addprefix clean-, $(MODULES))
 
 help:
@@ -155,6 +155,11 @@ build/$(Z3_2_19_ARCHIVE):
 
 clean-z3_2:
 	rm -rf $(Z3_2_19_DIR)
+
+# semfix #
+
+semfix: z3_2
+	cpan Log::Log4perl && cpan XML::Simple
 
 # MAX-SAT #
 
