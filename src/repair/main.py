@@ -404,7 +404,7 @@ if __name__ == "__main__":
                         help='build command in the form of simple shell command (default: %(default)s)')
     parser.add_argument('--build-before-instr', action='store_true',
                         help='build source before (and after) instrumentation (default: %(default)s)')
-    parser.add_argument('--timeout', metavar='MS', type=int, default=None,
+    parser.add_argument('--timeout', metavar='SEC', type=int, default=None,
                         help='total repair timeout (default: %(default)s)')
     parser.add_argument('--initial-tests', metavar='NUM', type=int, default=DEFAULT_INITIAL_TESTS,
                         help='initial repair test suite size (default: %(default)s)')
