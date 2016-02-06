@@ -527,6 +527,9 @@ if __name__ == "__main__":
         logger.error('\'guards\' and \'assignments\' defect classes are currently incompatible')
         exit(1)
 
+    if args.use_semfix_synthesizer:
+        args.semfix = True
+
     if args.semfix:
         if not (args.defect == DEFAULT_DEFECTS):
             logger.warning('--semfix disables --defect option')
