@@ -5,21 +5,26 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+class NoNegativeTestException(Exception):
+    pass
 
 def ochiai(executed_passing, executed_failing, total_passing, total_failing):
-    assert total_failing > 0
+    if not total_failing > 0:
+        raise NoNegativeTestException()
     if executed_failing + executed_passing == 0:
         return 0
     return executed_failing / sqrt(total_failing * (executed_passing + executed_failing))
 
 
 def jaccard(executed_passing, executed_failing, total_passing, total_failing):
-    assert total_failing > 0
+    if not total_failing > 0:
+        raise NoNegativeTestException()
     return executed_failing / (total_failing + executed_passing)
 
 
 def tarantula(executed_passing, executed_failing, total_passing, total_failing):
-    assert total_passing > 0 and total_failing > 0
+    if not total_failing > 0:
+        raise NoNegativeTestException()
     if executed_failing + executed_passing == 0:
         return 0
     return ((executed_failing / total_failing) /
@@ -91,8 +96,13 @@ class Localizer:
             all = filtered
 
         for e in all:
-            score = formula(executed_positive[e], executed_negative[e], len(positive), len(negative))
-            with_score.append((e, score))
+            try:
+                score = formula(executed_positive[e], executed_negative[e], 
+                                len(positive), len(negative))
+                with_score.append((e, score))
+            except NoNegativeTestException:
+                logger.info("No negative test exists")
+                exit(0)
 
         ranking = sorted(with_score, key=lambda r: r[1], reverse=True)
 
