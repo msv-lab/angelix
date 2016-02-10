@@ -73,11 +73,11 @@ class Project:
                                           shell=True,
                                           stderr=self.subproc_output,
                                           stdout=self.subproc_output)
-        if return_code != 0:
-            logger.warning("configuration of {} returned non-zero code".format(relpath(dir)))
+        if return_code != 0 and not self.config['mute_warning']:
+                logger.warning("configuration of {} returned non-zero code".format(relpath(dir)))
 
 
-def build_in_env(dir, cmd, subproc_output, env=os.environ):
+def build_in_env(dir, cmd, subproc_output, config, env=os.environ):
     dirpath = tempfile.mkdtemp()
     messages = join(dirpath, 'messages')
 
@@ -90,20 +90,21 @@ def build_in_env(dir, cmd, subproc_output, env=os.environ):
                                       shell=True,
                                       stderr=subproc_output,
                                       stdout=subproc_output)
-    if return_code != 0:
+    if return_code != 0 and not config['mute_warning']:
         logger.warning("compilation of {} returned non-zero code".format(relpath(dir)))
 
     if exists(messages):
         with open(messages) as file:
             lines = file.readlines()
-        for line in lines:
-            logger.warning("failed to build {}".format(relpath(line.strip())))
+        if not config['mute_warning']:
+            for line in lines:
+                logger.warning("failed to build {}".format(relpath(line.strip())))
 
 
-def build_with_cc(dir, cmd, stderr, cc):
+def build_with_cc(dir, cmd, stderr, cc, config):
     env = dict(os.environ)
     env['CC'] = cc
-    build_in_env(dir, cmd, stderr, env)
+    build_in_env(dir, cmd, stderr, config, env)
 
 
 class Validation(Project):
@@ -112,7 +113,8 @@ class Validation(Project):
         logger.info('building {} source'.format(basename(self.dir)))
         build_in_env(self.dir, self.build_cmd,
                      subprocess.DEVNULL if self.config['mute_build_message']
-                     else self.subproc_output)
+                     else self.subproc_output,
+                     self.config)
 
     def export_compilation_db(self):
         logger.info('building json compilation database from {} source'.format(basename(self.dir)))
@@ -120,7 +122,8 @@ class Validation(Project):
         build_in_env(self.dir,
                      'bear ' + self.build_cmd,
                      subprocess.DEVNULL if self.config['mute_build_message']
-                     else self.subproc_output)
+                     else self.subproc_output,
+                     self.config)
 
         compilation_db_file = join(self.dir, 'compile_commands.json')
         with open(compilation_db_file) as file:
@@ -140,7 +143,8 @@ class Frontend(Project):
                       self.build_cmd,
                       subprocess.DEVNULL if self.config['mute_build_message']
                       else self.subproc_output,
-                      'angelix-compiler --test')
+                      'angelix-compiler --test',
+                      self.config)
 
 
 class Backend(Project):
@@ -151,4 +155,5 @@ class Backend(Project):
                       self.build_cmd,
                       subprocess.DEVNULL if self.config['mute_build_message']
                       else self.subproc_output,
-                      'angelix-compiler --klee')
+                      'angelix-compiler --klee',
+                      self.config)

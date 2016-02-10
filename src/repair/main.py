@@ -477,6 +477,10 @@ if __name__ == "__main__":
                         help='mute test message (default: %(default)s)'
                         if "AF_DEBUG" in os.environ
                         else argparse.SUPPRESS)
+    parser.add_argument('--mute-warning', action='store_true',
+                        help='mute warning message (default: %(default)s)'
+                        if "AF_DEBUG" in os.environ
+                        else argparse.SUPPRESS)
     parser.add_argument('--build-validation-only', action='store_true',
                         help='build validation source and terminate (default: %(default)s)'
                         if "AF_DEBUG" in os.environ
@@ -579,6 +583,7 @@ if __name__ == "__main__":
     config['build_before_instr']    = args.build_before_instr
     config['mute_build_message']    = args.mute_build_message
     config['mute_test_message']     = args.mute_test_message
+    config['mute_warning']          = args.mute_warning
     config['build_validation_only'] = args.build_validation_only
     config['build_golden_only']     = args.build_golden_only
     config['build_backend_only']    = args.build_backend_only
