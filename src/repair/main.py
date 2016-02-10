@@ -408,6 +408,8 @@ if __name__ == "__main__":
                         help='total repair timeout (default: %(default)s)')
     parser.add_argument('--initial-tests', metavar='NUM', type=int, default=DEFAULT_INITIAL_TESTS,
                         help='initial repair test suite size (default: %(default)s)')
+    parser.add_argument('--all-tests', action='store_true',
+                        help='use all tests for repair (default: %(default)s)')
     parser.add_argument('--test-timeout', metavar='MS', type=int, default=None,
                         help='test case timeout (default: %(default)s)')
     parser.add_argument('--group-size', metavar='NUM', type=int, default=DEFAULT_GROUP_SIZE,
@@ -547,6 +549,7 @@ if __name__ == "__main__":
 
     config = dict()
     config['initial_tests']         = args.initial_tests
+    config['all_tests']             = args.all_tests
     config['semfix']                = args.semfix
     config['use_semfix_syn']        = args.use_semfix_synthesizer
     config['max_z3_trials']         = args.max_z3_trials

@@ -94,10 +94,16 @@ class Reducer:
 
             return selected
 
-        selected_failing = select_best_tests(failing_tests, number_failing)
+        if self.config['all_tests']:
+            selected_failing = failing_tests
+        else:
+            selected_failing = select_best_tests(failing_tests, number_failing)
         number_selected_failing = len(selected_failing)
 
-        selected_passing = select_best_tests(passing_tests, number - number_selected_failing)
+        if self.config['all_tests']:
+            selected_passing = passing_tests
+        else:
+            selected_passing = select_best_tests(passing_tests, number - number_selected_failing)
         number_selected_passing = len(selected_passing)
 
         total_selected = number_selected_passing + number_selected_failing
