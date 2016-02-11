@@ -17,7 +17,7 @@ from testing import Tester
 from localization import Localizer
 from reduction import Reducer
 from inference import Inferrer, InferenceError, NoSmtError
-from semfix_infer import Semfix_Inferrer, InferenceError
+from semfix_infer import Semfix_Inferrer
 from synthesis import Synthesizer
 from semfix_syn import Semfix_Synthesizer
 

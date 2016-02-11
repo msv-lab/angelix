@@ -11,12 +11,10 @@ import re
 import z3
 from z3 import Select, Concat, Array, BitVecSort, BitVecVal, Solver, BitVec
 
+from inference import InferenceError
+
 
 logger = logging.getLogger(__name__)
-
-
-class InferenceError(Exception):
-    pass
 
 
 # Temporary solution to implement get_vars. In principle, it should be available in z3util.py
