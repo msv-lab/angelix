@@ -196,7 +196,6 @@ class Angelix:
             _, instrumented = self.run_test(self.frontend_src, test, trace=self.trace[test], check_instrumented=True)
             if not instrumented:
                 self.repair_test_suite.remove(test)
-                continue
             if test not in self.dump:
                 if self.golden_src is None:
                     logger.error("golden version or assert file needed for test {}".format(test))
