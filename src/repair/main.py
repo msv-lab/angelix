@@ -219,7 +219,7 @@ class Angelix:
 
         positive_traces = [(test, self.trace.parse(test)) for test in positive]
         negative_traces = [(test, self.trace.parse(test)) for test in negative]
-        suspicious = self.get_suspicious_groups(positive_traces, negative_traces)
+        suspicious = self.get_suspicious_groups(self.validation_test_suite, positive_traces, negative_traces)
         if len(suspicious) == 0:
             logger.warning('no suspicious expressions localized')
 
@@ -469,6 +469,8 @@ if __name__ == "__main__":
                         help='synthesize and validate patch from angelic forest (default: %(default)s)')
     parser.add_argument('--redundant-test', action='store_true',
                         help='run tests redundantly (default: %(default)s)')
+    parser.add_argument('--invalid-localization', action='store_true',
+                        help='COMPATIBILITY use tests that fail in golden version for localization (default: %(default)s)')
     parser.add_argument('--verbose', action='store_true',
                         help='print compilation and KLEE messages (default: %(default)s)')
     parser.add_argument('--quiet', action='store_true',
@@ -592,6 +594,7 @@ if __name__ == "__main__":
     config['build_golden_only']     = args.build_golden_only
     config['build_backend_only']    = args.build_backend_only
     config['localize_only']         = args.localize_only
+    config['invalid_localization']  = args.invalid_localization
     config['term_when_syn_crashes'] = args.term_when_syn_crashes
 
     if args.verbose:
