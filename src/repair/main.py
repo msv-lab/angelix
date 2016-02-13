@@ -224,7 +224,9 @@ class Angelix:
         if len(suspicious) == 0:
             logger.warning('no suspicious expressions localized')
 
-        while len(negative) > 0 and len(suspicious) > 0:
+        repaired = len(negative) == 0
+
+        while not repaired and len(suspicious) > 0:
             if self.config['use_semfix_syn']:
                 # prepare a clean directory
                 shutil.rmtree(join(self.working_dir, 'semfix-syn-input'),
@@ -282,14 +284,15 @@ class Angelix:
                 continue
             repaired = len(neg) == 0
             neg = list(set(neg) & set(self.repair_test_suite))
-            positive, negative = pos, neg
+            current_positive, current_negative = pos, neg
+
+            if len(current_negative) == 0 and not repaired:
+                logger.warning("cannot repair using instrumented tests")
+                continue
 
             negative_idx = 0
             while not repaired:
-                if len(negative) == 0:
-                    logger.warning("cannot repair usig instrumented tests")
-                    break
-                counterexample = negative[negative_idx]
+                counterexample = current_negative[negative_idx]
 
                 logger.info('counterexample test is {}'.format(counterexample))
                 current_repair_suite.append(counterexample)
@@ -300,7 +303,7 @@ class Angelix:
                 except NoSmtError:
                     logger.warning("no smt file for test {}".format(counterexample))
                     negative_idx = negative_idx + 1
-                    if len(negative) - negative_idx > 0:
+                    if len(current_negative) - negative_idx > 0:
                         continue
                     break
                 if len(angelic_forest[counterexample]) == 0:
@@ -316,10 +319,10 @@ class Angelix:
                 pos, neg = self.evaluate(self.validation_src)
                 repaired = len(neg) == 0
                 neg = list(set(neg) & set(self.repair_test_suite))
-                positive, negative = pos, neg
+                current_positive, current_negative = pos, neg
 
-                if not set(negative).isdisjoint(set(current_repair_suite)):
-                    not_repaired = list(set(current_repair_suite) & set(negative))
+                if not set(current_negative).isdisjoint(set(current_repair_suite)):
+                    not_repaired = list(set(current_repair_suite) & set(current_negative))
                     logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
                     break
                 negative_idx = 0
