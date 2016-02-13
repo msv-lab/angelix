@@ -16,7 +16,7 @@ class Tester:
         self.oracle = oracle
         self.workdir = workdir
 
-    def __call__(self, project, test, dump=None, trace=None, klee=False, env=os.environ):
+    def __call__(self, project, test, dump=None, trace=None, klee=False, env=os.environ, check_instrumented=False):
         src = basename(project.dir)
         if klee:
             logger.info('running test \'{}\' of {} source with KLEE'.format(test, src))
@@ -61,14 +61,20 @@ class Tester:
             else:
                 code = proc.wait(timeout=self.config['test_timeout'])
 
+        instrumented = True
         if dump is not None or trace is not None or klee:
             if exists(executions):
                 with open(executions) as file:
                     content = file.read()
                     if len(content) > 1:
                         logger.warning("ANGELIX_RUN is executed multiple times by test {}".format(test))
+                        instrumented = False
             else:
                 if not self.config['mute_test_message']:
                     logger.warning("ANGELIX_RUN is not executed by test {}".format(test))
+                    instrumented = False
 
-        return code == 0
+        if check_instrumented:
+            return (code == 0, instrumented)
+        else:
+            return code == 0

@@ -67,7 +67,8 @@ class Angelix:
     def __init__(self, working_dir, src, buggy, oracle, tests, golden, asserts, lines, build, configure, config):
         self.working_dir = working_dir
         self.config = config
-        self.test_suite = tests
+        self.repair_test_suite = tests[:]
+        self.validation_test_suite = tests[:]
         extracted = join(working_dir, 'extracted')
         os.mkdir(extracted)
 
@@ -146,7 +147,7 @@ class Angelix:
     def evaluate(self, src):
         positive = []
         negative = []
-        for test in self.test_suite:
+        for test in self.validation_test_suite:
             if self.run_test(src, test):
                 positive.append(test)
             else:
@@ -154,7 +155,7 @@ class Angelix:
 
         # make sure if failing tests really fail
         if self.config['redundant_test']:
-            negative_copy = negative
+            negative_copy = negative[:]
             for test in negative_copy:
                 if self.run_test(src, test):
                     negative.remove(test)
@@ -177,9 +178,13 @@ class Angelix:
             self.trace += test
             if test not in self.dump:
                 self.dump += test
-                self.run_test(self.frontend_src, test, dump=self.dump[test], trace=self.trace[test])
+                _, instrumented = self.run_test(self.frontend_src, test, dump=self.dump[test], trace=self.trace[test], check_instrumented=True)
+                if not instrumented:
+                    self.repair_test_suite.remove(test)
             else:
-                self.run_test(self.frontend_src, test, trace=self.trace[test])
+                _, instrumented = self.run_test(self.frontend_src, test, trace=self.trace[test], check_instrumented=True)
+                if not instrumented:
+                    self.repair_test_suite.remove(test)
 
         golden_is_built = False
         excluded = []
@@ -206,7 +211,9 @@ class Angelix:
             if not self.config['mute_test_message']:
                 logger.warning('excluding test {} because it fails in golden version'.format(test))
             negative.remove(test)
-            self.test_suite.remove(test)
+            if test in self.reapir_test_suite:
+                self.reapir_test_suite.remove(test)
+            self.validation_test_suite.remove(test)
 
         positive_traces = [(test, self.trace.parse(test)) for test in positive]
         negative_traces = [(test, self.trace.parse(test)) for test in negative]
@@ -222,7 +229,7 @@ class Angelix:
 
             expressions = suspicious.pop(0)
             logger.info('considering suspicious expressions {}'.format(expressions))
-            repair_suite = self.reduce(positive_traces, negative_traces, expressions)
+            current_repair_suite = self.reduce(self.repair_test_suite, positive_traces, negative_traces, expressions)
             self.backend_src.restore_buggy()
             self.backend_src.configure()
             if config['build_before_instr']:
@@ -231,14 +238,13 @@ class Angelix:
             self.backend_src.build()
             angelic_forest = dict()
             inference_failed = False
-            repair_suite_valid = repair_suite
-            for test in repair_suite:
+            for test in current_repair_suite:
                 try:
                     angelic_forest[test] = self.infer_spec(self.backend_src, test, self.dump[test])
                     if len(angelic_forest[test]) == 0:
-                        logger.warning('inference failed (angelic forest was not found)')
                         if test in positive:
-                            repair_suite_valid.remove(test)
+                            logger.warning('angelic forest for positive test {} not found'.format(test))
+                            current_repair_suite.remove(test)
                             continue
                         inference_failed = True
                         break
@@ -248,7 +254,7 @@ class Angelix:
                     break
                 except NoSmtError:
                     if test in positive:
-                        repair_suite_valid.remove(test)
+                        current_repair_suite.remove(test)
                         continue
                     inference_failed = True
                     break
@@ -267,25 +273,23 @@ class Angelix:
                 continue
             self.validation_src.build()
             pos, neg = self.evaluate(self.validation_src)
-            if not set(neg).isdisjoint(set(repair_suite_valid)):
-                not_repaired = list(set(repair_suite_valid) & set(neg))
+            if not set(neg).isdisjoint(set(current_repair_suite)):
+                not_repaired = list(set(current_repair_suite) & set(neg))
                 logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
                 continue
-            repair_suite = repair_suite_valid
+            repaired = len(neg) == 0
+            neg = list(set(neg) & set(self.repair_test_suite))
             positive, negative = pos, neg
 
             negative_idx = 0
-            while len(negative) > 0:
+            while not repaired:
+                if len(negative) == 0:
+                    logger.warning("cannot repair usig instrumented tests")
+                    break
                 counterexample = negative[negative_idx]
 
-                # make sure counterexample fails
-                if self.config['redundant_test']:
-                    if self.run_test(self.validation_src, counterexample):
-                        negative.remove(counterexample)
-                        continue
-
                 logger.info('counterexample test is {}'.format(counterexample))
-                repair_suite.append(counterexample)
+                current_repair_suite.append(counterexample)
                 try:
                     angelic_forest[counterexample] = self.infer_spec(self.backend_src,
                                                                      counterexample,
@@ -307,22 +311,17 @@ class Angelix:
                 self.apply_patch(self.validation_src, fix)
                 self.validation_src.build()
                 pos, neg = self.evaluate(self.validation_src)
+                repaired = len(neg) == 0
+                neg = list(set(neg) & set(self.repair_test_suite))
                 positive, negative = pos, neg
 
-                # make sure about test failure
-                if self.config['redundant_test']:
-                    for test in neg:
-                        if self.run_test(self.validation_src, test):
-                            negative.remove(test)
-
-                if not set(negative).isdisjoint(set(repair_suite)):
-                    not_repaired = list(set(repair_suite) & set(negative))
+                if not set(negative).isdisjoint(set(current_repair_suite)):
+                    not_repaired = list(set(current_repair_suite) & set(negative))
                     logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
                     break
                 negative_idx = 0
 
-        if len(negative) > 0:
-            logger.warning("tests {} not repaired".format(negative))
+        if not repaired:
             return None
         else:
             return self.validation_src.diff_buggy()
@@ -334,7 +333,7 @@ class Angelix:
         self.instrument_for_localization(self.frontend_src)
         self.frontend_src.build()
         logger.info('running tests for dumping')
-        for test in self.test_suite:
+        for test in self.validation_test_suite:
             self.dump += test
             result = self.run_test(self.frontend_src, test, dump=self.dump[test])
             if result:

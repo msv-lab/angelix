@@ -195,7 +195,7 @@ class Inferrer:
         smt_files = non_error_smt_files
 
         if len(smt_files) == 0:
-            logger.warning('No smt file exists.')
+            logger.warning('No smt file exists')
             raise NoSmtError()
 
         # loading dump

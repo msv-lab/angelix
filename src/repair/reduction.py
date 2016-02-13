@@ -10,8 +10,9 @@ class Reducer:
     def __init__(self, config):
         self.config = config
 
-    def __call__(self, positive, negative, expressions):
+    def __call__(self, test_suite, positive, negative, expressions):
         '''
+        test_suite: list of tests to reduce
         positive, negative: (test * trace) list
         trace: expression list
 
@@ -34,14 +35,16 @@ class Reducer:
         relevant = set(expressions)
 
         for test, trace in positive:
-            data[test] = dict()
-            data[test][source_name] = set(trace) & relevant
-            passing_tests.append(test)
+            if test in test_suite:
+                data[test] = dict()
+                data[test][source_name] = set(trace) & relevant
+                passing_tests.append(test)
 
         for test, trace in negative:
-            data[test] = dict()
-            data[test][source_name] = set(trace) & relevant
-            failing_tests.append(test)
+            if test in test_suite:
+                data[test] = dict()
+                data[test][source_name] = set(trace) & relevant
+                failing_tests.append(test)
 
         current_coverage = {}
         for source in source_dirs:
