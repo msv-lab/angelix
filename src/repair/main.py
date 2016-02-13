@@ -214,8 +214,8 @@ class Angelix:
             if not self.config['mute_test_message']:
                 logger.warning('excluding test {} because it fails in golden version'.format(test))
             negative.remove(test)
-            if test in self.reapir_test_suite:
-                self.reapir_test_suite.remove(test)
+            if test in self.repair_test_suite:
+                self.repair_test_suite.remove(test)
             self.validation_test_suite.remove(test)
 
         positive_traces = [(test, self.trace.parse(test)) for test in positive]
