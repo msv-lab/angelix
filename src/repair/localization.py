@@ -111,7 +111,7 @@ class Localizer:
 
         if self.lines is not None:
             filtered = filter(is_selected, all)
-            all = filtered
+            all = list(filtered)
 
         for e in all:
             try:
@@ -144,10 +144,6 @@ class Localizer:
             groups_with_score.append((group, total_score))
 
         sorted_groups = sorted(groups_with_score, key=lambda r: r[1], reverse=True)
-        if self.config['localize_only']:
-            for idx, (group, score) in enumerate(sorted_groups):
-                logger.info('group {}: {} ({})'.format(idx+1, group, score))
-            sys.exit()
 
         groups = []
         for (group, score) in sorted_groups:

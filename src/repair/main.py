@@ -217,9 +217,18 @@ class Angelix:
                 self.repair_test_suite.remove(test)
             self.validation_test_suite.remove(test)
 
+        logger.info("repair test suite: {}".format(self.repair_test_suite))
+        logger.info("validation test suite: {}".format(self.validation_test_suite))
+
         positive_traces = [(test, self.trace.parse(test)) for test in positive]
         negative_traces = [(test, self.trace.parse(test)) for test in negative]
         suspicious = self.get_suspicious_groups(self.validation_test_suite, positive_traces, negative_traces)
+
+        if self.config['localize_only']:
+            for idx, (group, score) in enumerate(suspicious):
+                logger.info('group {}: {} ({})'.format(idx+1, group, score))
+            exit(0)
+
         if len(suspicious) == 0:
             logger.warning('no suspicious expressions localized')
 
