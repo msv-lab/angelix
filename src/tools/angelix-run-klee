@@ -18,6 +18,12 @@ else
     search_arg="--search=$ANGELIX_KLEE_SEARCH"
 fi
 
+if [ -z $ANGELIX_KLEE_LOAD ]; then
+    load_arg=""
+else
+    load_arg="$ANGELIX_KLEE_LOAD"
+fi
+
 if [ -z $ANGELIX_KLEE_MAX_FORKS ]; then
     forks_arg=""
 else
@@ -57,7 +63,7 @@ else
     syn_arg=""
 fi
 
-klee $search_arg $forks_arg $depth_arg $time_arg $solver_time_arg $debug_arg $syn_arg \
+klee $search_arg $forks_arg $depth_arg $time_arg $solver_time_arg $debug_arg $syn_arg $load_arg \
      -write-smt2s \
      --libc=uclibc \
      --posix-runtime \

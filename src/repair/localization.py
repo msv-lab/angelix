@@ -37,9 +37,10 @@ class Localizer:
         self.lines = lines
         self.config = config
 
-    def __call__(self, positive, negative):
+    def __call__(self, test_suite, all_positive, all_negative):
         '''
-        positive, negative: (test * trace) list
+        test_suite: tests under consideration
+        all_positive, all_negative: (test * trace) list
         trace: expression list
 
         computes config['suspicious']/config['group_size'] groups
@@ -55,6 +56,23 @@ class Localizer:
             formula = jaccard
         elif self.config['localization'] == 'tarantula':
             formula = tarantula
+
+        # first, remove irrelevant information:
+        positive = []
+        negative = []
+
+        if not self.config['invalid_localization']:
+            for test, trace in all_positive:
+                if test in test_suite:
+                    positive.append((test, trace))
+
+            for test, trace in all_negative:
+                if test in test_suite:
+                    negative.append((test, trace))
+        else:
+            positive = all_positive
+            negative = all_negative
+
 
         all = set()
 
