@@ -452,6 +452,8 @@ if __name__ == "__main__":
                         help='print instructions executed by KLEE (default: %(default)s)')
     parser.add_argument('--klee-ignore-errors', action='store_true',
                         help='Don\'t terminate on memory errors (default: %(default)s)')
+    parser.add_argument('--ignore-trans-errors', action='store_true',
+                        help='Don\'t terminate on transformation errors (default: %(default)s)')
     parser.add_argument('--synthesis-timeout', metavar='MS', type=int, default=30000, # 30 sec
                         help='synthesis timeout (default: %(default)s)')
     parser.add_argument('--synthesis-levels', metavar='LEVEL', nargs='+',
@@ -587,6 +589,7 @@ if __name__ == "__main__":
     config['klee_solver_timeout']   = args.klee_solver_timeout
     config['klee_debug']            = args.klee_debug
     config['klee_ignore_errors']    = args.klee_ignore_errors
+    config['ignore_trans_errors']   = args.ignore_trans_errors
     config['synthesis_timeout']     = args.synthesis_timeout
     config['synthesis_levels']      = args.synthesis_levels
     config['synthesis_global_vars'] = args.synthesis_global_vars

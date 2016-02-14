@@ -50,8 +50,12 @@ class RepairableTransformer:
                                           stdout=self.subproc_output,
                                           env=environment)
         if return_code != 0:
-            logger.error("transformation of {} failed".format(relpath(project.dir)))
-            raise TransformationError()
+            
+            if self.config['ignore_trans_errors']:
+                logger.warning("transformation of {} failed".format(relpath(project.dir)))
+            else:
+                logger.error("transformation of {} failed".format(relpath(project.dir)))    
+                raise TransformationError()
 
 
 class SuspiciousTransformer:
@@ -98,8 +102,11 @@ class SuspiciousTransformer:
                                           stdout=self.subproc_output,
                                           env=environment)
         if return_code != 0:
-            logger.error("transformation of {} failed".format(relpath(project.dir)))
-            raise TransformationError()
+            if self.config['ignore_trans_errors']:
+                logger.warning("transformation of {} failed".format(relpath(project.dir)))
+            else:
+                logger.error("transformation of {} failed".format(relpath(project.dir)))
+                raise TransformationError()
 
         shutil.rmtree(dirpath)
 
@@ -136,8 +143,11 @@ class FixInjector:
                                           stdout=self.subproc_output,
                                           env=environment)
         if return_code != 0:
-            logger.error("transformation of {} failed".format(relpath(project.dir)))
-            raise TransformationError()
+            if self.config['ignore_trans_errors']:
+                logger.error("transformation of {} failed".format(relpath(project.dir)))
+            else:
+                logger.error("transformation of {} failed".format(relpath(project.dir)))
+                raise TransformationError()
 
         shutil.rmtree(dirpath)
 
