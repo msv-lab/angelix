@@ -19,7 +19,7 @@ export LLVM_GCC_DIR="$ANGELIX_ROOT/build/llvm-gcc4.2-2.9-x86_64-linux"
 export LLVM2_DIR="$ANGELIX_ROOT/build/llvm-2.9"
 export LLVM3_DIR="$ANGELIX_ROOT/build/llvm-3.7.0.src"
 export CLANG_HEADERS="$LLVM3_DIR/tools/clang/lib/Headers/"
-export LLVM3_INCLUDE_PATH="$LLVM3_DIR/build/lib/clang/3.7.0/include"
+export LLVM3_INCLUDE_PATH="$ANGELIX_ROOT/build/include"
 export STP_DIR="$ANGELIX_ROOT/build/stp"
 export MINISAT_DIR="$ANGELIX_ROOT/build/minisat"
 export Z3_DIR="$ANGELIX_ROOT/build/z3"
@@ -44,7 +44,7 @@ export PATH="$KLEE_DIR/Release+Asserts/bin/:$PATH"
 export PATH="$Z3_DIR/build/:$PATH"
 export PATH="$Z3_2_19_DIR/bin/:$PATH"
 export PATH="$ANGELIX_ROOT/src/tools:$PATH"
-export PATH="$LLVM3_DIR/build/bin/angelix/:$PATH"
+export PATH="$ANGELIX_ROOT/build/bin/:$PATH"
 
 export ANGELIX_LIBRARY_PATH_KLEE="$ANGELIX_ROOT/build/lib/klee"
 export ANGELIX_LIBRARY_PATH_TEST="$ANGELIX_ROOT/build/lib/test"
@@ -62,7 +62,8 @@ export PYTHONPATH="$Z3_DIR/build/:$PYTHONPATH"
 ulimit -s unlimited
 
 mkdir -p $ANGELIX_ROOT/build
-
+mkdir -p $ANGELIX_ROOT/build/bin
+mkdir -p $ANGELIX_ROOT/build/include
 
 # utilities for testing:
 
