@@ -12,7 +12,7 @@ help:
 	@echo \'make test\''                         'run tests
 	@echo
 	@echo Modules:
-	@echo -n ' '$(freach module, $(MODULES),"* $(module)\n")
+	@echo -n ' '$(foreach module, $(MODULES),"* $(module)\n")
 
 all: $(MODULES)
 clean-all: $(CLEAN_MODULES)
