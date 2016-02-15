@@ -4,19 +4,19 @@ Semantics-based automated program repair tool for C programs. Angelix fixes bugs
 
 ## Installation ##
 
-Angelix is distrubuted in source code form and pre-installed form in VirtualBox image. The VirtualBox image also contains ICSE'16 evaluation scripts and results.
+Angelix is distrubuted in source code form and pre-installed in VirtualBox image. The VirtualBox image also contains ICSE'16 evaluation scripts and results.
 
 ### Option 1: VirtualBox image ###
 
-You can [request](https://docs.google.com/forms/d/1XoQ3AomEwd2hke7-ty8CDaQ_iH7TH3W5foO5BQWc-6o/viewform?usp=send_form) VirtualBox image with preinstalled Angelix. Note that it may not include the latest version of Angelix.
+You can [request](https://docs.google.com/forms/d/1XoQ3AomEwd2hke7-ty8CDaQ_iH7TH3W5foO5BQWc-6o/viewform?usp=send_form) VirtualBox image with pre-installed Angelix. Note that it may not include the latest version of Angelix.
 
 ### Option 2: Build from source ###
 
 The following is required to install Angelix from source code:
 
-1. 30GB Hard drive
-2. 8GM Memory
-3. Ubuntu 14.04 64-bit\*
+* 30GB Hard drive
+* 8GM Memory
+* Ubuntu 14.04 64-bit\*
 
 \* Angelix can be run on other 64-bit linux distributions, however installation scripts were tested only on Ubuntu 14.04. If you want to install Angelix on a different system, you may need to modify Makefile and activate scripts.
 
