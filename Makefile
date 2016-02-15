@@ -246,9 +246,10 @@ frontend: $(LLVM3_DIR)/tools/clang/tools/angelix
 	grep -q angelix "$(LLVM3_DIR)/tools/clang/tools/CMakeLists.txt" || echo 'add_subdirectory(angelix)' >> "$(LLVM3_DIR)/tools/clang/tools/CMakeLists.txt"
 	cd "$(LLVM3_DIR)/build" && make
 	mkdir -p "$(LLVM3_DIR)/build/bin/angelix"
-	cp "$(LLVM3_DIR)/build/bin/instrument-repairable" "$(LLVM3_DIR)/build/bin/angelix"
-	cp "$(LLVM3_DIR)/build/bin/instrument-suspicious" "$(LLVM3_DIR)/build/bin/angelix"
-	cp "$(LLVM3_DIR)/build/bin/apply-patch" "$(LLVM3_DIR)/build/bin/angelix"
+	cp "$(LLVM3_DIR)/build/bin/instrument-repairable" "$(ANGELIX_ROOT)/build/bin"
+	cp "$(LLVM3_DIR)/build/bin/instrument-suspicious" "$(ANGELIX_ROOT)/build/bin"
+	cp "$(LLVM3_DIR)/build/bin/apply-patch" "$(ANGELIX_ROOT)/build/bin"
+	cp -r "$(LLVM3_DIR)/build/lib/clang/3.7.0/include/"* "$(ANGELIX_ROOT)/build/include"
 
 $(LLVM3_DIR)/tools/clang/tools/angelix:
 	ln -f -s "$(ANGELIX_ROOT)/src/frontend" "$(LLVM3_DIR)/tools/clang/tools/angelix"
