@@ -179,7 +179,13 @@ public:
   }
 
   void VisitDeclRefExpr(DeclRefExpr *Node) {
-    OS << Node->getNameInfo();
+    ValueDecl* decl = Node->getDecl();
+    if (isa<EnumConstantDecl>(decl)) {
+      EnumConstantDecl* ecdecl = cast<EnumConstantDecl>(decl);
+      OS << ecdecl->getInitVal().toString(10);
+    } else {
+      OS << Node->getNameInfo();
+    }
   }
 
 };

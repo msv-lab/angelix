@@ -108,6 +108,7 @@ StatementMatcher RepairableNode =
         // pointers of various types are used in x->y expressions
         declRefExpr(to(varDecl(anyOf(hasType(isInteger()),
                                      hasType(pointerType()))))).bind("repairable"),
+        declRefExpr(to(enumConstantDecl())).bind("repairable"),
         integerLiteral().bind("repairable"),
         characterLiteral().bind("repairable"),
         // TODO: I need to make sure that base is a variable here:
