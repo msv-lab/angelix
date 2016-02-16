@@ -18,7 +18,7 @@ else
     search_arg="--search=$ANGELIX_KLEE_SEARCH"
 fi
 
-if [ -z $ANGELIX_KLEE_LOAD ]; then
+if [ -z "$ANGELIX_KLEE_LOAD" ]; then
     load_arg=""
 else
     load_arg="$ANGELIX_KLEE_LOAD"
