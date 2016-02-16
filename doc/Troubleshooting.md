@@ -51,5 +51,3 @@ The test script is no instrumented correctly or the binary is executed multiple 
 ## generated invalid fix (tests ... not repaired) ##
 
 Inferred angelic forest is wrong. Can be caused by incorrect output instrumentation, incorrect expected output or imprecision of symbolic execution.
-
-## Other issues ##
