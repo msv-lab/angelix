@@ -1,10 +1,10 @@
 # Angelix #
 
-Semantics-based automated program repair tool for C programs. Angelix fixes bugs manifested by failing test cases and searches for the minimal change in order to preserve the original source code. Powered by KLEE symbolic execution engine and Z3 SMT solver.
+Semantics-based [automated program repair](http://automated-program-repair.org) tool for C programs. Angelix fixes bugs manifested by failing test cases and searches for the minimal change in order to preserve the original source code. Powered by KLEE symbolic execution engine and Z3 SMT solver.
 
 ## Installation ##
 
-Angelix is distrubuted in source code form and pre-installed in VirtualBox image. The VirtualBox image also contains ICSE'16 evaluation scripts and results.
+Angelix is distrubuted in source code form and pre-installed in VirtualBox image. The VirtualBox image also contains Angelix ICSE'16 and SemFix ICSE'13 evaluation results.
 
 ### Option 1: VirtualBox image ###
 
@@ -50,6 +50,18 @@ Run tests:
 * [Troubleshooting](doc/Troubleshooting.md)
 
 Run `angelix --help` to see the list of available options.
+
+## SemFix ##
+
+SemFix is a predecessor of Angelix; it is implemented as a part of Angelix, and can be activated using `--semfix` option.
+
+## Publications ##
+
+**Angelix: Scalable Multiline Program Patch Synthesis via Symbolic Analysis.** S. Mechtaev, J. Yi, A. Roychoudhury. ICSE'16.
+
+**DirectFix: Looking for Simple Program Repairs.** S. Mechtaev, J. Yi, A. Roychoudhury. ICSE'15.
+
+** SemFix: Program Repair via Semantic Analysis ** H.D.T. Nguyen, D. Qi, A. Roychoudhury, S. Chandra. ICSE'13.
 
 ## Contributors ##
 
