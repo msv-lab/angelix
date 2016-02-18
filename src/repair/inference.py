@@ -194,8 +194,12 @@ class Inferrer:
                 non_error_smt_files.append(smt)
         smt_files = non_error_smt_files
 
+        if len(smt_files) == 0 and len(err_list) == 0:
+            logger.warning('No paths explored')
+            raise NoSmtError()
+
         if len(smt_files) == 0:
-            logger.warning('No smt file exists')
+            logger.warning('No non-error paths explored')
             raise NoSmtError()
 
         # loading dump
