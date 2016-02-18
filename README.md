@@ -61,7 +61,7 @@ SemFix is a predecessor of Angelix; it is implemented as a part of Angelix, and 
 
 **DirectFix: Looking for Simple Program Repairs.** S. Mechtaev, J. Yi, A. Roychoudhury. ICSE'15.
 
-** SemFix: Program Repair via Semantic Analysis ** H.D.T. Nguyen, D. Qi, A. Roychoudhury, S. Chandra. ICSE'13.
+**SemFix: Program Repair via Semantic Analysis.** H.D.T. Nguyen, D. Qi, A. Roychoudhury, S. Chandra. ICSE'13.
 
 ## Contributors ##
 
