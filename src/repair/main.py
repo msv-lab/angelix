@@ -454,6 +454,8 @@ if __name__ == "__main__":
                         help='Don\'t terminate on memory errors (default: %(default)s)')
     parser.add_argument('--ignore-trans-errors', action='store_true',
                         help='Don\'t terminate on transformation errors (default: %(default)s)')
+    parser.add_argument('--ignore-infer-errors', action='store_true',
+                        help='Consider path with errors for inference (default: %(default)s)')
     parser.add_argument('--synthesis-timeout', metavar='MS', type=int, default=30000, # 30 sec
                         help='synthesis timeout (default: %(default)s)')
     parser.add_argument('--synthesis-levels', metavar='LEVEL', nargs='+',
@@ -465,13 +467,13 @@ if __name__ == "__main__":
     parser.add_argument('--synthesis-func-params', action='store_true',
                         help='use function parameters as variables for synthesis (default: %(default)s)')
     parser.add_argument('--synthesis-used-vars', action='store_true',
-                        help='use variables that are used in scope for synthesis (default: %(default)s)')
+                        help='[deprecated] use variables that are used in scope for synthesis (default: %(default)s)')
     parser.add_argument('--synthesis-ptr-vars', action='store_true',
                         help='use pointer variables for synthesis (default: %(default)s)')
     parser.add_argument('--semfix', action='store_true',
                         help='enable SemFix mode (default: %(default)s)')
     parser.add_argument('--use-semfix-synthesizer', action='store_true',
-                        help='use SemFix synthesizer (default: %(default)s)')
+                        help='[deprecated] use SemFix synthesizer (default: %(default)s)')
     parser.add_argument('--max-z3-trials', metavar='NUM', type=int, default=2,
                         help='maxium Z3 trials when using SemFix synthesizer (default: %(default)s)')
     parser.add_argument('--dump-only', action='store_true',
@@ -479,47 +481,31 @@ if __name__ == "__main__":
     parser.add_argument('--synthesis-only', metavar="FILE", default=None,
                         help='synthesize and validate patch from angelic forest (default: %(default)s)')
     parser.add_argument('--redundant-test', action='store_true',
-                        help='run tests redundantly (default: %(default)s)')
+                        help='[deprecated] run tests redundantly (default: %(default)s)')
     parser.add_argument('--invalid-localization', action='store_true',
-                        help='COMPATIBILITY use tests that fail in golden version for localization (default: %(default)s)')
+                        help='[deprecated] use tests that fail in golden version for localization (default: %(default)s)')
     parser.add_argument('--verbose', action='store_true',
                         help='print compilation and KLEE messages (default: %(default)s)')
     parser.add_argument('--quiet', action='store_true',
                         help='print only errors (default: %(default)s)')
     parser.add_argument('--mute-build-message', action='store_true',
-                        help='mute build message (default: %(default)s)'
-                        if "AF_DEBUG" in os.environ
-                        else argparse.SUPPRESS)
+                        help='mute build message (default: %(default)s)')
     parser.add_argument('--mute-test-message', action='store_true',
-                        help='mute test message (default: %(default)s)'
-                        if "AF_DEBUG" in os.environ
-                        else argparse.SUPPRESS)
+                        help='mute test message (default: %(default)s)')
     parser.add_argument('--mute-warning', action='store_true',
-                        help='mute warning message (default: %(default)s)'
-                        if "AF_DEBUG" in os.environ
-                        else argparse.SUPPRESS)
+                        help='mute warning message (default: %(default)s)')
     parser.add_argument('--build-validation-only', action='store_true',
-                        help='build validation source and terminate (default: %(default)s)'
-                        if "AF_DEBUG" in os.environ
-                        else argparse.SUPPRESS)
+                        help='build validation source and terminate (default: %(default)s)')
     parser.add_argument('--build-golden-only', action='store_true',
-                        help='build golden source and terminate (default: %(default)s)'
-                        if "AF_DEBUG" in os.environ
-                        else argparse.SUPPRESS)
+                        help='build golden source and terminate (default: %(default)s)')
     parser.add_argument('--build-backend-only', action='store_true',
-                        help='build backend source and terminate (default: %(default)s)'
-                        if "AF_DEBUG" in os.environ
-                        else argparse.SUPPRESS)
+                        help='build backend source and terminate (default: %(default)s)')
     parser.add_argument('--ignore-lines', action='store_true',
-                        help='ignore --lines options (default: %(default)s)'
-                        if "AF_DEBUG" in os.environ
-                        else argparse.SUPPRESS)
+                        help='ignore --lines options (default: %(default)s)')
     parser.add_argument('--localize-only', action='store_true',
-                        help='show all suspicious expressions and terminate (default: %(default)s)'
-                        if "AF_DEBUG" in os.environ
-                        else argparse.SUPPRESS)
+                        help='show all suspicious expressions and terminate (default: %(default)s)')
     parser.add_argument('--term-when-syn-crashes', action='store_true',
-                        help='terminate when synthesis crashes (default: %(default)s)'
+                        help='[deprecated] terminate when synthesis crashes (default: %(default)s)'
                         if "AF_DEBUG" in os.environ
                         else argparse.SUPPRESS)
 
@@ -554,6 +540,7 @@ if __name__ == "__main__":
         args.semfix = True
 
     if args.semfix:
+        args.use_semfix_synthesizer = True
         if not (args.defect == DEFAULT_DEFECTS):
             logger.warning('--semfix disables --defect option')
         if args.ignore_trivial:
@@ -590,6 +577,7 @@ if __name__ == "__main__":
     config['klee_debug']            = args.klee_debug
     config['klee_ignore_errors']    = args.klee_ignore_errors
     config['ignore_trans_errors']   = args.ignore_trans_errors
+    config['ignore_infer_errors']   = args.ignore_infer_errors
     config['synthesis_timeout']     = args.synthesis_timeout
     config['synthesis_levels']      = args.synthesis_levels
     config['synthesis_global_vars'] = args.synthesis_global_vars

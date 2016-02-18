@@ -192,7 +192,9 @@ class Inferrer:
             smt_id = os.path.basename(smt).split('.')[0]
             if not smt_id in err_list:
                 non_error_smt_files.append(smt)
-        smt_files = non_error_smt_files
+
+        if not self.config['ignore_infer_errors']:
+            smt_files = non_error_smt_files
 
         if len(smt_files) == 0 and len(err_list) == 0:
             logger.warning('No paths explored')
