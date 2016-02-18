@@ -501,7 +501,7 @@ if __name__ == "__main__":
     parser.add_argument('--build-backend-only', action='store_true',
                         help='build backend source and terminate (default: %(default)s)')
     parser.add_argument('--ignore-lines', action='store_true',
-                        help='ignore --lines options (default: %(default)s)')
+                        help='[deprecated] ignore --lines options (default: %(default)s)')
     parser.add_argument('--localize-only', action='store_true',
                         help='show all suspicious expressions and terminate (default: %(default)s)')
     parser.add_argument('--term-when-syn-crashes', action='store_true',
