@@ -81,12 +81,12 @@ public:
   }
 
   void VisitDeclRefExpr(DeclRefExpr *Node) {
-    if (VSet) {
+    if (VSet && isa<VarDecl>(Node->getDecl())) {
       VarDecl* vd;
-      if ((vd = cast<VarDecl>(Node->getDecl())) != NULL) { // TODO: other kinds of declarations?
-        if (suitableVarDecl(vd, Types)) {
-          VSet->insert(vd);
-        }
+      if ((vd = cast<VarDecl>(Node->getDecl())) != NULL) {
+	if (suitableVarDecl(vd, Types)) {
+	  VSet->insert(vd);
+	}
       }
     }
   }
