@@ -540,7 +540,8 @@ if __name__ == "__main__":
         args.semfix = True
 
     if args.semfix:
-        args.use_semfix_synthesizer = True
+        # this should be tested first:
+        # args.use_semfix_synthesizer = True
         if not (args.defect == DEFAULT_DEFECTS):
             logger.warning('--semfix disables --defect option')
         if args.ignore_trivial:
