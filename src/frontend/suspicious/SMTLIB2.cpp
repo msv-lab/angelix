@@ -182,7 +182,13 @@ public:
     ValueDecl* decl = Node->getDecl();
     if (isa<EnumConstantDecl>(decl)) {
       EnumConstantDecl* ecdecl = cast<EnumConstantDecl>(decl);
-      OS << ecdecl->getInitVal().toString(10);
+      if (ecdecl->getInitVal() < 0) {
+        OS << "(- ";
+        OS << (-(ecdecl->getInitVal())).toString(10);
+        OS << ")";
+      } else {
+        OS << ecdecl->getInitVal().toString(10);
+      }
     } else {
       OS << Node->getNameInfo();
     }
