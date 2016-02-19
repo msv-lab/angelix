@@ -4,7 +4,7 @@ Semantics-based [automated program repair](http://automated-program-repair.org) 
 
 ## Installation ##
 
-Angelix is distrubuted in source code form and pre-installed in VirtualBox image. The VirtualBox image also contains Angelix ICSE'16 and SemFix ICSE'13 evaluation results.
+Angelix is distributed in source code form and pre-installed in VirtualBox image. The VirtualBox image also contains Angelix ICSE'16 and SemFix ICSE'13 evaluation results.
 
 ### Option 1: VirtualBox image ###
 
@@ -18,7 +18,7 @@ The following is required to install Angelix from source code:
 * 8GM Memory
 * Ubuntu 14.04 64-bit\*
 
-\* Angelix can be run on other 64-bit linux distributions, however installation scripts were tested only on Ubuntu 14.04. If you want to install Angelix on a different system, you may need to modify Makefile and activate scripts.
+\* Angelix can be run on other 64-bit Linux distributions, however installation scripts were tested only on Ubuntu 14.04. If you want to install Angelix on a different system, you may need to modify Makefile and activate scripts.
 
 Clone repository recursively:
 
@@ -53,7 +53,7 @@ Run `angelix --help` to see the list of available options.
 
 ## SemFix ##
 
-SemFix is a predecessor of Angelix; it is implemented as a part of Angelix, and can be activated using `--semfix` option.
+SemFix is a predecessor of Angelix. Taking advantage of the modular design of Angelix, we incorporate the algorithm of SemFix into Angelix. SemFix can be activated using the `--semfix` option of Angelix.
 
 ## Publications ##
 
@@ -69,7 +69,7 @@ Principal investigator:
 
 * Abhik Roychoudhury
 
-Developers (in alphabetical order):
+Developers:
 
-* Jooyong Yi
 * Sergey Mechtaev
+* Jooyong Yi
