@@ -97,7 +97,7 @@ class TestAngelix(unittest.TestCase):
 
     def test_semfix_synthesis(self):
         test_dir = os.path.join(script_dir, 'semfix-synthesis')
-        args = ['src', 'test.c', 'oracle', '1', '2', '3', '4', '5', '--assert', 'assert.json', '--lines', '47', '--semfix', '--use-semfix-synthesizer']
+        args = ['src', 'test.c', 'oracle', '1', '2', '3', '4', '5', '--assert', 'assert.json', '--lines', '47', '--semfix']
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 

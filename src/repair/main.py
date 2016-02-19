@@ -536,6 +536,9 @@ if __name__ == "__main__":
         logger.error('\'guards\' and \'assignments\' defect classes are currently incompatible')
         exit(1)
 
+    if args.semfix:
+        args.use_semfix_synthesizer = True
+
     if args.use_semfix_synthesizer:
         args.semfix = True
 
