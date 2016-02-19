@@ -153,6 +153,19 @@ class Inferrer:
         sorted_af = sorted(angelic_paths, key=len)
         return sorted_af[:self.config['max_angelic_paths']]
 
+    def _boolean_angelic_forest(self, angelic_paths):
+        '''convert all angelic values to booleans'''
+        baf = []
+        for path in angelic_paths:
+            bpath = dict()
+            for expr, instances in path.items():
+                bpath[expr] = []
+                for angelic, original, env_values in instances:
+                    bpath[expr].append((bool(angelic), original, env_values))
+            baf.append(bpath)
+        return baf
+
+
     def __call__(self, project, test, dump):
         logger.info('inferring specification for test \'{}\''.format(test))
 
@@ -436,6 +449,9 @@ class Inferrer:
             # TODO: add constants to angelic path
 
             angelic_paths.append(angelic_path)
+
+        if self.config['synthesis_bool_only']:
+            angelic_paths = self._boolean_angelic_forest(angelic_paths)
 
         if self.config['max_angelic_paths'] is not None and \
            len(angelic_paths) > self.config['max_angelic_paths']:

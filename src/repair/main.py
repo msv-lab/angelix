@@ -470,6 +470,8 @@ if __name__ == "__main__":
                         help='[deprecated] use variables that are used in scope for synthesis (default: %(default)s)')
     parser.add_argument('--synthesis-ptr-vars', action='store_true',
                         help='use pointer variables for synthesis (default: %(default)s)')
+    parser.add_argument('--synthesis-bool-only', action='store_true',
+                        help='synthesize only boolean expressions (default: %(default)s)')
     parser.add_argument('--semfix', action='store_true',
                         help='enable SemFix mode (default: %(default)s)')
     parser.add_argument('--use-semfix-synthesizer', action='store_true',
@@ -588,6 +590,7 @@ if __name__ == "__main__":
     config['synthesis_func_params'] = args.synthesis_func_params
     config['synthesis_used_vars']   = args.synthesis_used_vars
     config['synthesis_ptr_vars']    = args.synthesis_ptr_vars
+    config['synthesis_bool_only']   = args.synthesis_bool_only
     config['redundant_test']        = args.redundant_test
     config['verbose']               = args.verbose
     config['build_before_instr']    = args.build_before_instr
