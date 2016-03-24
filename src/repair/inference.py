@@ -290,23 +290,32 @@ class Inferrer:
 
             def int_to_bv32(i):
                 return BitVecVal(i, 32)
+            
+            def char_to_bv32(c):
+                return BitVecVal(ord(c), 32)
 
             to_bv32_converter_by_type = dict()
             to_bv32_converter_by_type['bool'] = bool_to_bv32
             to_bv32_converter_by_type['int'] = int_to_bv32
+            to_bv32_converter_by_type['char'] = char_to_bv32
 
             def bv32_to_bool(bv):
                 return bv.as_long() != 0
 
             def bv32_to_int(bv):
                 l = bv.as_long()
-                if l >> 31 == 1:  # negative
+                if l >> 31 == 1:  # negative, but there must be a better way
                     l -= 4294967296
                 return l
+
+            def bv32_to_char(bv):
+                l = bv.as_long()
+                return chr(l)
 
             from_bv32_converter_by_type = dict()
             from_bv32_converter_by_type['bool'] = bv32_to_bool
             from_bv32_converter_by_type['int'] = bv32_to_int
+            from_bv32_converter_by_type['char'] = bv32_to_char
 
             matching_path = True
 
