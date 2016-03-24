@@ -114,6 +114,7 @@ StatementMatcher RepairableNode =
         characterLiteral().bind("repairable"),
         // TODO: I need to make sure that base is a variable here:
         memberExpr().bind("repairable"), 
+        castExpr(hasType(asString("void *")), hasDescendant(integerLiteral(equals(0)))).bind("repairable"), // NULL
         binaryOperator(anyOf(hasOperatorName("=="),
                              hasOperatorName("!="),
                              hasOperatorName("<="),
