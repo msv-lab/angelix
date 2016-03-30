@@ -10,6 +10,7 @@ help:
 	@echo \'make clean-all\''            'clean all modules
 	@echo \'make clean-MODULE\''              'clean module
 	@echo \'make test\''                         'run tests
+	@echo \'make docker\''              'build docker image
 	@echo
 	@echo Modules:
 	@echo -n ' '$(foreach module, $(MODULES),"* $(module)\n")
@@ -17,7 +18,7 @@ help:
 all: $(MODULES)
 clean-all: $(CLEAN_MODULES)
 
-.PHONY: help all $(MODULES) clean-all $(CLEAN_MODULES) test
+.PHONY: help all $(MODULES) clean-all $(CLEAN_MODULES) test docker
 
 # Information for retrieving dependencies
 
@@ -267,3 +268,6 @@ $(BEAR_DIR):
 
 clean-bear:
 	rm -rf "$(BEAR_DIR)/build"
+
+docker:
+	sudo docker build -t angelix .
