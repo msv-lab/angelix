@@ -25,7 +25,9 @@ RUN git clone --recursive https://github.com/mechtaev/angelix.git
 
 WORKDIR angelix
 
-RUN bash -c 'source activate && make all'
+ENV JAVA_TOOL_OPTIONS -Dfile.encoding=UTF8
+
+RUN bash -c 'source activate && make z3 && make maxsmt && make synthesis && make all'
 
 RUN rm -rf build/llvm-3.7.0.src
 
