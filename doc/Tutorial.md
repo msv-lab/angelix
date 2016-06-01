@@ -54,7 +54,7 @@ In order for Angelix to analyse the program, you need to provide an interface to
 
 To abstract over the testing framework, Angelix uses three concepts: output expressions that must be specified in the source code of the buggy program, runner script that executes a test by its ID ("oracle"), expected output values. This is similar to the organization of JUnit tests and can be injected into existing test framework without significant modifications.
 
-Output values are specified by wrapping them with `ANGELIX_OUTPUT` macro. In out example, the only output value is the computed distance, therefore the instrumentation will look the following:
+Output values are specified by wrapping them with `ANGELIX_OUTPUT` macro. In out example, the only output value is the computed distance, therefore the instrumentation will look as follows:
 
     #include <stdio.h>
 
@@ -95,7 +95,7 @@ Oracle script must execute the test using `ANGELIX_RUN` command if it is defined
     #!/bin/bash
 
     assert-equal () {
-        diff -q <(${ANGELIX_RUN:-eval} $1) <(echo -ne "$2") > /dev/null
+        diff -q <($ANGELIX_RUN $1) <(echo -ne "$2") > /dev/null
     }
 
     case "$1" in
@@ -118,7 +118,7 @@ Apart from that, it is required to provide expected output values for failing te
         }
     }
 
-Now we can run Angelix to generate a patch for that make all test pass:
+Now we can run Angelix to generate a patch that would make all the tests pass:
 
     angelix /path/to/src distance.c oracle 1 2 3 --assert assert.json
 

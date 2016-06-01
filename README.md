@@ -49,7 +49,7 @@ Run tests:
 * [Manual](doc/Manual.md)
 * [Troubleshooting](doc/Troubleshooting.md)
 
-Run `angelix --help` to see the list of available options.
+Currently, default Angelix configuration corresponds to a very narrow repair search space. Typically, you need to specify a defect class, synthesis levels and bounds for symbolic execution and program synthesis. Run `angelix --help` to see the list of available options.
 
 ## SemFix ##
 
