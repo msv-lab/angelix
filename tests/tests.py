@@ -89,17 +89,17 @@ class TestAngelix(unittest.TestCase):
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 
-    def test_semfix(self):
-        test_dir = os.path.join(script_dir, 'semfix')
-        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--semfix', '--synthesis-level', 'variables']
-        result = run_angelix(args, test_dir)
-        self.assertEqual(result, 'SUCCESS')
+    # def test_semfix(self):
+    #     test_dir = os.path.join(script_dir, 'semfix')
+    #     args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--semfix', '--synthesis-level', 'variables']
+    #     result = run_angelix(args, test_dir)
+    #     self.assertEqual(result, 'SUCCESS')
 
-    def test_semfix_synthesis(self):
-        test_dir = os.path.join(script_dir, 'semfix-synthesis')
-        args = ['src', 'test.c', 'oracle', '1', '2', '3', '4', '5', '--assert', 'assert.json', '--lines', '47', '--semfix']
-        result = run_angelix(args, test_dir)
-        self.assertEqual(result, 'SUCCESS')
+    # def test_semfix_synthesis(self):
+    #     test_dir = os.path.join(script_dir, 'semfix-synthesis')
+    #     args = ['src', 'test.c', 'oracle', '1', '2', '3', '4', '5', '--assert', 'assert.json', '--lines', '47', '--semfix']
+    #     result = run_angelix(args, test_dir)
+    #     self.assertEqual(result, 'SUCCESS')
 
     def test_enum(self):
         test_dir = os.path.join(script_dir, 'enum')
@@ -113,9 +113,15 @@ class TestAngelix(unittest.TestCase):
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 
-    def test_str_output(self):
-        test_dir = os.path.join(script_dir, 'str-output')
-        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--defect', 'if-conditions']
+    # def test_str_output(self):
+    #     test_dir = os.path.join(script_dir, 'str-output')
+    #     args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--defect', 'if-conditions']
+    #     result = run_angelix(args, test_dir)
+    #     self.assertEqual(result, 'SUCCESS')
+
+    def test_named_decl(self):
+        test_dir = os.path.join(script_dir, 'named-decl')
+        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json']
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 

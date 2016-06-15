@@ -295,14 +295,18 @@ class Inferrer:
 
             def int_to_bv(i):
                 return BitVecVal(i, 32)
-
+            
             def long_to_bv(i):
                 return BitVecVal(i, 64)
+
+            def char_to_bv(c):
+                return BitVecVal(ord(c), 32)
 
             to_bv_converter_by_type = dict()
             to_bv_converter_by_type['bool'] = bool_to_bv
             to_bv_converter_by_type['int'] = int_to_bv
             to_bv_converter_by_type['long'] = long_to_bv
+            to_bv_converter_by_type['char'] = char_to_bv
             
             def bv_to_bool(bv):
                 return bv.as_long() != 0
@@ -319,10 +323,15 @@ class Inferrer:
                     l -= pow(2, 64)
                 return l
 
+            def bv_to_char(bv):
+                l = bv.as_long()
+                return chr(l)
+
             from_bv_converter_by_type = dict()
             from_bv_converter_by_type['bool'] = bv_to_bool
             from_bv_converter_by_type['int'] = bv_to_int
             from_bv_converter_by_type['long'] = bv_to_long
+            from_bv_converter_by_type['char'] = bv_to_char
 
             matching_path = True
 

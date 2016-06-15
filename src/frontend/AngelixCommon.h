@@ -109,10 +109,12 @@ StatementMatcher RepairableNode =
         declRefExpr(to(varDecl(anyOf(hasType(isInteger()),
                                      hasType(pointerType()))))).bind("repairable"),
         declRefExpr(to(enumConstantDecl())).bind("repairable"),
+        declRefExpr(to(namedDecl())).bind("repairable"),
         integerLiteral().bind("repairable"),
         characterLiteral().bind("repairable"),
         // TODO: I need to make sure that base is a variable here:
         memberExpr().bind("repairable"), 
+        castExpr(hasType(asString("void *")), hasDescendant(integerLiteral(equals(0)))).bind("repairable"), // NULL
         binaryOperator(anyOf(hasOperatorName("=="),
                              hasOperatorName("!="),
                              hasOperatorName("<="),

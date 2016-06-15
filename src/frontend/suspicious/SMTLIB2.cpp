@@ -96,6 +96,10 @@ public:
     PrintExpr(Node->getSubExpr());
   }
 
+  void VisitCastExpr(CastExpr *Node) {
+    PrintExpr(Node->getSubExpr()); // TODO: this may not always work
+  }
+
   void VisitParenExpr(ParenExpr *Node) {
     PrintExpr(Node->getSubExpr());
   }
