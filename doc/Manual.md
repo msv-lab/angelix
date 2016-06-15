@@ -85,10 +85,11 @@ Output expressions are wrapped with `ANGELIX_OUTPUT` macro providing their type 
 
 The following types of output expressions are supported:
 
-* [x] int
-* [x] bool
-* [x] char
-* [ ] str (null-terminated string)
+* int
+* long
+* bool
+* char
+* str (null-terminated string)
 
 ### Running ###
 

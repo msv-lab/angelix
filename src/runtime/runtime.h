@@ -60,16 +60,11 @@
 #endif /* ANGELIX_SYMBOLIC_RUNTIME */
 
 
-int angelix_symbolic_output_int_with_deps(int expr, char* id);
-int angelix_symbolic_output_bool_with_deps(int expr, char* id);
-int angelix_symbolic_output_char_with_deps(char expr, char* id);
-int angelix_symbolic_output_str_with_deps(char* expr, char* id);
-
-
 int angelix_dump_output_int(int expr, char* id);
+long angelix_dump_output_long(long expr, char* id);
 int angelix_dump_output_bool(int expr, char* id);
-int angelix_dump_output_char(char expr, char* id);
-int angelix_dump_output_str(char* expr, char* id);
+char angelix_dump_output_char(char expr, char* id);
+char* angelix_dump_output_str(char* expr, char* id);
 
 
 int angelix_choose_int_with_deps(int expr, int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size);

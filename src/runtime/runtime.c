@@ -171,6 +171,7 @@ int ht_get( hashtable_t *hashtable, char *key ) {
 #define MAX_PATH_LENGTH 1000
 #define MAX_NAME_LENGTH 1000
 #define INT_LENGTH 15
+#define LONG_LENGTH (INT_LENGTH * 2)
 
 hashtable_t *output_instances;
 hashtable_t *choice_instances;
@@ -212,6 +213,12 @@ char parse_char(char* str) {
 char* print_int(int i) {
   char* str = (char*) malloc(INT_LENGTH * sizeof(char));
   sprintf(str, "%d", i);
+  return str;
+}
+
+char* print_long(long i) {
+  char* str = (char*) malloc(LONG_LENGTH * sizeof(char));
+  sprintf(str, "%ld", i);
   return str;
 }
 
@@ -322,6 +329,7 @@ LOAD_PROTO(char)
   }
 
 DUMP_PROTO(int)
+DUMP_PROTO(long)
 DUMP_PROTO(bool)
 DUMP_PROTO(char)
 DUMP_PROTO(str)
@@ -329,7 +337,7 @@ DUMP_PROTO(str)
 #undef WRITE_TO_FILE_PROTO
 
 #define SYMBOLIC_OUTPUT_PROTO(type, typestr)                  \
-  int angelix_symbolic_output_##type(type expr, char* id) {   \
+  type angelix_symbolic_output_##type(type expr, char* id) {   \
     if (!output_instances)                                    \
       init_tables();                                          \
     int previous = ht_get(output_instances, id);              \
@@ -349,6 +357,7 @@ DUMP_PROTO(str)
   }
 
 SYMBOLIC_OUTPUT_PROTO(int, "int")
+SYMBOLIC_OUTPUT_PROTO(long, "long")
 SYMBOLIC_OUTPUT_PROTO(bool, "bool")
 SYMBOLIC_OUTPUT_PROTO(char, "char")
 
@@ -376,7 +385,7 @@ void angelix_symbolic_reachable(char* id) {
 
 
 #define DUMP_OUTPUT_PROTO(type)                         \
-  int angelix_dump_output_##type(type expr, char* id) { \
+  type angelix_dump_output_##type(type expr, char* id) { \
     if (getenv("ANGELIX_DUMP")) {                       \
       if (!output_instances)                            \
         init_tables();                                  \
@@ -396,6 +405,7 @@ void angelix_symbolic_reachable(char* id) {
   }
 
 DUMP_OUTPUT_PROTO(int)
+DUMP_OUTPUT_PROTO(long)
 DUMP_OUTPUT_PROTO(bool)
 DUMP_OUTPUT_PROTO(char)
 

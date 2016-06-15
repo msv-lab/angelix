@@ -253,6 +253,7 @@ class Inferrer:
 
             variables = [str(var) for var in get_vars(path)
                          if str(var).startswith('int!')
+                         or str(var).startswith('long!')
                          or str(var).startswith('bool!')
                          or str(var).startswith('char!')
                          or str(var).startswith('reachable!')]
@@ -263,6 +264,9 @@ class Inferrer:
             oracle_constraints = dict()
 
             def str_to_int(s):
+                return int(s)
+
+            def str_to_long(s):
                 return int(s)
 
             def str_to_bool(s):
@@ -279,34 +283,46 @@ class Inferrer:
 
             dump_parser_by_type = dict()
             dump_parser_by_type['int'] = str_to_int
+            dump_parser_by_type['long'] = str_to_long
             dump_parser_by_type['bool'] = str_to_bool
             dump_parser_by_type['char'] = str_to_char
 
-            def bool_to_bv32(b):
+            def bool_to_bv(b):
                 if b:
                     return BitVecVal(1, 32)
                 else:
                     return BitVecVal(0, 32)
 
-            def int_to_bv32(i):
+            def int_to_bv(i):
                 return BitVecVal(i, 32)
 
-            to_bv32_converter_by_type = dict()
-            to_bv32_converter_by_type['bool'] = bool_to_bv32
-            to_bv32_converter_by_type['int'] = int_to_bv32
+            def long_to_bv(i):
+                return BitVecVal(i, 64)
 
-            def bv32_to_bool(bv):
+            to_bv_converter_by_type = dict()
+            to_bv_converter_by_type['bool'] = bool_to_bv
+            to_bv_converter_by_type['int'] = int_to_bv
+            to_bv_converter_by_type['long'] = long_to_bv
+            
+            def bv_to_bool(bv):
                 return bv.as_long() != 0
 
-            def bv32_to_int(bv):
+            def bv_to_int(bv):
                 l = bv.as_long()
                 if l >> 31 == 1:  # negative
-                    l -= 4294967296
+                    l -= pow(2, 32)
                 return l
 
-            from_bv32_converter_by_type = dict()
-            from_bv32_converter_by_type['bool'] = bv32_to_bool
-            from_bv32_converter_by_type['int'] = bv32_to_int
+            def bv_to_long(bv):
+                l = bv.as_long()
+                if l >> 63 == 1:  # negative
+                    l -= pow(2, 64)
+                return l
+
+            from_bv_converter_by_type = dict()
+            from_bv_converter_by_type['bool'] = bv_to_bool
+            from_bv_converter_by_type['int'] = bv_to_int
+            from_bv_converter_by_type['long'] = bv_to_long
 
             matching_path = True
 
@@ -354,6 +370,16 @@ class Inferrer:
                               Select(array, BitVecVal(1, 32)),
                               Select(array, BitVecVal(0, 32)))
 
+            def array_to_bv64(array):
+                return Concat(Select(array, BitVecVal(7, 32)),
+                              Select(array, BitVecVal(6, 32)),
+                              Select(array, BitVecVal(5, 32)),
+                              Select(array, BitVecVal(4, 32)),
+                              Select(array, BitVecVal(3, 32)),
+                              Select(array, BitVecVal(2, 32)),
+                              Select(array, BitVecVal(1, 32)),
+                              Select(array, BitVecVal(0, 32)))
+
             def angelic_variable(type, expr, instance):
                 pattern = '{}!choice!{}!{}!{}!{}!{}!angelic'
                 s = pattern.format(type, expr[0], expr[1], expr[2], expr[3], instance)
@@ -371,7 +397,10 @@ class Inferrer:
 
             def output_variable(type, name, instance):
                 s = '{}!output!{}!{}'.format(type, name, instance)
-                return Array(s, BitVecSort(32), BitVecSort(8))
+                if type == 'long':
+                    return Array(s, BitVecSort(32), BitVecSort(8))
+                else:
+                    return Array(s, BitVecSort(32), BitVecSort(8))
 
             def angelic_selector(expr, instance):
                 s = 'angelic!{}!{}!{}!{}!{}'.format(expr[0], expr[1], expr[2], expr[3], instance)
@@ -389,8 +418,12 @@ class Inferrer:
                 type, _ = outputs[name]
                 for i, value in enumerate(values):
                     array = output_variable(type, name, i)
-                    bv_value = to_bv32_converter_by_type[type](value)
-                    solver.add(bv_value == array_to_bv32(array))
+                    bv_value = to_bv_converter_by_type[type](value)
+                    if type == 'long':
+                        solver.add(bv_value == array_to_bv64(array))
+                    else:
+                        solver.add(bv_value == array_to_bv32(array))
+                    
 
             for (expr, item) in choices.items():
                 type, instances, env = item
@@ -423,9 +456,9 @@ class Inferrer:
                 type, instances, env = item
                 for instance in range(0, instances):
                     bv_angelic = model[angelic_selector(expr, instance)]
-                    angelic = from_bv32_converter_by_type[type](bv_angelic)
+                    angelic = from_bv_converter_by_type[type](bv_angelic)
                     bv_original = model[original_selector(expr, instance)]
-                    original = from_bv32_converter_by_type[type](bv_original)
+                    original = from_bv_converter_by_type[type](bv_original)
                     if original_available:
                         logger.info('expression {}[{}]: angelic = {}, original = {}'.format(expr,
                                                                                             instance,
@@ -438,7 +471,7 @@ class Inferrer:
                     env_values = dict()
                     for name in env:
                         bv_env = model[env_selector(expr, instance, name)]
-                        value = from_bv32_converter_by_type['int'](bv_env)
+                        value = from_bv_converter_by_type['int'](bv_env)
                         env_values[name] = value
 
                     if original_available:

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+assert-equal () {
+    diff -q <($ANGELIX_RUN $1) <(echo -ne "$2") > /dev/null
+}
+
+case "$1" in
+    1)
+        assert-equal "./test 1 2" '0\n'
+        ;;
+    2)
+        assert-equal "./test 2 2" '2147483647\n'
+        ;;
+    3)
+        assert-equal "./test 2 1" '2147483647\n'
+        ;;
+esac
