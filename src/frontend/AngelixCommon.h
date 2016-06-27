@@ -263,12 +263,12 @@ StatementMatcher InterestingAssignment =
                  hasOperatorName("="),
                  anyOf(hasLHS(ignoringParenImpCasts(declRefExpr())),
                        hasLHS(ignoringParenImpCasts(memberExpr()))),
-                 unless(hasAngelixOutput)).bind("repairable");
+                 unless(hasAngelixOutput), unless(has(forStmt()))).bind("repairable");
 
 
 StatementMatcher InterestingCall =
   callExpr(isTopLevelStatement,
-           unless(hasAngelixOutput)).bind("repairable");
+           unless(hasAngelixOutput), unless(has(forStmt()))).bind("repairable");
 
 
 StatementMatcher InterestingStatement =
