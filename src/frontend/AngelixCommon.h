@@ -209,7 +209,7 @@ StatementMatcher NonTrivialRepairableLoopCondition =
 
 StatementMatcher RepairableAssignment =
   binaryOperator(isTopLevelStatement,
-                 hasOperatorName("="),
+                 anyOf(hasOperatorName("="), hasOperatorName("+="), hasOperatorName("-="), hasOperatorName("*=")),
                  anyOf(hasLHS(ignoringParenImpCasts(declRefExpr())),
                        hasLHS(ignoringParenImpCasts(memberExpr()))),
                  hasRHS(ignoringParenImpCasts(RepairableExpression)));
@@ -217,7 +217,7 @@ StatementMatcher RepairableAssignment =
 
 StatementMatcher NonTrivialRepairableAssignment =
   binaryOperator(isTopLevelStatement,
-                 hasOperatorName("="),
+                 anyOf(hasOperatorName("="), hasOperatorName("+="), hasOperatorName("-="), hasOperatorName("*=")),
                  anyOf(hasLHS(ignoringParenImpCasts(declRefExpr())),
                        hasLHS(ignoringParenImpCasts(memberExpr()))),
                  hasRHS(ignoringParenImpCasts(NonTrivialRepairableExpression)));
@@ -240,7 +240,7 @@ StatementMatcher InterestingRepairableExpression =
 
 // TODO: make variable instead of macro
 #define hasAngelixOutput\
-  hasDescendant(callExpr(callee(functionDecl(hasName("angelix_ignore")))))
+ anyOf(hasDescendant(callExpr(callee(functionDecl(matchesName("angelix_ignore"))))), callExpr(callee(functionDecl(matchesName("angelix_ignore")))))
 
 
 StatementMatcher InterestingCondition =
@@ -251,7 +251,7 @@ StatementMatcher InterestingCondition =
 
 StatementMatcher InterestingIntegerAssignment =
   binaryOperator(isTopLevelStatement,
-                 hasOperatorName("="),
+                 anyOf(hasOperatorName("="), hasOperatorName("+="), hasOperatorName("-="), hasOperatorName("*=")),
                  anyOf(hasLHS(ignoringParenImpCasts(declRefExpr(hasType(isInteger())))),
                        hasLHS(ignoringParenImpCasts(memberExpr(hasType(isInteger()))))),
                  hasRHS(expr().bind("repairable")),
@@ -260,7 +260,7 @@ StatementMatcher InterestingIntegerAssignment =
 
 StatementMatcher InterestingAssignment =
   binaryOperator(isTopLevelStatement,
-                 hasOperatorName("="),
+                 anyOf(hasOperatorName("="), hasOperatorName("+="), hasOperatorName("-="), hasOperatorName("*=")),
                  anyOf(hasLHS(ignoringParenImpCasts(declRefExpr())),
                        hasLHS(ignoringParenImpCasts(memberExpr()))),
                  unless(hasAngelixOutput), unless(has(forStmt()))).bind("repairable");
@@ -272,6 +272,6 @@ StatementMatcher InterestingCall =
 
 
 StatementMatcher InterestingStatement =
-  anyOf(InterestingAssignment, InterestingCall);
+  anyOf(InterestingAssignment, InterestingCall, breakStmt().bind("repairable"),continueStmt().bind("repairable"));
 
 #endif // ANGELIX_COMMON_H
