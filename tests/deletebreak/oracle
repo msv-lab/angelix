@@ -1,0 +1,16 @@
+#!/bin/bash
+cd src
+case "$1" in
+    1)
+        ./test-angelix.sh n1
+        ;;
+    2)
+        ./test-angelix.sh p1
+        ;;
+    3)
+        ./test-angelix.sh p2
+        ;;
+    4)
+        ./test-angelix.sh p3
+        ;;
+esac
