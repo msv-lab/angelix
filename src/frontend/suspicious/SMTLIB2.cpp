@@ -61,16 +61,17 @@ public:
 
   void VisitBinaryOperator(BinaryOperator *Node) {
     std::string opcode_str = BinaryOperator::getOpcodeStr(Node->getOpcode()).lower();
-    if (opcode_str == "!=") {
-      OS << "(not (= ";
-      PrintExpr(Node->getLHS());
-      OS << " ";
-      PrintExpr(Node->getRHS());
-      OS << "))";
-      return;
-    }
+    // if (opcode_str == "!=") {
+    //   OS << "(not (= ";
+    //   PrintExpr(Node->getLHS());
+    //   OS << " ";
+    //   PrintExpr(Node->getRHS());
+    //   OS << "))";
+    //   return;
+    // }
 
     replaceStr(opcode_str, "==", "=");
+    replaceStr(opcode_str, "!=", "neq");
     replaceStr(opcode_str, "||", "or");
     replaceStr(opcode_str, "&&", "and");
 

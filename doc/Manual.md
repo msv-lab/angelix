@@ -194,6 +194,8 @@ Existing  | Additional
 --------- | ----------
 `||`      | `&&`
 `&&`      | `||`
+`==`      | `!=`
+`!=`      | `==`
 `<`       | `<=`
 `<=`      | `<`
 `>`       | `>=`
@@ -245,4 +247,22 @@ Additional visible variables, integer constant, `>`, `>=`, `||`, `&&`, `+`, `-`.
 
 Additional visible variables, integer constant, `>`, `>=`, `+`, `-`, `ite`.
 
-## Options ##
+## Configuration ##
+
+Default Angelix configuration corresponds to a very narrow repair search space. Typically, you need to specify a defect class, synthesis levels and bounds for symbolic execution and program synthesis. The value of the paramenters depends on the size and the structure of your subject programs. 
+
+Run `angelix --help` to see the list of available options. You can find example configurations for small programs in `tests/tests.py` of Angelix distribution and in `options.json` file for large programs in ICSE'16 experiments [scripts](http://www.comp.nus.edu.sg/~release/angelix/angelix-experiments.tar.gz).
+
+An example of configuration is the following:
+
+    --defect if-conditions loop-conditions assignments \
+    --synthesis-levels alternatives extended-arithmetic extended-logic extended-inequalities \
+    --timeout 3600 \
+    --group-size 1 \
+    --klee-solver-timeout 20 \
+    --klee-timeout 300 \
+    --klee-max-forks 200 \
+    --synthesis-timeout 100000 \
+    --synthesis-global-vars \
+    --synthesis-func-params \
+    --synthesis-used-vars

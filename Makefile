@@ -270,4 +270,4 @@ clean-bear:
 	rm -rf "$(BEAR_DIR)/build"
 
 docker:
-	sudo docker build -t angelix .
+	docker build -t angelix .
