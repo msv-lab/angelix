@@ -117,7 +117,8 @@ class Localizer:
             try:
                 score = formula(executed_positive[e], executed_negative[e], 
                                 len(positive), len(negative))
-                with_score.append((e, score))
+                if not (score == 0.0):  # 0.0 mean not executed by failing test
+                    with_score.append((e, score))
             except NoNegativeTestException:
                 logger.info("No negative test exists")
                 exit(0)
