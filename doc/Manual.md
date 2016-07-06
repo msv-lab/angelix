@@ -12,7 +12,7 @@
   * [Expressions](#expressions)
   * [Statements](#statements)
 * [Synthesis Levels](#synthesis-levels)
-* [Options](#options)
+* [Configuration](#configuration)
 
 ## Introduction ##
 
@@ -249,7 +249,7 @@ Additional visible variables, integer constant, `>`, `>=`, `+`, `-`, `ite`.
 
 ## Configuration ##
 
-Default Angelix configuration corresponds to a very narrow repair search space. Typically, you need to specify a defect class, synthesis levels and bounds for symbolic execution and program synthesis. The value of the paramenters depends on the size and the structure of your subject programs. 
+Default Angelix configuration corresponds to a very narrow repair search space. Typically, you need to specify defect classes, synthesis levels and bounds for symbolic execution and program synthesis. The values of the paramenters depends on the size and the structure of your subject programs. 
 
 Run `angelix --help` to see the list of available options. You can find example configurations for small programs in `tests/tests.py` of Angelix distribution and in `options.json` file for large programs in ICSE'16 experiments [scripts](http://www.comp.nus.edu.sg/~release/angelix/angelix-experiments.tar.gz).
 

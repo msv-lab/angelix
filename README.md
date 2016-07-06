@@ -49,7 +49,7 @@ Run tests:
 * [Manual](doc/Manual.md)
 * [Troubleshooting](doc/Troubleshooting.md)
 
-Before using Angelix, we recommend to read the Configuration section of the [manual](doc/Manual.md) to set optimal configuration for your subjects.
+To set optimal configuration for your subject, refer to the Configuration section of the [manual](doc/Manual.md).
 
 ## SemFix ##
 
