@@ -429,6 +429,8 @@ if __name__ == "__main__":
                         help='number of statements considered at once (default: %(default)s)')
     parser.add_argument('--group-by-score', action='store_true',
                         help='group statements by suspiciousness score (default: grouping by location)')
+    parser.add_argument('--localize-from-bottom', action='store_true',
+                        help='iterate suspicious expression from the bottom of file (default: localizing from top)')
     parser.add_argument('--suspicious', metavar='NUM', type=int, default=20,
                         help='total number of suspicious statements (default: %(default)s)')
     parser.add_argument('--localization', default='jaccard', choices=['jaccard', 'ochiai', 'tarantula'],
@@ -571,6 +573,7 @@ if __name__ == "__main__":
     config['test_timeout']          = args.test_timeout
     config['group_size']            = args.group_size
     config['group_by_score']        = args.group_by_score
+    config['localize_from_bottom']  = args.localize_from_bottom
     config['suspicious']            = args.suspicious
     config['localization']          = args.localization
     config['ignore_trivial']        = args.ignore_trivial
