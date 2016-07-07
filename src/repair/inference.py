@@ -5,6 +5,8 @@ import logging
 from glob import glob
 import os
 from pprint import pprint
+import time
+
 
 import z3
 from z3 import Select, Concat, Array, BitVecSort, BitVecVal, Solver, BitVec
@@ -189,6 +191,9 @@ class Inferrer:
         environment['ANGELIX_KLEE_WORKDIR'] = project.dir
 
         self.run_test(project, test, klee=True, env=environment)
+
+        logger.info('sleeping for 1 second...')
+        time.sleep(1)
 
         smt_glob = join(project.dir, 'klee-out-0', '*.smt2')
         smt_files = glob(smt_glob)
