@@ -56,6 +56,9 @@
 #define ANGELIX_REACHABLE(name)                 \
   angelix_dump_reachable(name)
 
+#define ANGELIX_TRACE_AND_VALIDATE(expr, instance)   \
+  (getenv("ANGELIX_TRACE_AND_VALIDATE") ? angelix_trace_and_validate_##type(expr, instance) : expr)
+
 
 #endif /* ANGELIX_SYMBOLIC_RUNTIME */
 
@@ -87,6 +90,9 @@ void angelix_trace(int bl, int bc, int el, int ec);
 
 /* Stub */
 int angelix_ignore();
+
+int angelix_trace_and_validate_int(char* expr, int instance);
+int angelix_trace_and_validate_bool(char* expr, int instance);
 
 
 #endif

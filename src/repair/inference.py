@@ -168,7 +168,7 @@ class Inferrer:
         return baf
 
 
-    def __call__(self, project, test, dump):
+    def __call__(self, project, test, dump, validation_project):
         logger.info('inferring specification for test \'{}\''.format(test))
 
         environment = dict(os.environ)
@@ -468,6 +468,12 @@ class Inferrer:
             for (expr, item) in choices.items():
                 angelic_path[expr] = []
                 type, instances, env = item
+                
+                expr_str = '{}-{}-{}-{}'.format(expr[0], expr[1], expr[2], expr[3])
+                expression_dir = join(dump, expr_str)
+                if not os.path.exists(expression_dir):
+                    os.mkdir(expression_dir)
+
                 for instance in range(0, instances):
                     bv_angelic = model[angelic_selector(expr, instance)]
                     angelic = from_bv_converter_by_type[type](bv_angelic)
@@ -495,7 +501,15 @@ class Inferrer:
 
             # TODO: add constants to angelic path
 
-            angelic_paths.append(angelic_path)
+                    # Dump angelic path to dump folder
+                    instance_file = join(expression_dir, str(instance))
+                    with open(instance_file, 'w') as file:
+                        file.write(str(angelic))
+            
+            # Run Tester to validate the dumped values
+            validated = True#self.run_test(validation_project, test, env=environment, validate=True, path_for_validation=dump)
+            if (validated):
+                angelic_paths.append(angelic_path)
 
         if self.config['synthesis_bool_only']:
             angelic_paths = self._boolean_angelic_forest(angelic_paths)

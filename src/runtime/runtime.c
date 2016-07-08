@@ -562,3 +562,29 @@ void angelix_trace(int bl, int bc, int el, int ec) {
 int angelix_ignore() {
   return 0;
 }
+
+#define TRACE_AND_VALIDATE(type)                                         \
+  int angelix_trace_and_validate_##type(char* expr, int instance) {      \
+    int result;                                                          \
+    char *dir = getenv("ANGELIX_TRACE_AND_VALIDATE");                    \
+    char file[MAX_PATH_LENGTH + 1];                                      \
+    sprintf(file, "%s/%s/%d", dir, expr, instance);                      \
+    FILE *fp = fopen(file, "r");                                         \
+    if (fp == NULL)                                                      \
+      return NULL;                                                       \
+    fseek(fp, 0, SEEK_END);                                              \
+    long fsize = ftell(fp);                                              \
+    fseek(fp, 0, SEEK_SET);                                              \
+    char *string = malloc(fsize + 1);                                    \
+    fread(string, fsize, 1, fp);                                         \
+    fclose(fp);                                                          \
+    string[fsize] = 0;                                                   \
+    if (string != NULL) {                                                \
+      result = parse_##type(string);                                     \
+    }                                                                    \
+    return result;                                                       \
+  }
+TRACE_AND_VALIDATE(int)
+TRACE_AND_VALIDATE(bool)
+
+#undef TRACE_AND_VALIDATE

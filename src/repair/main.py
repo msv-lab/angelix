@@ -253,7 +253,7 @@ class Angelix:
             inference_failed = False
             for test in current_repair_suite:
                 try:
-                    angelic_forest[test] = self.infer_spec(self.backend_src, test, self.dump[test])
+                    angelic_forest[test] = self.infer_spec(self.backend_src, test, self.dump[test], self.frontend_src)
                     if len(angelic_forest[test]) == 0:
                         if test in positive:
                             logger.warning('angelic forest for positive test {} not found'.format(test))
@@ -307,7 +307,8 @@ class Angelix:
                 try:
                     angelic_forest[counterexample] = self.infer_spec(self.backend_src,
                                                                      counterexample,
-                                                                     self.dump[counterexample])
+                                                                     self.dump[counterexample],
+                                                                     self.frontend_src)
                 except NoSmtError:
                     logger.warning("no smt file for test {}".format(counterexample))
                     negative_idx = negative_idx + 1
