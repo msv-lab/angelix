@@ -512,6 +512,7 @@ if __name__ == "__main__":
                         help='[deprecated] terminate when synthesis crashes (default: %(default)s)'
                         if "AF_DEBUG" in os.environ
                         else argparse.SUPPRESS)
+    parser.add_argument('--version', action='version', version='Angelix 1.0')
 
     args = parser.parse_args()
 
