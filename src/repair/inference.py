@@ -6,6 +6,7 @@ from glob import glob
 import os
 from pprint import pprint
 import time
+import shutil
 
 
 import z3
@@ -144,9 +145,10 @@ def parse_variables(vars):
 
 class Inferrer:
 
-    def __init__(self, config, tester):
+    def __init__(self, config, tester, load):
         self.config = config
         self.run_test = tester
+        self.load = load
 
     def _reduce_angelic_forest(self, angelic_paths):
         '''reduce the size of angelic forest (select shortest paths)'''
@@ -465,12 +467,16 @@ class Inferrer:
             # expr -> (angelic * original * env) list
             angelic_path = dict()
 
+            if os.path.exists(self.load[test]):
+                shutil.rmtree(self.load[test])
+            os.mkdir(self.load[test])
+
             for (expr, item) in choices.items():
                 angelic_path[expr] = []
                 type, instances, env = item
                 
                 expr_str = '{}-{}-{}-{}'.format(expr[0], expr[1], expr[2], expr[3])
-                expression_dir = join(dump, expr_str)
+                expression_dir = join(self.load[test], expr_str)
                 if not os.path.exists(expression_dir):
                     os.mkdir(expression_dir)
 
@@ -499,17 +505,24 @@ class Inferrer:
                     else:
                         angelic_path[expr].append((angelic, None, env_values))
 
-            # TODO: add constants to angelic path
-
                     # Dump angelic path to dump folder
                     instance_file = join(expression_dir, str(instance))
                     with open(instance_file, 'w') as file:
-                        file.write(str(angelic))
+                        if isinstance(angelic, bool):
+                            if angelic:
+                                file.write('1')
+                            else:
+                                file.write('0')
+                        else:
+                            file.write(str(angelic))
             
+
             # Run Tester to validate the dumped values
-            validated = True#self.run_test(validation_project, test, env=environment, validate=True, path_for_validation=dump)
-            if (validated):
+            validated = self.run_test(validation_project, test, load=self.load[test])
+            if validated:
                 angelic_paths.append(angelic_path)
+            else:
+                logger.info('spurious angelic path')
 
         if self.config['synthesis_bool_only']:
             angelic_paths = self._boolean_angelic_forest(angelic_paths)

@@ -10,7 +10,7 @@ import sys
 
 from project import Validation, Frontend, Backend, CompilationError
 from utils import format_time, time_limit, TimeoutException
-from runtime import Dump, Trace
+from runtime import Dump, Trace, Load
 from transformation import RepairableTransformer, SuspiciousTransformer, \
                            FixInjector, TransformationError
 from testing import Tester
@@ -84,7 +84,7 @@ class Angelix:
             self.infer_spec = Semfix_Inferrer(working_dir, config, tester)
         else:
             self.synthesize_fix = Synthesizer(config, extracted, angelic_forest_file)
-            self.infer_spec = Inferrer(config, tester)
+            self.infer_spec = Inferrer(config, tester, Load(working_dir))
         self.instrument_for_localization = RepairableTransformer(config)
         self.instrument_for_inference = SuspiciousTransformer(config, extracted)
         self.apply_patch = FixInjector(config)

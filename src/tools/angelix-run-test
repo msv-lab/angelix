@@ -8,6 +8,10 @@ if [ -n "$ANGELIX_WITH_DUMPING" ]; then
     export ANGELIX_DUMP="$ANGELIX_WITH_DUMPING"
 fi
 
+if [ -n "$ANGELIX_WITH_LOADING" ]; then
+    export ANGELIX_LOAD="$ANGELIX_WITH_LOADING"
+fi
+
 if [ -n "$ANGELIX_WITH_TRACING" ]; then
     export ANGELIX_TRACE="$ANGELIX_WITH_TRACING"
 fi

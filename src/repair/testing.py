@@ -16,7 +16,7 @@ class Tester:
         self.oracle = oracle
         self.workdir = workdir
 
-    def __call__(self, project, test, dump=None, trace=None, klee=False, env=os.environ, check_instrumented=False, validate=False, path_for_validation=None):
+    def __call__(self, project, test, dump=None, trace=None, load=None, klee=False, env=os.environ, check_instrumented=False):
         src = basename(project.dir)
         if klee:
             logger.info('running test \'{}\' of {} source with KLEE'.format(test, src))
@@ -31,14 +31,14 @@ class Tester:
             os.mkdir(reachable_dir)
         if trace is not None:
             environment['ANGELIX_WITH_TRACING'] = trace
-        if (trace is not None) or (dump is not None):
+        if (trace is not None) or (dump is not None) or (load is not None):
             environment['ANGELIX_RUN'] = 'angelix-run-test'
         if klee:
             environment['ANGELIX_RUN'] = 'angelix-run-klee'
             # using stub library to make lli work
             environment['LLVMINTERP'] = 'lli -load {}/libkleeRuntest.so'.format(os.environ['KLEE_LIBRARY_PATH'])
-        if validate:
-            environment['ANGELIX_TRACE_AND_VALIDATE'] = path_for_validation
+        if load is not None:
+            environment['ANGELIX_WITH_LOADING'] = load
         environment['ANGELIX_WORKDIR'] = self.workdir
         environment['ANGELIX_TEST_ID'] = test
 

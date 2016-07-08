@@ -1,5 +1,4 @@
 #!/bin/bash
-cd src
 case "$1" in
     1)
         ./test-angelix.sh n1

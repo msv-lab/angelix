@@ -93,3 +93,14 @@ class Trace:
                 assert len(id) == 4
                 trace.append(tuple(id))
         return trace
+
+
+class Load:
+
+    def __init__(self, working_dir):
+        self.dir = join(working_dir, 'load')
+        os.mkdir(self.dir)
+
+    def __getitem__(self, test_id):
+        trace_file = join(self.dir, test_id)
+        return trace_file

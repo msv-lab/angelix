@@ -31,14 +31,13 @@ public:
                 << toString(expr) << "\n";
 
       std::ostringstream stringStream;
-      stringStream << "({ angelix_trace("
+      stringStream << "angelix_trace_and_load("
+                   << toString(expr) << ", "
                    << beginLine << ", "
                    << beginColumn << ", "
                    << endLine << ", "
                    << endColumn
-                   << "); "
-                   << toString(expr)
-                   << "; })";
+                   << ")";
       std::string replacement = stringStream.str();
 
       Rewrite.ReplaceText(expandedLoc, replacement);
@@ -77,14 +76,16 @@ public:
                 << toString(stmt) << "\n";
 
       std::ostringstream stringStream;
-      stringStream << "{ angelix_trace("
+      stringStream << "if ("
+                   << "angelix_trace_and_load("
+                   << 1 << ", "
                    << beginLine << ", "
                    << beginColumn << ", "
                    << endLine << ", "
                    << endColumn
-                   << "); "
-                   << toString(stmt)
-                   << "; }";
+                   << ")"
+                   << ") "
+                   << toString(stmt);
       std::string replacement = stringStream.str();
 
       Rewrite.ReplaceText(expandedLoc, replacement);

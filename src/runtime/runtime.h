@@ -17,6 +17,7 @@
 #define ANGELIX_REACHABLE(name)                 \
   (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_reachable(name) : 1)
 
+//TODO: trace and load with deps
 
 #elif defined ANGELIX_SYMBOLIC_RUNTIME
 
@@ -56,9 +57,8 @@
 #define ANGELIX_REACHABLE(name)                 \
   angelix_dump_reachable(name)
 
-#define ANGELIX_TRACE_AND_VALIDATE(expr, instance)   \
-  (getenv("ANGELIX_TRACE_AND_VALIDATE") ? angelix_trace_and_validate_##type(expr, instance) : expr)
-
+#define ANGELIX_TRACE_AND_LOAD(type, expr, instance)                 \
+  angelix_trace_and_load_##type(expr, instance)
 
 #endif /* ANGELIX_SYMBOLIC_RUNTIME */
 
@@ -84,15 +84,11 @@ void angelix_dump_reachable(char* id);
 void angelix_symbolic_reachable(char* id);
 
 
-/* For fault localization */
-void angelix_trace(int bl, int bc, int el, int ec);
-
-
 /* Stub */
 int angelix_ignore();
 
-int angelix_trace_and_validate_int(char* expr, int instance);
-int angelix_trace_and_validate_bool(char* expr, int instance);
+/* for localization and validation */
+int angelix_trace_and_load(int expr, int bl, int bc, int el, int ec);
 
 
 #endif

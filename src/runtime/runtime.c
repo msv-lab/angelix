@@ -246,7 +246,7 @@ char* print_str(char* s) {
 */
 
 char* load_instance(char* var, int instance) {
-  char *dir = getenv("ANGELIX_DUMP");
+  char *dir = getenv("ANGELIX_LOAD");
   char file[MAX_PATH_LENGTH + 1];
   sprintf(file, "%s/%s/%d", dir, var, instance);
 
@@ -548,8 +548,11 @@ CHOOSE_CONST_PROTO(bool, "bool")
 
 #undef CHOOSE_CONST_PROTO
 
-// begin line, begin column, end line, end column
-void angelix_trace(int bl, int bc, int el, int ec) {
+int angelix_ignore() {
+  return 0;
+}
+
+int angelix_trace_and_load(int expr, int bl, int bc, int el, int ec) {
   if (getenv("ANGELIX_TRACE")) {
     FILE *fp = fopen(getenv("ANGELIX_TRACE"), "a");
     if (fp == NULL)
@@ -557,34 +560,25 @@ void angelix_trace(int bl, int bc, int el, int ec) {
     fprintf(fp, "%d %d %d %d\n", bl, bc, el, ec);
     fclose(fp);
   }
-}
-
-int angelix_ignore() {
-  return 0;
-}
-
-#define TRACE_AND_VALIDATE(type)                                         \
-  int angelix_trace_and_validate_##type(char* expr, int instance) {      \
-    int result;                                                          \
-    char *dir = getenv("ANGELIX_TRACE_AND_VALIDATE");                    \
-    char file[MAX_PATH_LENGTH + 1];                                      \
-    sprintf(file, "%s/%s/%d", dir, expr, instance);                      \
-    FILE *fp = fopen(file, "r");                                         \
-    if (fp == NULL)                                                      \
-      return NULL;                                                       \
-    fseek(fp, 0, SEEK_END);                                              \
-    long fsize = ftell(fp);                                              \
-    fseek(fp, 0, SEEK_SET);                                              \
-    char *string = malloc(fsize + 1);                                    \
-    fread(string, fsize, 1, fp);                                         \
-    fclose(fp);                                                          \
-    string[fsize] = 0;                                                   \
-    if (string != NULL) {                                                \
-      result = parse_##type(string);                                     \
-    }                                                                    \
-    return result;                                                       \
+  if (getenv("ANGELIX_LOAD")) {
+    if (!choice_instances)
+      init_tables();
+    char str_id[INT_LENGTH * 4 + 4 + 1];
+    sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);
+    int previous = ht_get(choice_instances, str_id);
+    int instance;
+    if (table_miss) {
+      instance = 0;
+    } else {
+      instance = previous + 1;
+    }
+    ht_set(choice_instances, str_id, instance);
+    char* data = load_instance(str_id, instance);
+    if (!data) {
+      return expr;
+    }
+    int result = parse_int(data);
+    return result;
   }
-TRACE_AND_VALIDATE(int)
-TRACE_AND_VALIDATE(bool)
-
-#undef TRACE_AND_VALIDATE
+  return expr;
+}
