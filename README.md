@@ -42,7 +42,8 @@ Download and build required modules:
 Run tests:
 
     make test
-
+   
+   
 ## Documentation ##
 
 * [Tutorial](doc/Tutorial.md)
@@ -55,13 +56,30 @@ To set optimal configuration for your subject, refer to the Configuration sectio
 
 SemFix is a predecessor of Angelix. Taking advantage of the modular design of Angelix, we incorporate the algorithm of SemFix into Angelix. SemFix can be activated using the `--semfix` option of Angelix.
 
+## Changelog
+
+### [1.0](https://github.com/mechtaev/angelix/tree/1.0)
+
+**Implemented enhancements:**
+
+- Supported NULL pointer, break and continue statements, 64-bit long in ANGELIX_OUTPUT.
+
+**Fixed bugs:**
+
+- Various reported bugs in frontend and localization.
+
+### [icse16](https://github.com/mechtaev/angelix/tree/icse16)
+
+- Initial release used to reproduce ICSE'16 experiments. Available on [VirtualBox VM](https://docs.google.com/forms/d/1XoQ3AomEwd2hke7-ty8CDaQ_iH7TH3W5foO5BQWc-6o/viewform?usp=send_form).
+
+
 ## Publications ##
 
-**Angelix: Scalable Multiline Program Patch Synthesis via Symbolic Analysis.** S. Mechtaev, J. Yi, A. Roychoudhury. ICSE'16.
+**Angelix: Scalable Multiline Program Patch Synthesis via Symbolic Analysis.** S. Mechtaev, J. Yi, A. Roychoudhury. ICSE'16. [\[pdf\]](http://www.comp.nus.edu.sg/~abhik/pdf/ICSE16-angelix.pdf)
 
-**DirectFix: Looking for Simple Program Repairs.** S. Mechtaev, J. Yi, A. Roychoudhury. ICSE'15.
+**DirectFix: Looking for Simple Program Repairs.** S. Mechtaev, J. Yi, A. Roychoudhury. ICSE'15. [\[pdf\]](https://www.comp.nus.edu.sg/~abhik/pdf/ICSE15-directfix.pdf)
 
-**SemFix: Program Repair via Semantic Analysis.** H.D.T. Nguyen, D. Qi, A. Roychoudhury, S. Chandra. ICSE'13.
+**SemFix: Program Repair via Semantic Analysis.** H.D.T. Nguyen, D. Qi, A. Roychoudhury, S. Chandra. ICSE'13. [\[pdf\]](https://www.comp.nus.edu.sg/~abhik/pdf/ICSE13-SEMFIX.pdf)
 
 ## Contributors ##
 
