@@ -1,14 +1,12 @@
 package sg.edu.nus.comp.nsynth;
 
 import com.microsoft.z3.*;
-import fj.data.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sg.edu.nus.comp.nsynth.ast.*;
 import sg.edu.nus.comp.nsynth.ast.theory.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by Sergey Mechtaev on 7/4/2016.
@@ -17,55 +15,34 @@ public class Z3 implements Solver {
 
     private Logger logger = LoggerFactory.getLogger(Z3.class);
 
-    private Context globalContext;
-    private com.microsoft.z3.Solver solver;
-
-    private InterpolationContext globalIContext;
+    private Context ctx;
 
     public Z3() {
         HashMap<String, String> cfg = new HashMap<>();
         cfg.put("model", "true");
-        this.globalContext = new Context(cfg);
-        this.solver = globalContext.mkSolver();
-    }
-
-    public void dispose() {
-        this.globalContext.dispose();
-        this.globalIContext.dispose();
+        this.ctx = new Context(cfg);
     }
 
     @Override
-    public Optional<Map<Variable, Constant>> maxsat(List<Node> clauses, List<Node> assumptions) {
-
-        solver.reset();
+    public Optional<Map<Variable, Constant>> maxsat(List<Node> hard, List<Node> soft) {
+        com.microsoft.z3.Optimize solver = ctx.mkOptimize();
         VariableMarshaller marshaller = new VariableMarshaller();
-        for (Node clause : clauses) {
-            NodeTranslatorVisitor visitor = new NodeTranslatorVisitor(globalContext, marshaller);
+        for (Node clause : hard) {
+            NodeTranslatorVisitor visitor = new NodeTranslatorVisitor(marshaller);
             clause.accept(visitor);
-            solver.add((BoolExpr)visitor.getExpr());
+            solver.Add((BoolExpr)visitor.getExpr());
         }
-        ArrayList<BoolExpr> assumptionExprs = new ArrayList<>();
-        for (Node assumption : assumptions) {
-            NodeTranslatorVisitor visitor = new NodeTranslatorVisitor(globalContext, marshaller);
+        for (Node assumption : soft) {
+            NodeTranslatorVisitor visitor = new NodeTranslatorVisitor(marshaller);
             assumption.accept(visitor);
-            assumptionExprs.add((BoolExpr)visitor.getExpr());
+            solver.AssertSoft((BoolExpr)visitor.getExpr(), 1, "default");
         }
 
-        BoolExpr[] assumptionArray = assumptionExprs.toArray(new BoolExpr[assumptionExprs.size()]);
-
-        Status status = solver.check(assumptionArray);
+        Status status = solver.Check();
         if (status.equals(Status.SATISFIABLE)) {
             Model model = solver.getModel();
-            return Optional.of(getAssignment(globalContext, model, marshaller));
+            return Optional.of(getAssignment(model, marshaller));
         } else if (status.equals(Status.UNSATISFIABLE)) {
-            ArrayList<Node> unsatCore = new ArrayList<>();
-            Expr[] unsatCoreArray = solver.getUnsatCore();
-            ArrayList<Expr> unsatCoreExprs = new ArrayList<>(Arrays.asList(unsatCoreArray));
-            for (int i=0; i<assumptionExprs.size(); i++) {
-                if (unsatCoreExprs.contains(assumptionExprs.get(i))) {
-                    unsatCore.add(assumptions.get(i));
-                }
-            }
             return Optional.empty();
         } else {
             throw new UnsupportedOperationException();
@@ -74,10 +51,10 @@ public class Z3 implements Solver {
 
     @Override
     public Optional<Map<Variable, Constant>> sat(List<Node> clauses) {
-        solver.reset();
+        com.microsoft.z3.Solver solver = ctx.mkSolver();
         VariableMarshaller marshaller = new VariableMarshaller();
         for (Node clause : clauses) {
-            NodeTranslatorVisitor visitor = new NodeTranslatorVisitor(globalContext, marshaller);
+            NodeTranslatorVisitor visitor = new NodeTranslatorVisitor(marshaller);
             clause.accept(visitor);
             solver.add((BoolExpr)visitor.getExpr());
         }
@@ -85,7 +62,7 @@ public class Z3 implements Solver {
         Status status = solver.check();
         if (status.equals(Status.SATISFIABLE)) {
             Model model = solver.getModel();
-            return Optional.of(getAssignment(globalContext, model, marshaller));
+            return Optional.of(getAssignment(model, marshaller));
         } else if (status.equals(Status.UNSATISFIABLE)) {
             return Optional.empty();
         } else {
@@ -94,7 +71,7 @@ public class Z3 implements Solver {
 
     }
 
-    private Map<Variable, Constant> getAssignment(Context ctx, Model model, VariableMarshaller marshaller) {
+    private Map<Variable, Constant> getAssignment(Model model, VariableMarshaller marshaller) {
         HashMap<Variable, Constant> assignment = new HashMap<>();
         for (Variable variable: marshaller.getVariables()) {
             if (TypeInference.typeOf(variable).equals(IntType.TYPE)) {
@@ -125,12 +102,10 @@ public class Z3 implements Solver {
         private Stack<Expr> exprs;
 
         private VariableMarshaller marshaller;
-        private Context ctx;
 
-        NodeTranslatorVisitor(Context ctx, VariableMarshaller marshaller) {
+        NodeTranslatorVisitor(VariableMarshaller marshaller) {
             this.marshaller = marshaller;
             this.exprs = new Stack<>();
-            this.ctx = ctx;
         }
 
         Expr getExpr() {

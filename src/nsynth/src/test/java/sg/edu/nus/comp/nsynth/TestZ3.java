@@ -40,23 +40,23 @@ public class TestZ3 {
     }
 
     @Test
-    public void testUnsatCore() {
-        ArrayList<Node> clauses = new ArrayList<>();
+    public void testMaxsat() {
+        ArrayList<Node> hard = new ArrayList<>();
         ProgramVariable x = ProgramVariable.mkInt("x");
         ProgramVariable y = ProgramVariable.mkInt("y");
         ProgramVariable a = ProgramVariable.mkBool("a");
         ProgramVariable b = ProgramVariable.mkBool("b");
-        clauses.add(new Equal(x, IntConst.of(1)));
-        clauses.add(new Equal(y, IntConst.of(2)));
-        clauses.add(new Or(a, new Equal(x, y)));
-        clauses.add(new Or(b, new LessOrEqual(x, y)));
-        ArrayList<Node> assumptions = new ArrayList<>();
-        assumptions.add(new Not(a));
-        assumptions.add(new Not(b));
-        Optional<Map<Variable, Constant>> unsatCore = solver.maxsat(clauses, assumptions);
-//        assertTrue(unsatCore.isRight());
-//        assertTrue(unsatCore.right().value().contains(new Not(a)));
-//        assertFalse(unsatCore.right().value().contains(new Not(b)));
+        hard.add(new Equal(x, IntConst.of(1)));
+        hard.add(new Equal(y, IntConst.of(2)));
+        hard.add(new Or(a, new Equal(x, y)));
+        hard.add(new Or(b, new LessOrEqual(x, y)));
+        ArrayList<Node> soft = new ArrayList<>();
+        soft.add(new Not(a));
+        soft.add(new Not(b));
+        Optional<Map<Variable, Constant>> result = solver.maxsat(hard, soft);
+        assertTrue(result.isPresent());
+        assertTrue(((BoolConst) result.get().get(a)).getValue() || ((BoolConst) result.get().get(b)).getValue());
+        assertFalse(((BoolConst) result.get().get(a)).getValue() && ((BoolConst) result.get().get(b)).getValue());
     }
 
 }

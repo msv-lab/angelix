@@ -13,6 +13,6 @@ import java.util.Optional;
  * Created by Sergey Mechtaev on 7/4/2016.
  */
 public interface Solver {
-    Optional<Map<Variable, Constant>> maxsat(List<Node> clauses, List<Node> assumptions);
+    Optional<Map<Variable, Constant>> maxsat(List<Node> hard, List<Node> soft);
     Optional<Map<Variable, Constant>> sat(List<Node> clauses);
 }
