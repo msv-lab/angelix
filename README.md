@@ -50,6 +50,8 @@ Install Java 8 (for Ubuntu 14.04) and Maven:
     sudo apt-get install oracle-java8-installer
     sudo apt-get install maven
     
+Install SBT by following [intructions](http://www.scala-sbt.org/0.13/docs/Installing-sbt-on-Linux.html).
+
 Set Angelix environment:
 
     . activate
