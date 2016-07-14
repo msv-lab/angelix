@@ -12,6 +12,7 @@
   * [Expressions](#expressions)
   * [Statements](#statements)
 * [Synthesis Levels](#synthesis-levels)
+* [SemFix](#semfix)
 * [Configuration](#configuration)
 
 ## Introduction ##
@@ -246,6 +247,10 @@ Additional visible variables, integer constant, `>`, `>=`, `||`, `&&`, `+`, `-`.
 ### conditional-arithmetic ###
 
 Additional visible variables, integer constant, `>`, `>=`, `+`, `-`, `ite`.
+
+## SemFix ##
+
+SemFix is a predecessor of Angelix. Taking advantage of the modular design of Angelix, we incorporated the algorithm of SemFix into Angelix. To download and build SemFix dependencies, execute `make semfix`, to verify your installation, run `make test-semfix`. After installation, SemFix can be activated using the `--semfix` option of Angelix.
 
 ## Configuration ##
 
