@@ -152,7 +152,7 @@ class Semfix_Inferrer:
         sorted_af = sorted(angelic_paths, key=len)
         return sorted_af[:self.config['max_angelic_paths']]
 
-    def __call__(self, project, test, dump):
+    def __call__(self, project, test, dump, fronend_source):
         logger.info('inferring specification for test \'{}\''.format(test))
 
         environment = dict(os.environ)
