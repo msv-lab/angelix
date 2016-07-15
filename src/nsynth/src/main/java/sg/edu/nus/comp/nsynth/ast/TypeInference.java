@@ -4,7 +4,6 @@ import sg.edu.nus.comp.nsynth.ast.theory.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.Stack;
 
 /**
@@ -53,18 +52,10 @@ public class TypeInference {
         throw new UnsupportedOperationException();
     }
 
-    public static Type typeOf(Component component) {
-        return typeOf(component.getSemantics());
-    }
-
     public static Type checkType(Node node) throws TypeInferenceException {
         TypeCheckVisitor visitor = new TypeCheckVisitor();
         node.accept(visitor);
         return visitor.getType();
-    }
-
-    public static Type checkType(Component component) throws TypeInferenceException {
-        return checkType(component.getSemantics());
     }
 
     private static class TypeCheckVisitor implements BottomUpVisitor {
@@ -331,9 +322,9 @@ public class TypeInference {
         }
 
         @Override
-        public void visit(ProgramOutput programOutput) {
+        public void visit(ExpressionOutput expressionOutput) {
             if (typeError) return;
-            types.push(programOutput.getType());
+            types.push(expressionOutput.getType());
         }
 
         @Override

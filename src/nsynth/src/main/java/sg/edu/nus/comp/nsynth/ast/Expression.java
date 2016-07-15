@@ -4,37 +4,36 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * Programs are either leafs of applications.
  */
-public class Program {
+public class Expression {
 
-    private Component root;
+    private Node root;
 
-    public Component getRoot() {
+    public Node getRoot() {
         return root;
     }
 
-    private Map<Hole, Program> children;
+    private Map<Hole, Expression> children;
 
-    public Map<Hole, Program> getChildren() {
+    public Map<Hole, Expression> getChildren() {
         return children;
     }
 
-    private Program(Component root, Map<Hole, Program> children) {
-        this.root = root;
+    private Expression(Node rootComponent, Map<Hole, Expression> children) {
+        this.root = rootComponent;
         this.children = children;
     }
 
-    public static Program leaf(Component c) {
-        return new Program(c, new HashMap<>());
+    public static Expression leaf(Node c) {
+        return new Expression(c, new HashMap<>());
     }
 
-    public static Program app(Component function, Map<Hole, Program> arguments) {
-        return new Program(function, arguments);
+    public static Expression app(Node function, Map<Hole, Expression> arguments) {
+        return new Expression(function, arguments);
     }
 
     public boolean isLeaf() {
@@ -48,28 +47,28 @@ public class Program {
     public Node getSemantics(Map<Parameter, Constant> parameterValuation) {
         Node semantics;
         if (isLeaf()) {
-            semantics = root.getSemantics();
+            semantics = root;
         } else {
             Map<Hole, Node> map = children.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(),
                                                                                         e -> e.getValue().getSemantics()));
-            semantics = Traverse.substitute(root.getSemantics(), map);
+            semantics = Traverse.substitute(root, map);
         }
         return Traverse.substitute(semantics, parameterValuation);
     }
 
-    public List<Component> getLeaves() {
-        List<Component> current = new ArrayList<>();
+    public List<Node> getLeaves() {
+        List<Node> current = new ArrayList<>();
         if (this.isLeaf()) {
             current.add(this.getRoot());
         } else {
-            for (Program program : this.getChildren().values()) {
-                current.addAll(program.getLeaves());
+            for (Expression expression : this.getChildren().values()) {
+                current.addAll(expression.getLeaves());
             }
         }
         return current;
     }
 
-    public Program substitute(Map<Component, Program> mapping) {
+    public Expression substitute(Map<Node, Expression> mapping) {
         if (this.isLeaf()) {
             if (mapping.containsKey(this.getRoot())) {
                 return mapping.get(this.getRoot());
@@ -77,7 +76,7 @@ public class Program {
                 return this;
             }
         } else {
-            return Program.app(this.getRoot(), this.getChildren().entrySet().stream()
+            return Expression.app(this.getRoot(), this.getChildren().entrySet().stream()
                     .collect(Collectors.toMap(
                             e -> e.getKey(),
                             e -> e.getValue().substitute(mapping)
@@ -85,23 +84,23 @@ public class Program {
         }
     }
 
-    public List<Component> getComponents() {
-        List<Component> list = new ArrayList<>();
+    public List<Node> getAllComponents() {
+        List<Node> list = new ArrayList<>();
         list.add(this.getRoot());
-        for (Program program : this.getChildren().values()) {
-            list.addAll(program.getComponents());
+        for (Expression expression : this.getChildren().values()) {
+            list.addAll(expression.getAllComponents());
         }
         return list;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof Program))
+        if (!(obj instanceof Expression))
             return false;
         if (obj == this)
             return true;
 
-        Program rhs = (Program) obj;
+        Expression rhs = (Expression) obj;
         return new EqualsBuilder().
                 append(root, rhs.children).
                 append(root, rhs.children).

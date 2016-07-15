@@ -286,8 +286,8 @@ public class Z3 implements Solver {
         }
 
         @Override
-        public void visit(ProgramOutput programOutput) {
-            processVariable(ctx, programOutput);
+        public void visit(ExpressionOutput expressionOutput) {
+            processVariable(ctx, expressionOutput);
         }
 
         @Override

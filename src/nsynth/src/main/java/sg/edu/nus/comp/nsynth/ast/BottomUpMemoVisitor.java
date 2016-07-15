@@ -60,7 +60,7 @@ public interface BottomUpMemoVisitor {
 
     void visit(BranchOutput branchOutput);
 
-    void visit(ProgramOutput programOutput);
+    void visit(ExpressionOutput expressionOutput);
 
     void visit(Indexed indexed);
 

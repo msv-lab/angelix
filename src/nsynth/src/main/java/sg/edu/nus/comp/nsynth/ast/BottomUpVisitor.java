@@ -57,7 +57,7 @@ public interface BottomUpVisitor {
 
     void visit(BranchOutput branchOutput);
 
-    void visit(ProgramOutput programOutput);
+    void visit(ExpressionOutput expressionOutput);
 
     void visit(Indexed indexed);
 

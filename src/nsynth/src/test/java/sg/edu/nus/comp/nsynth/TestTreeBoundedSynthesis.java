@@ -8,7 +8,6 @@ import org.junit.Test;
 import sg.edu.nus.comp.nsynth.ast.*;
 import sg.edu.nus.comp.nsynth.ast.theory.Add;
 import sg.edu.nus.comp.nsynth.ast.theory.BoolConst;
-import sg.edu.nus.comp.nsynth.ast.theory.ITE;
 import sg.edu.nus.comp.nsynth.ast.theory.IntConst;
 
 import java.util.*;
@@ -51,7 +50,7 @@ public class TestTreeBoundedSynthesis {
         assignment2.put(y, IntConst.of(2));
         testSuite.add(TestCase.ofAssignment(assignment2, IntConst.of(3)));
 
-        Optional<Pair<Program, Map<Parameter, Constant>>> result = synthesizer.synthesize(testSuite, components);
+        Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizer.synthesize(testSuite, components);
         assertTrue(result.isPresent());
         Node node = result.get().getLeft().getSemantics(result.get().getRight());
         assertTrue(node.equals(new Add(x, y)) || node.equals(new Add(y, x)));
@@ -76,15 +75,15 @@ public class TestTreeBoundedSynthesis {
         assignment2.put(y, IntConst.of(2));
         testSuite.add(TestCase.ofAssignment(assignment2, IntConst.of(3)));
 
-        List<Program> forbidden = new ArrayList<>();
-        Map<Hole, Program> args = new HashMap<>();
-        args.put((Hole)Components.ADD.getLeft(), Program.leaf(new Component(x)));
-        args.put((Hole)Components.ADD.getRight(), Program.leaf(new Component(y)));
-        forbidden.add(Program.app(new Component(Components.ADD), args));
+        List<Expression> forbidden = new ArrayList<>();
+        Map<Hole, Expression> args = new HashMap<>();
+        args.put((Hole)Components.ADD.getLeft(), Expression.leaf(x));
+        args.put((Hole)Components.ADD.getRight(), Expression.leaf(y));
+        forbidden.add(Expression.app(Components.ADD, args));
 
         TreeBoundedSynthesis synthesizerWithForbidden =
                 new TreeBoundedSynthesis(new Z3(), new TBSConfig(2).disableUniqueUsage().setForbidden(forbidden));
-        Optional<Pair<Program, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
+        Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertTrue(result.isPresent());
         Node node = result.get().getLeft().getSemantics(result.get().getRight());
         assertEquals(node, new Add(y, x));
@@ -108,19 +107,19 @@ public class TestTreeBoundedSynthesis {
         assignment2.put(y, IntConst.of(2));
         testSuite.add(TestCase.ofAssignment(assignment2, IntConst.of(3)));
 
-        List<Program> forbidden = new ArrayList<>();
-        Map<Hole, Program> args = new HashMap<>();
-        args.put((Hole)Components.ADD.getLeft(), Program.leaf(new Component(x)));
-        args.put((Hole)Components.ADD.getRight(), Program.leaf(new Component(y)));
-        Map<Hole, Program> args2 = new HashMap<>();
-        args2.put((Hole)Components.ADD.getLeft(), Program.leaf(new Component(y)));
-        args2.put((Hole)Components.ADD.getRight(), Program.leaf(new Component(x)));
-        forbidden.add(Program.app(new Component(Components.ADD), args));
-        forbidden.add(Program.app(new Component(Components.ADD), args2));
+        List<Expression> forbidden = new ArrayList<>();
+        Map<Hole, Expression> args = new HashMap<>();
+        args.put((Hole)Components.ADD.getLeft(), Expression.leaf(x));
+        args.put((Hole)Components.ADD.getRight(), Expression.leaf(y));
+        Map<Hole, Expression> args2 = new HashMap<>();
+        args2.put((Hole)Components.ADD.getLeft(), Expression.leaf(y));
+        args2.put((Hole)Components.ADD.getRight(), Expression.leaf(x));
+        forbidden.add(Expression.app(Components.ADD, args));
+        forbidden.add(Expression.app(Components.ADD, args2));
 
         TreeBoundedSynthesis synthesizerWithForbidden =
                 new TreeBoundedSynthesis(new Z3(), new TBSConfig(2).disableUniqueUsage().setForbidden(forbidden));
-        Optional<Pair<Program, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
+        Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertFalse(result.isPresent());
     }
 
@@ -138,12 +137,12 @@ public class TestTreeBoundedSynthesis {
         assignment1.put(x, IntConst.of(10));
         testSuite.add(TestCase.ofAssignment(assignment1, IntConst.of(2)));
 
-        List<Program> forbidden = new ArrayList<>();
-        forbidden.add(Program.leaf(new Component(p)));
+        List<Expression> forbidden = new ArrayList<>();
+        forbidden.add(Expression.leaf(p));
 
         TreeBoundedSynthesis synthesizerWithForbidden =
                 new TreeBoundedSynthesis(new Z3(), new TBSConfig(2).setForbidden(forbidden));
-        Optional<Pair<Program, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
+        Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertFalse(result.isPresent());
     }
 
@@ -160,18 +159,18 @@ public class TestTreeBoundedSynthesis {
         assignment1.put(x, IntConst.of(2));
         testSuite.add(TestCase.ofAssignment(assignment1, IntConst.of(2)));
 
-        List<Program> forbidden = new ArrayList<>();
-        forbidden.add(Program.leaf(new Component(x)));
+        List<Expression> forbidden = new ArrayList<>();
+        forbidden.add(Expression.leaf(x));
 
-        Map<Hole, Program> args = new HashMap<>();
-        args.put((Hole)Components.MINUS.getArg(), Program.leaf(new Component(x)));
-        Map<Hole, Program> args2 = new HashMap<>();
-        args2.put((Hole)Components.MINUS.getArg(), Program.app(new Component(Components.MINUS), args));
-        forbidden.add(Program.app(new Component(Components.MINUS), args2));
+        Map<Hole, Expression> args = new HashMap<>();
+        args.put((Hole)Components.MINUS.getArg(), Expression.leaf(x));
+        Map<Hole, Expression> args2 = new HashMap<>();
+        args2.put((Hole)Components.MINUS.getArg(), Expression.app(Components.MINUS, args));
+        forbidden.add(Expression.app(Components.MINUS, args2));
 
         TreeBoundedSynthesis synthesizerWithForbidden =
                 new TreeBoundedSynthesis(new Z3(), new TBSConfig(3).setForbidden(forbidden));
-        Optional<Pair<Program, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
+        Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertFalse(result.isPresent());
     }
 
@@ -202,29 +201,29 @@ public class TestTreeBoundedSynthesis {
         testSuite.add(testCase2);
 
 
-        Map<Hole, Program> argsGT = new HashMap<>();
-        argsGT.put((Hole)Components.GT.getLeft(), Program.leaf(new Component(x)));
-        argsGT.put((Hole)Components.GT.getRight(), Program.leaf(new Component(y)));
-        Map<Hole, Program> args = new HashMap<>();
-        args.put((Hole)Components.ITE.getArgs().get(0), Program.app(new Component(Components.GT), argsGT));
-        args.put((Hole)Components.ITE.getArgs().get(1), Program.leaf(new Component(IntConst.of(1))));
-        args.put((Hole)Components.ITE.getArgs().get(2), Program.leaf(new Component(IntConst.of(0))));
+        Map<Hole, Expression> argsGT = new HashMap<>();
+        argsGT.put((Hole)Components.GT.getLeft(), Expression.leaf(x));
+        argsGT.put((Hole)Components.GT.getRight(), Expression.leaf(y));
+        Map<Hole, Expression> args = new HashMap<>();
+        args.put((Hole)Components.ITE.getArgs().get(0), Expression.app(Components.GT, argsGT));
+        args.put((Hole)Components.ITE.getArgs().get(1), Expression.leaf(IntConst.of(1)));
+        args.put((Hole)Components.ITE.getArgs().get(2), Expression.leaf(IntConst.of(0)));
 
-        Map<Hole, Program> argsGT2 = new HashMap<>();
-        argsGT2.put((Hole)Components.GT.getLeft(), Program.leaf(new Component(y)));
-        argsGT2.put((Hole)Components.GT.getRight(), Program.leaf(new Component(x)));
-        Map<Hole, Program> args2 = new HashMap<>();
-        args2.put((Hole)Components.ITE.getArgs().get(0), Program.app(new Component(Components.GT), argsGT2));
-        args2.put((Hole)Components.ITE.getArgs().get(1), Program.leaf(new Component(IntConst.of(0))));
-        args2.put((Hole)Components.ITE.getArgs().get(2), Program.leaf(new Component(IntConst.of(1))));
+        Map<Hole, Expression> argsGT2 = new HashMap<>();
+        argsGT2.put((Hole)Components.GT.getLeft(), Expression.leaf(y));
+        argsGT2.put((Hole)Components.GT.getRight(), Expression.leaf(x));
+        Map<Hole, Expression> args2 = new HashMap<>();
+        args2.put((Hole)Components.ITE.getArgs().get(0), Expression.app(Components.GT, argsGT2));
+        args2.put((Hole)Components.ITE.getArgs().get(1), Expression.leaf(IntConst.of(0)));
+        args2.put((Hole)Components.ITE.getArgs().get(2), Expression.leaf(IntConst.of(1)));
 
-        List<Program> forbidden = new ArrayList<>();
-        forbidden.add(Program.app(new Component(Components.ITE), args));
-        forbidden.add(Program.app(new Component(Components.ITE), args2));
+        List<Expression> forbidden = new ArrayList<>();
+        forbidden.add(Expression.app(Components.ITE, args));
+        forbidden.add(Expression.app(Components.ITE, args2));
 
         TreeBoundedSynthesis synthesizerWithForbidden =
                 new TreeBoundedSynthesis(new Z3(), new TBSConfig(3).setForbidden(forbidden));
-        Optional<Pair<Program, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
+        Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertFalse(result.isPresent());
     }
 
@@ -243,7 +242,7 @@ public class TestTreeBoundedSynthesis {
         testSuite.add(testCase1);
 
         TreeBoundedSynthesis synthesizerWithForbidden = new TreeBoundedSynthesis(new Z3(), new TBSConfig(3));
-        Optional<Pair<Program, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
+        Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertTrue(result.isPresent());
     }
 
@@ -260,7 +259,7 @@ public class TestTreeBoundedSynthesis {
         assignment1.put(y, IntConst.of(1));
         testSuite.add(TestCase.ofAssignment(assignment1, IntConst.of(2)));
 
-        Optional<Pair<Program, Map<Parameter, Constant>>> result = synthesizerUnique.synthesize(testSuite, components);
+        Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerUnique.synthesize(testSuite, components);
         assertFalse(result.isPresent());
     }
 
@@ -277,15 +276,15 @@ public class TestTreeBoundedSynthesis {
         assignment1.put(x, IntConst.of(1));
         testSuite.add(TestCase.ofAssignment(assignment1, IntConst.of(2)));
 
-        Map<Hole, Program> args = new HashMap<>();
-        args.put((Hole)Components.ADD.getLeft(), Program.leaf(new Component(x)));
-        args.put((Hole)Components.ADD.getRight(), Program.leaf(new Component(x)));
-        List<Program> forbidden = new ArrayList<>();
-        forbidden.add(Program.app(new Component(Components.ADD), args));
+        Map<Hole, Expression> args = new HashMap<>();
+        args.put((Hole)Components.ADD.getLeft(), Expression.leaf(x));
+        args.put((Hole)Components.ADD.getRight(), Expression.leaf(x));
+        List<Expression> forbidden = new ArrayList<>();
+        forbidden.add(Expression.app(Components.ADD, args));
 
         TreeBoundedSynthesis synthesizerWithForbidden =
                 new TreeBoundedSynthesis(new Z3(), new TBSConfig(3).setForbidden(forbidden));
-        Optional<Pair<Program, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
+        Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertFalse(result.isPresent());
     }
 
@@ -308,15 +307,15 @@ public class TestTreeBoundedSynthesis {
         assignment2.put(y, IntConst.of(2));
         testSuite.add(TestCase.ofAssignment(assignment2, IntConst.of(3)));
 
-        List<Program> forbidden = new ArrayList<>();
-        Map<Hole, Program> args = new HashMap<>();
-        args.put((Hole)Components.ADD.getLeft(), Program.leaf(new Component(x)));
-        args.put((Hole)Components.ADD.getRight(), Program.leaf(new Component(y)));
-        forbidden.add(Program.app(new Component(Components.SUB), args));
+        List<Expression> forbidden = new ArrayList<>();
+        Map<Hole, Expression> args = new HashMap<>();
+        args.put((Hole)Components.ADD.getLeft(), Expression.leaf(x));
+        args.put((Hole)Components.ADD.getRight(), Expression.leaf(y));
+        forbidden.add(Expression.app(Components.SUB, args));
 
         TreeBoundedSynthesis synthesizerWithForbidden =
                 new TreeBoundedSynthesis(new Z3(), new TBSConfig(2).disableUniqueUsage().setForbidden(forbidden));
-        Optional<Pair<Program, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
+        Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertTrue(result.isPresent());
         Node node = result.get().getLeft().getSemantics(result.get().getRight());
         assertTrue(node.equals(new Add(x, y)) || node.equals(new Add(y, x)));

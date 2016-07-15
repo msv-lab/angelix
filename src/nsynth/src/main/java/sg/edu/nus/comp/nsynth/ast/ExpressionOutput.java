@@ -6,7 +6,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 /**
  * Variable used for CODIS, conflict learning, evaluation. Test-instantiated. Physical equality.
  */
-public class ProgramOutput extends Variable {
+public class ExpressionOutput extends Variable {
 
     private Type type;
 
@@ -19,7 +19,7 @@ public class ProgramOutput extends Variable {
         return true;
     }
 
-    public ProgramOutput(Type type) {
+    public ExpressionOutput(Type type) {
         this.type = type;
         this.objectCounter = classCounter;
         classCounter++;
@@ -49,12 +49,12 @@ public class ProgramOutput extends Variable {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof ProgramOutput))
+        if (!(obj instanceof ExpressionOutput))
             return false;
         if (obj == this)
             return true;
 
-        ProgramOutput rhs = (ProgramOutput) obj;
+        ExpressionOutput rhs = (ExpressionOutput) obj;
         return new EqualsBuilder().
                 append(objectCounter, rhs.objectCounter).
                 isEquals();

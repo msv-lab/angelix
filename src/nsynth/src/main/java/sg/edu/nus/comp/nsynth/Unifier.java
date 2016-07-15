@@ -297,9 +297,9 @@ public class Unifier {
         }
 
         @Override
-        public void visit(ProgramOutput programOutput) {
+        public void visit(ExpressionOutput expressionOutput) {
             if (failed) return;
-            processLeaf(programOutput);
+            processLeaf(expressionOutput);
         }
 
         @Override

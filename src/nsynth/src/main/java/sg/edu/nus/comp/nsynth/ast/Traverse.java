@@ -186,8 +186,8 @@ public class Traverse {
         }
 
         @Override
-        public void visit(ProgramOutput programOutput) {
-            addIfMatches(programOutput);
+        public void visit(ExpressionOutput expressionOutput) {
+            addIfMatches(expressionOutput);
         }
 
         @Override
@@ -381,8 +381,8 @@ public class Traverse {
         }
 
         @Override
-        public void visit(ProgramOutput programOutput) {
-            nodes.push(function.apply(programOutput));
+        public void visit(ExpressionOutput expressionOutput) {
+            nodes.push(function.apply(expressionOutput));
         }
 
         @Override

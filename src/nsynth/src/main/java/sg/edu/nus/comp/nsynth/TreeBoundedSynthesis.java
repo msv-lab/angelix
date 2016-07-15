@@ -1,8 +1,6 @@
 package sg.edu.nus.comp.nsynth;
 
-import com.google.common.base.*;
 import com.google.common.collect.Multiset;
-import fj.data.Either;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -42,7 +40,7 @@ public class TreeBoundedSynthesis {
 
         // from forbidden program to corresponding selectors
         // list of lists because at each node there can be several matches that must be disjoined
-        private Map<Program, List<List<Selector>>> forbiddenSelectors;
+        private Map<Expression, List<List<Selector>>> forbiddenSelectors;
 
         private List<Node> clauses;
 
@@ -51,7 +49,7 @@ public class TreeBoundedSynthesis {
                               Map<Selector, Node> selectedComponent,
                               Map<Variable, List<Selector>> branchDependencies,
                               Map<Node, List<Selector>> componentUsage,
-                              Map<Program, List<List<Selector>>> forbiddenSelectors,
+                              Map<Expression, List<List<Selector>>> forbiddenSelectors,
                               List<Node> clauses) {
             this.tree = tree;
             this.nodeChoices = nodeChoices;
@@ -65,20 +63,20 @@ public class TreeBoundedSynthesis {
 
     private Solver solver;
 
-    // NOTE: now forbidden isSatisfiable prefixes if they are larger than size
+    // NOTE: now forbidden checks prefixes if they are larger than size
     public TreeBoundedSynthesis(Solver solver, TBSConfig config) {
         this.solver = solver;
         this.config = config;
     }
 
-    public Optional<Pair<Program, Map<Parameter, Constant>>> synthesize(List<? extends TestCase> testSuite,
+    public Optional<Pair<Expression, Map<Parameter, Constant>>> synthesize(List<? extends TestCase> testSuite,
 
-                                                                                   Multiset<Node> components) {
+                                                                           Multiset<Node> components) {
         List<Node> uniqueComponents = new ArrayList<>(components.elementSet());
-        ProgramOutput root;
-        root = new ProgramOutput(testSuite.get(0).getOutputType());
+        ExpressionOutput root;
+        root = new ExpressionOutput(testSuite.get(0).getOutputType());
         // top level -> current level
-        Map<Program, Program> initialForbidden =
+        Map<Expression, Expression> initialForbidden =
                 config.forbidden.stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
 
         Optional<EncodingResult> result = encodeBranch(root, config.bound, uniqueComponents, initialForbidden);
@@ -123,7 +121,7 @@ public class TreeBoundedSynthesis {
 
         Optional<Map<Variable, Constant>> solverResult = solver.sat(synthesisClauses);
         if (solverResult.isPresent()) {
-            Pair<Program, Map<Parameter, Constant>> decoded = decode(solverResult.get(), root, result.get());
+            Pair<Expression, Map<Parameter, Constant>> decoded = decode(solverResult.get(), root, result.get());
             return Optional.of(decoded);
         } else {
             return Optional.empty();
@@ -139,7 +137,7 @@ public class TreeBoundedSynthesis {
         return clauses;
     }
 
-    private Optional<EncodingResult> encodeBranch(Variable output, int size, List<Node> components, Map<Program, Program> forbidden) {
+    private Optional<EncodingResult> encodeBranch(Variable output, int size, List<Node> components, Map<Expression, Expression> forbidden) {
         // Local results:
         List<Selector> currentChoices = new ArrayList<>();
         Map<Selector, Node> selectedComponent = new HashMap<>();
@@ -155,23 +153,23 @@ public class TreeBoundedSynthesis {
         List<Node> functionComponents = new ArrayList<>(relevantComponents);
         functionComponents.removeIf(c -> Traverse.collectByType(c, Hole.class).isEmpty());
 
-        Set<Program> localForbidden = new HashSet<>(forbidden.values());
+        Set<Expression> localForbidden = new HashSet<>(forbidden.values());
         // mapping from current level to selectors
-        Map<Program, List<Selector>> localForbiddenSelectors = new HashMap<>();
-        for (Program program : localForbidden) {
-            localForbiddenSelectors.put(program, new ArrayList<>());
+        Map<Expression, List<Selector>> localForbiddenSelectors = new HashMap<>();
+        for (Expression expression : localForbidden) {
+            localForbiddenSelectors.put(expression, new ArrayList<>());
         }
-        Map<Program, List<Selector>> localForbiddenLeavesSelectors = new HashMap<>();
-        Map<Program, List<List<Selector>>> globalForbiddenResult = new HashMap<>();
+        Map<Expression, List<Selector>> localForbiddenLeavesSelectors = new HashMap<>();
+        Map<Expression, List<List<Selector>>> globalForbiddenResult = new HashMap<>();
 
         for (Node component : leafComponents) {
             Selector selector = new Selector();
-            for (Program program : localForbidden) {
-                if (program.getRoot().getSemantics().equals(component)) {
-                    if (!localForbiddenLeavesSelectors.containsKey(program)) {
-                        localForbiddenLeavesSelectors.put(program, new ArrayList<>());
+            for (Expression expression : localForbidden) {
+                if (expression.getRoot().equals(component)) {
+                    if (!localForbiddenLeavesSelectors.containsKey(expression)) {
+                        localForbiddenLeavesSelectors.put(expression, new ArrayList<>());
                     }
-                    localForbiddenLeavesSelectors.get(program).add(selector);
+                    localForbiddenLeavesSelectors.get(expression).add(selector);
                 }
             }
             clauses.add(new Impl(selector, new Equal(output, component)));
@@ -194,7 +192,7 @@ public class TreeBoundedSynthesis {
             // components dependent of the branch:
             Map<Variable, List<Node>> componentDependencies = new HashMap<>();
             // forbidden for each branch:
-            Map<Variable, Map<Program, Program>> subnodeForbidden = new HashMap<>();
+            Map<Variable, Map<Expression, Expression>> subnodeForbidden = new HashMap<>();
             // first we need to precompute all required branches and match them with subnodes of forbidden programs:
             for (Node component : functionComponents) {
                 Map<Hole, Variable> args = new HashMap<>();
@@ -213,9 +211,9 @@ public class TreeBoundedSynthesis {
                     args.put(input, child);
 
                     subnodeForbidden.put(child, new HashMap<>());
-                    for (Program local : localForbidden) {
-                        if (local.getRoot().getSemantics().equals(component)) {
-                            for (Program global : forbidden.keySet()) {
+                    for (Expression local : localForbidden) {
+                        if (local.getRoot().equals(component)) {
+                            for (Expression global : forbidden.keySet()) {
                                 if (forbidden.get(global).equals(local)) {
                                     // NOTE: can be repetitions, but it is OK
                                     subnodeForbidden.get(child).put(global, local.getChildren().get(input));
@@ -255,9 +253,9 @@ public class TreeBoundedSynthesis {
                     }
                     branchDependencies.get(child).add(selector);
                 }
-                for (Program program : localForbidden) {
-                    if (program.getRoot().getSemantics().equals(component)) {
-                        localForbiddenSelectors.get(program).add(selector);
+                for (Expression expression : localForbidden) {
+                    if (expression.getRoot().equals(component)) {
+                        localForbiddenSelectors.get(expression).add(selector);
                     }
                 }
                 clauses.add(new Impl(selector, new Equal(output, Traverse.substitute(component, branchMatching.get(component)))));
@@ -297,8 +295,8 @@ public class TreeBoundedSynthesis {
             branchDependencies.putAll(subresult.branchDependencies);
         }
 
-        for (Program global : forbidden.keySet()) {
-            Program local = forbidden.get(global);
+        for (Expression global : forbidden.keySet()) {
+            Expression local = forbidden.get(global);
             if (localForbiddenLeavesSelectors.containsKey(local)) {
                 globalForbiddenResult.put(global, new ArrayList<>());
                 globalForbiddenResult.get(global).add(localForbiddenLeavesSelectors.get(local)); // matching leaves
@@ -310,7 +308,7 @@ public class TreeBoundedSynthesis {
                     globalForbiddenResult.get(global).add(localForbiddenSelectors.get(local));
                     boolean failed = false;
                     for (Map.Entry<Variable, EncodingResult> entry : subresults.entrySet()) {
-                        Map<Program, List<List<Selector>>> subnodeForbidden = entry.getValue().forbiddenSelectors;
+                        Map<Expression, List<List<Selector>>> subnodeForbidden = entry.getValue().forbiddenSelectors;
                         if (!subnodeForbidden.containsKey(global)) { // means that it is not matched with local program
                             continue;
                         }
@@ -331,9 +329,9 @@ public class TreeBoundedSynthesis {
         return Optional.of(new EncodingResult(tree, nodeChoices, selectedComponent, branchDependencies, componentUsage, globalForbiddenResult, clauses));
     }
 
-    private Pair<Program, Map<Parameter, Constant>> decode(Map<Variable, Constant> assignment,
-                                                           Variable root,
-                                                           EncodingResult result) {
+    private Pair<Expression, Map<Parameter, Constant>> decode(Map<Variable, Constant> assignment,
+                                                              Variable root,
+                                                              EncodingResult result) {
         List<Selector> nodeChoices = result.nodeChoices.get(root);
         Selector choice = nodeChoices.stream().filter(s -> assignment.get(s).equals(BoolConst.TRUE)).findFirst().get();
         Node component = result.selectedComponent.get(choice);
@@ -344,20 +342,20 @@ public class TreeBoundedSynthesis {
         }
 
         if (Traverse.collectByType(component, Hole.class).isEmpty()) {
-            return new ImmutablePair<>(Program.leaf(new Component(component)), parameterValuation);
+            return new ImmutablePair<>(Expression.leaf(component), parameterValuation);
         }
 
-        Map<Hole, Program> args = new HashMap<>();
+        Map<Hole, Expression> args = new HashMap<>();
         List<Variable> children = new ArrayList<>(result.tree.get(root));
         for (Hole input : Traverse.collectByType(component, Hole.class)) {
             Variable child = children.stream().filter(o -> o.getType().equals(input.getType())).findFirst().get();
             children.remove(child);
-            Pair<Program, Map<Parameter, Constant>> subresult = decode(assignment, child, result);
+            Pair<Expression, Map<Parameter, Constant>> subresult = decode(assignment, child, result);
             parameterValuation.putAll(subresult.getRight());
             args.put(input, subresult.getLeft());
         }
 
-        return new ImmutablePair<>(Program.app(new Component(component), args), parameterValuation);
+        return new ImmutablePair<>(Expression.app(component, args), parameterValuation);
     }
 
 }
