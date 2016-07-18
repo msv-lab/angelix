@@ -1,6 +1,7 @@
 package sg.edu.nus.comp.nsynth;
 
 import sg.edu.nus.comp.nsynth.ast.Expression;
+import sg.edu.nus.comp.nsynth.ast.Type;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,12 @@ import java.util.List;
  */
 public abstract class Shape {
     protected List<Expression> forbidden = new ArrayList<>();
+    protected Type outputType;
+
+    public Type getOutputType() {
+        return outputType;
+    }
+
     public List<Expression> getForbidden() {
         return forbidden;
     }

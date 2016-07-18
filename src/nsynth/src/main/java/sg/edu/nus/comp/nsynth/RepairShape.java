@@ -1,6 +1,7 @@
 package sg.edu.nus.comp.nsynth;
 
 import sg.edu.nus.comp.nsynth.ast.Expression;
+import sg.edu.nus.comp.nsynth.ast.TypeInference;
 
 import java.util.List;
 
@@ -14,12 +15,14 @@ public class RepairShape extends Shape {
     public RepairShape(Expression original, SynthesisLevel level) {
         this.original = original;
         this.level = level;
+        this.outputType = TypeInference.typeOf(original.getRoot());
     }
 
     public RepairShape(Expression original, SynthesisLevel level, List<Expression> forbidden) {
         this.original = original;
         this.level = level;
         this.forbidden = forbidden;
+        this.outputType = TypeInference.typeOf(original.getRoot());
     }
 
     public Expression getOriginal() {

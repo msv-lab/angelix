@@ -2,7 +2,9 @@ package sg.edu.nus.comp.nsynth;
 
 import com.google.common.collect.Multiset;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sg.edu.nus.comp.nsynth.ast.*;
@@ -16,14 +18,14 @@ import java.util.stream.Collectors;
 /**
  * Created by Sergey Mechtaev on 2/5/2016.
  */
-public class TreeBoundedEncoding {
+public class TreeBoundedEncoder {
+
+    private Logger logger = LoggerFactory.getLogger(TreeBoundedEncoder.class);
 
     private Shape shape;
-
-    private Logger logger = LoggerFactory.getLogger(TreeBoundedEncoding.class);
     private boolean uniqueUsage = true;
 
-    private class EncodingResult {
+    protected class EncodingInfo {
         // branch values tree
         private Map<Variable, List<Variable>> tree;
 
@@ -45,13 +47,13 @@ public class TreeBoundedEncoding {
 
         private List<Node> clauses;
 
-        public EncodingResult(Map<Variable, List<Variable>> tree,
-                              Map<Variable, List<Selector>> nodeChoices,
-                              Map<Selector, Node> selectedComponent,
-                              Map<Variable, List<Selector>> branchDependencies,
-                              Map<Node, List<Selector>> componentUsage,
-                              Map<Expression, List<List<Selector>>> forbiddenSelectors,
-                              List<Node> clauses) {
+        public EncodingInfo(Map<Variable, List<Variable>> tree,
+                            Map<Variable, List<Selector>> nodeChoices,
+                            Map<Selector, Node> selectedComponent,
+                            Map<Variable, List<Selector>> branchDependencies,
+                            Map<Node, List<Selector>> componentUsage,
+                            Map<Expression, List<List<Selector>>> forbiddenSelectors,
+                            List<Node> clauses) {
             this.tree = tree;
             this.nodeChoices = nodeChoices;
             this.selectedComponent = selectedComponent;
@@ -62,31 +64,28 @@ public class TreeBoundedEncoding {
         }
     }
 
-    private Solver solver;
 
     // NOTE: now forbidden checks prefixes if they are larger than size
-    public TreeBoundedEncoding(Solver solver, Shape shape) {
-        this.solver = solver;
+    public TreeBoundedEncoder(Shape shape) {
         this.shape = shape;
     }
 
-    public TreeBoundedEncoding(Solver solver, Shape shape, boolean uniqueUsage) {
-        this.solver = solver;
+    public TreeBoundedEncoder(Shape shape, boolean uniqueUsage) {
         this.shape = shape;
         this.uniqueUsage = uniqueUsage;
     }
 
-    public Optional<Pair<Expression, Map<Parameter, Constant>>> synthesize(List<? extends TestCase> testSuite,
-
-                                                                           Multiset<Node> components) {
+    /**
+     * @return output variable, synthesis constraints and encoding information
+     */
+    public Triple<Variable, List<Node>, EncodingInfo> encode(Multiset<Node> components) {
         List<Node> uniqueComponents = new ArrayList<>(components.elementSet());
-        ExpressionOutput root;
-        root = new ExpressionOutput(testSuite.get(0).getOutputType());
+        ExpressionOutput root = new ExpressionOutput(shape.getOutputType());
         // top level -> current level
         Map<Expression, Expression> initialForbidden =
                 shape.getForbidden().stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
 
-        Optional<EncodingResult> result;
+        Optional<EncodingInfo> result;
 
         if (shape instanceof BoundedShape) {
             result = encodeBranch(root, ((BoundedShape)shape).getBound(), uniqueComponents, initialForbidden);
@@ -95,16 +94,15 @@ public class TreeBoundedEncoding {
         }
 
         if (!result.isPresent()) {
-            throw new IllegalArgumentException("wrong synthesis input");
-        }
-        List<Node> synthesisClauses = new ArrayList<>();
-        for (TestCase test : testSuite) {
-            for (Node node : result.get().clauses) {
-                synthesisClauses.add(node.instantiate(test));
-            }
-            synthesisClauses.addAll(testToConstraint(test, root));
+            throw new RuntimeException("wrong synthesis configuration");
         }
 
+        List<Node> synthesisConstraints = new ArrayList<>();
+
+        // choice synthesis constraints:
+        synthesisConstraints.addAll(result.get().clauses);
+
+        // branch activation constraints:
         for (Map.Entry<Variable, List<Selector>> entry : result.get().nodeChoices.entrySet()) {
             if (!entry.getValue().isEmpty()) {
                 Node precondition;
@@ -113,44 +111,34 @@ public class TreeBoundedEncoding {
                 } else {
                     precondition = BoolConst.TRUE;
                 }
-                synthesisClauses.add(new Impl(precondition, Node.disjunction(entry.getValue())));
+                synthesisConstraints.add(new Impl(precondition, Node.disjunction(entry.getValue())));
             }
         }
+
+        // forbidden constrains:
         for (List<List<Selector>> selectors : result.get().forbiddenSelectors.values()) {
             if (!selectors.isEmpty()) {
-                synthesisClauses.add(
+                synthesisConstraints.add(
                         Node.disjunction(selectors.stream().map(l ->
                                 Node.conjunction(l.stream().map(Not::new).collect(Collectors.toList()))).collect(Collectors.toList())));
             }
         }
+
+        // uniqueness constraints:
         if (uniqueUsage) {
-            for (Node component : uniqueComponents) {
+            for (Node component : components.elementSet()) {
                 if (result.get().componentUsage.containsKey(component)) {
-                    synthesisClauses.addAll(Cardinality.SortingNetwork.atMostK(components.count(component),
+                    synthesisConstraints.addAll(Cardinality.SortingNetwork.atMostK(components.count(component),
                             result.get().componentUsage.get(component)));
                 }
             }
         }
 
-        Optional<Map<Variable, Constant>> solverResult = solver.sat(synthesisClauses);
-        if (solverResult.isPresent()) {
-            Pair<Expression, Map<Parameter, Constant>> decoded = decode(solverResult.get(), root, result.get());
-            return Optional.of(decoded);
-        } else {
-            return Optional.empty();
-        }
+
+        return new ImmutableTriple<>(root, synthesisConstraints, result.get());
     }
 
-    private List<Node> testToConstraint(TestCase testCase, Variable output) {
-        List<Node> clauses = new ArrayList<>();
-        List<Node> testClauses = testCase.getConstraints(output);
-        for (Node clause : testClauses) {
-            clauses.add(clause.instantiate(testCase));
-        }
-        return clauses;
-    }
-
-    private Optional<EncodingResult> encodeBranch(Variable output, int size, List<Node> components, Map<Expression, Expression> forbidden) {
+    private Optional<EncodingInfo> encodeBranch(Variable output, int size, List<Node> components, Map<Expression, Expression> forbidden) {
         // Local results:
         List<Selector> currentChoices = new ArrayList<>();
         Map<Selector, Node> selectedComponent = new HashMap<>();
@@ -196,7 +184,7 @@ public class TreeBoundedEncoding {
 
         List<Variable> children = new ArrayList<>();
         // from child branch to its encoding:
-        Map<Variable, EncodingResult> subresults = new HashMap<>();
+        Map<Variable, EncodingInfo> subresults = new HashMap<>();
 
         List<Node> feasibleComponents = new ArrayList<>(functionComponents);
 
@@ -246,7 +234,7 @@ public class TreeBoundedEncoding {
             List<Variable> infeasibleChildren = new ArrayList<>();
             // encoding subnodes and removing infeasible children and components:
             for (Variable child : children) {
-                Optional<EncodingResult> subresult = encodeBranch(child, size - 1, components, subnodeForbidden.get(child));
+                Optional<EncodingInfo> subresult = encodeBranch(child, size - 1, components, subnodeForbidden.get(child));
                 if (!subresult.isPresent()) {
                     feasibleComponents.removeAll(componentDependencies.get(child));
                     infeasibleChildren.add(child);
@@ -293,7 +281,7 @@ public class TreeBoundedEncoding {
         tree.put(output, children);
 
         // merging subnodes information:
-        for (EncodingResult subresult: subresults.values()) {
+        for (EncodingInfo subresult: subresults.values()) {
             clauses.addAll(subresult.clauses);
             for (Map.Entry<Node, List<Selector>> usage : subresult.componentUsage.entrySet()) {
                 if (componentUsage.containsKey(usage.getKey())) {
@@ -320,7 +308,7 @@ public class TreeBoundedEncoding {
                     globalForbiddenResult.put(global, new ArrayList<>());
                     globalForbiddenResult.get(global).add(localForbiddenSelectors.get(local));
                     boolean failed = false;
-                    for (Map.Entry<Variable, EncodingResult> entry : subresults.entrySet()) {
+                    for (Map.Entry<Variable, EncodingInfo> entry : subresults.entrySet()) {
                         Map<Expression, List<List<Selector>>> subnodeForbidden = entry.getValue().forbiddenSelectors;
                         if (!subnodeForbidden.containsKey(global)) { // means that it is not matched with local program
                             continue;
@@ -339,12 +327,12 @@ public class TreeBoundedEncoding {
             }
         }
 
-        return Optional.of(new EncodingResult(tree, nodeChoices, selectedComponent, branchDependencies, componentUsage, globalForbiddenResult, clauses));
+        return Optional.of(new EncodingInfo(tree, nodeChoices, selectedComponent, branchDependencies, componentUsage, globalForbiddenResult, clauses));
     }
 
-    private Pair<Expression, Map<Parameter, Constant>> decode(Map<Variable, Constant> assignment,
-                                                              Variable root,
-                                                              EncodingResult result) {
+    protected Pair<Expression, Map<Parameter, Constant>> decode(Map<Variable, Constant> assignment,
+                                                                Variable root,
+                                                                EncodingInfo result) {
         List<Selector> nodeChoices = result.nodeChoices.get(root);
         Selector choice = nodeChoices.stream().filter(s -> assignment.get(s).equals(BoolConst.TRUE)).findFirst().get();
         Node component = result.selectedComponent.get(choice);
