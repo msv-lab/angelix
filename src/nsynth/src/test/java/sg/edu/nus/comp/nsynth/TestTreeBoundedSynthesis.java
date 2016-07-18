@@ -150,7 +150,6 @@ public class TestTreeBoundedSynthesis {
         assertFalse(result.isPresent());
     }
 
-
     @Test
     public void testForbiddenDoubleNegation() {
         Multiset<Node> components = HashMultiset.create();

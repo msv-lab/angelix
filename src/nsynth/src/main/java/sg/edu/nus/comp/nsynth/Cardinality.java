@@ -120,12 +120,24 @@ public class Cardinality {
             List<? extends Variable> oddResultVariables = oddResult.getRight();
             List<? extends Variable> evenResultVariables = evenResult.getRight();
 
-            if ((a % 2 == 0 && b % 2 == 0) || (a % 2 == 1 && b % 2 == 1)) {
+            if (a % 2 == 0 && b % 2 == 0) {
                 Variable z1 = oddResultVariables.get(0);
                 List<? extends Variable> restOfOdds = oddResultVariables.subList(1, oddResultVariables.size());
                 Variable zLast = evenResultVariables.get(evenResultVariables.size() - 1);
-                List<? extends Variable> restOfEvens = evenResultVariables.subList(0, oddResultVariables.size() - 1);
+                List<? extends Variable> restOfEvens = evenResultVariables.subList(0, evenResultVariables.size() - 1);
                 Pair<List<Node>, List<? extends Variable>> pairwiseResult = pairwiseComp(restOfEvens, restOfOdds);
+                algorithm.addAll(pairwiseResult.getLeft());
+                List<? extends Variable> pairwiseResultVariables = pairwiseResult.getRight();
+                sorted.add(z1);
+                sorted.addAll(pairwiseResultVariables);
+                sorted.add(zLast);
+            }
+
+            if (a % 2 == 1 && b % 2 == 1) {
+                Variable z1 = oddResultVariables.get(0);
+                Variable zLast = oddResultVariables.get(oddResultVariables.size() - 1);
+                List<? extends Variable> restOfOdds = oddResultVariables.subList(1, oddResultVariables.size() - 1);
+                Pair<List<Node>, List<? extends Variable>> pairwiseResult = pairwiseComp(evenResultVariables, restOfOdds);
                 algorithm.addAll(pairwiseResult.getLeft());
                 List<? extends Variable> pairwiseResultVariables = pairwiseResult.getRight();
                 sorted.add(z1);

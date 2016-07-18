@@ -119,4 +119,14 @@ public class Expression {
     public String toString() {
         return this.getSemantics().toString();
     }
+
+    public static boolean isLeaf(Node component) {
+        return Traverse.collectByType(component, Hole.class).isEmpty();
+    }
+
+    public static List<Hole> getComponentInputs(Node component) {
+        //FIXME: this could be not good if set is non-deterministic
+        return new ArrayList<>(Traverse.collectByType(component, Hole.class));
+    }
+
 }

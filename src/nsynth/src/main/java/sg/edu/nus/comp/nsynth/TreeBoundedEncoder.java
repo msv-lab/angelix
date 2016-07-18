@@ -45,6 +45,9 @@ public class TreeBoundedEncoder {
         // list of lists because at each node there can be several matches that must be disjoined
         private Map<Expression, List<List<Selector>>> forbiddenSelectors;
 
+        //selectors corresponding to original program
+        private List<Selector> originalSelectors;
+
         private List<Node> clauses;
 
         public EncodingInfo(Map<Variable, List<Variable>> tree,
@@ -53,6 +56,7 @@ public class TreeBoundedEncoder {
                             Map<Variable, List<Selector>> branchDependencies,
                             Map<Node, List<Selector>> componentUsage,
                             Map<Expression, List<List<Selector>>> forbiddenSelectors,
+                            List<Selector> originalSelectors,
                             List<Node> clauses) {
             this.tree = tree;
             this.nodeChoices = nodeChoices;
@@ -60,10 +64,10 @@ public class TreeBoundedEncoder {
             this.branchDependencies = branchDependencies;
             this.componentUsage = componentUsage;
             this.forbiddenSelectors = forbiddenSelectors;
+            this.originalSelectors = originalSelectors;
             this.clauses = clauses;
         }
     }
-
 
     // NOTE: now forbidden checks prefixes if they are larger than size
     public TreeBoundedEncoder(Shape shape) {
@@ -87,11 +91,7 @@ public class TreeBoundedEncoder {
 
         Optional<EncodingInfo> result;
 
-        if (shape instanceof BoundedShape) {
-            result = encodeBranch(root, ((BoundedShape)shape).getBound(), uniqueComponents, initialForbidden);
-        } else {
-            throw new UnsupportedOperationException();
-        }
+        result = encodeBranch(root, shape, uniqueComponents, initialForbidden);
 
         if (!result.isPresent()) {
             throw new RuntimeException("wrong synthesis configuration");
@@ -138,7 +138,7 @@ public class TreeBoundedEncoder {
         return new ImmutableTriple<>(root, synthesisConstraints, result.get());
     }
 
-    private Optional<EncodingInfo> encodeBranch(Variable output, int size, List<Node> components, Map<Expression, Expression> forbidden) {
+    private Optional<EncodingInfo> encodeBranch(Variable output, Shape shape, List<Node> components, Map<Expression, Expression> forbidden) {
         // Local results:
         List<Selector> currentChoices = new ArrayList<>();
         Map<Selector, Node> selectedComponent = new HashMap<>();
@@ -147,12 +147,11 @@ public class TreeBoundedEncoder {
 
         List<Node> clauses = new ArrayList<>();
 
-        List<Node> relevantComponents = new ArrayList<>(components);
-        relevantComponents.removeIf(c -> !TypeInference.typeOf(c).equals(output.getType()));
+        List<Node> relevantComponents = selectRelevantComponents(components, shape);
         List<Node> leafComponents = new ArrayList<>(relevantComponents);
-        leafComponents.removeIf(c -> !Traverse.collectByType(c, Hole.class).isEmpty());
+        leafComponents.removeIf(c -> !Expression.isLeaf(c));
         List<Node> functionComponents = new ArrayList<>(relevantComponents);
-        functionComponents.removeIf(c -> Traverse.collectByType(c, Hole.class).isEmpty());
+        functionComponents.removeIf(Expression::isLeaf);
 
         Set<Expression> localForbidden = new HashSet<>(forbidden.values());
         // mapping from current level to selectors
@@ -161,7 +160,7 @@ public class TreeBoundedEncoder {
             localForbiddenSelectors.put(expression, new ArrayList<>());
         }
         Map<Expression, List<Selector>> localForbiddenLeavesSelectors = new HashMap<>();
-        Map<Expression, List<List<Selector>>> globalForbiddenResult = new HashMap<>();
+        List<Selector> originalSelectors = new ArrayList<>();
 
         for (Node component : leafComponents) {
             Selector selector = new Selector();
@@ -171,6 +170,11 @@ public class TreeBoundedEncoder {
                         localForbiddenLeavesSelectors.put(expression, new ArrayList<>());
                     }
                     localForbiddenLeavesSelectors.get(expression).add(selector);
+                }
+            }
+            if (shape instanceof RepairShape) {
+                if (component.equals(((RepairShape) shape).getOriginal().getRoot())) {
+                    originalSelectors.add(selector);
                 }
             }
             clauses.add(new Impl(selector, new Equal(output, component)));
@@ -188,7 +192,20 @@ public class TreeBoundedEncoder {
 
         List<Node> feasibleComponents = new ArrayList<>(functionComponents);
 
-        if (size > 1) {
+        boolean exploreSubnodes = false;
+
+        if (shape instanceof BoundedShape) {
+            int size = ((BoundedShape) shape).getBound();
+            if (size > 1) {
+                exploreSubnodes = true;
+            }
+        } else if (shape instanceof RepairShape) {
+            throw new UnsupportedOperationException();
+        } else {
+            throw new UnsupportedOperationException();
+        }
+
+        if (exploreSubnodes) {
             Map<Node, Map<Hole, Variable>> branchMatching = new HashMap<>();
             // components dependent of the branch:
             Map<Variable, List<Node>> componentDependencies = new HashMap<>();
@@ -198,7 +215,7 @@ public class TreeBoundedEncoder {
             for (Node component : functionComponents) {
                 Map<Hole, Variable> args = new HashMap<>();
                 List<Variable> availableChildren = new ArrayList<>(children);
-                for (Hole input : Traverse.collectByType(component, Hole.class)) {
+                for (Hole input : Expression.getComponentInputs(component)) {
                     Variable child;
                     Optional<Variable> existingChild = availableChildren.stream().filter(o -> o.getType().equals(input.getType())).findFirst();
                     if (existingChild.isPresent()) {
@@ -232,9 +249,20 @@ public class TreeBoundedEncoder {
             }
 
             List<Variable> infeasibleChildren = new ArrayList<>();
+
             // encoding subnodes and removing infeasible children and components:
             for (Variable child : children) {
-                Optional<EncodingInfo> subresult = encodeBranch(child, size - 1, components, subnodeForbidden.get(child));
+                Shape subshape;
+                if (shape instanceof BoundedShape) {
+                    int size = ((BoundedShape) shape).getBound();
+                    subshape = new BoundedShape(size - 1, child.getType()); // don't care about forbidden here
+                } else if (shape instanceof RepairShape) {
+                    throw new UnsupportedOperationException();
+                } else {
+                    throw new UnsupportedOperationException();
+                }
+
+                Optional<EncodingInfo> subresult = encodeBranch(child, subshape, components, subnodeForbidden.get(child));
                 if (!subresult.isPresent()) {
                     feasibleComponents.removeAll(componentDependencies.get(child));
                     infeasibleChildren.add(child);
@@ -267,7 +295,6 @@ public class TreeBoundedEncoder {
                 selectedComponent.put(selector, component);
                 currentChoices.add(selector);
             }
-
         }
 
         if (currentChoices.isEmpty()) {
@@ -295,6 +322,8 @@ public class TreeBoundedEncoder {
             selectedComponent.putAll(subresult.selectedComponent);
             branchDependencies.putAll(subresult.branchDependencies);
         }
+
+        Map<Expression, List<List<Selector>>> globalForbiddenResult = new HashMap<>();
 
         for (Expression global : forbidden.keySet()) {
             Expression local = forbidden.get(global);
@@ -327,7 +356,73 @@ public class TreeBoundedEncoder {
             }
         }
 
-        return Optional.of(new EncodingInfo(tree, nodeChoices, selectedComponent, branchDependencies, componentUsage, globalForbiddenResult, clauses));
+        return Optional.of(new EncodingInfo(tree, nodeChoices, selectedComponent, branchDependencies, componentUsage, globalForbiddenResult, originalSelectors, clauses));
+    }
+
+    /**
+     * Select all components that can be relevant at current encoding node for the current synthesis level.
+     */
+    private List<Node> selectRelevantComponents(List<Node> components, Shape shape) {
+        List<Node> relevantComponents = new ArrayList<>();
+        if (shape instanceof BoundedShape) {
+            relevantComponents.addAll(components);
+        } else if (shape instanceof RepairShape){
+            RepairShape repairShape = (RepairShape) shape;
+            Node root = repairShape.getOriginal().getRoot();
+            assert components.contains(root);
+            switch (repairShape.getLevel()) {
+                case EMPTY:
+                    relevantComponents.add(root);
+                    break;
+                case OPERATORS:
+                    if (!Expression.isLeaf(root)) {
+                        relevantComponents.addAll(filterComponentsByType(root, components));
+                    } else {
+                        relevantComponents.add(root);
+                    }
+                    break;
+                case LEAVES:
+                    if (Expression.isLeaf(root)) {
+                        relevantComponents.addAll(filterComponentsByType(root, components));
+                    } else {
+                        relevantComponents.add(root);
+                    }
+                    break;
+                case LOGIC:
+                    // because we need special encoding for that
+                    throw new UnsupportedOperationException();
+                case ARITHMETIC:
+                    if (Expression.isLeaf(root) && TypeInference.typeOf(root).equals(IntType.TYPE)) {
+                        relevantComponents.addAll(components);
+                    } else {
+                        relevantComponents.add(root);
+                    }
+                    break;
+                case CONDITIONAL:
+                    // because we need special encoding for that
+                    throw new UnsupportedOperationException();
+            }
+        } else {
+            throw new UnsupportedOperationException();
+        }
+        relevantComponents.removeIf(c -> !TypeInference.typeOf(c).equals(shape.getOutputType()));
+        return relevantComponents;
+    }
+
+    /**
+     * @return have same inputs types (and order) and output type as pattern
+     */
+    private List<Node> filterComponentsByType(Node pattern, List<Node> components) {
+        List<Node> relevant = new ArrayList<>();
+        Type outputType = TypeInference.typeOf(pattern);
+        List<Type> args = Expression.getComponentInputs(pattern).stream().map(Hole::getType).collect(Collectors.toList());
+        for (Node node : components) {
+            if (outputType.equals(TypeInference.typeOf(node)) &&
+                    args.equals(Expression.getComponentInputs(node).stream().map(Hole::getType).collect(Collectors.toList()))) {
+                relevant.add(node);
+            }
+        }
+        return relevant;
     }
 
     protected Pair<Expression, Map<Parameter, Constant>> decode(Map<Variable, Constant> assignment,
@@ -342,13 +437,13 @@ public class TreeBoundedEncoder {
             parameterValuation.put(p, assignment.get(p));
         }
 
-        if (Traverse.collectByType(component, Hole.class).isEmpty()) {
+        if (Expression.isLeaf(component)) {
             return new ImmutablePair<>(Expression.leaf(component), parameterValuation);
         }
 
         Map<Hole, Expression> args = new HashMap<>();
         List<Variable> children = new ArrayList<>(result.tree.get(root));
-        for (Hole input : Traverse.collectByType(component, Hole.class)) {
+        for (Hole input : Expression.getComponentInputs(component)) {
             Variable child = children.stream().filter(o -> o.getType().equals(input.getType())).findFirst().get();
             children.remove(child);
             Pair<Expression, Map<Parameter, Constant>> subresult = decode(assignment, child, result);
