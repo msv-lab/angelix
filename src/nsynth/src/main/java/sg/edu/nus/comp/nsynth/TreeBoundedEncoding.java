@@ -16,11 +16,12 @@ import java.util.stream.Collectors;
 /**
  * Created by Sergey Mechtaev on 2/5/2016.
  */
-public class TreeBoundedSynthesis {
+public class TreeBoundedEncoding {
 
-    private TBSConfig config;
+    private Shape shape;
 
-    private Logger logger = LoggerFactory.getLogger(TreeBoundedSynthesis.class);
+    private Logger logger = LoggerFactory.getLogger(TreeBoundedEncoding.class);
+    private boolean uniqueUsage = true;
 
     private class EncodingResult {
         // branch values tree
@@ -64,9 +65,15 @@ public class TreeBoundedSynthesis {
     private Solver solver;
 
     // NOTE: now forbidden checks prefixes if they are larger than size
-    public TreeBoundedSynthesis(Solver solver, TBSConfig config) {
+    public TreeBoundedEncoding(Solver solver, Shape shape) {
         this.solver = solver;
-        this.config = config;
+        this.shape = shape;
+    }
+
+    public TreeBoundedEncoding(Solver solver, Shape shape, boolean uniqueUsage) {
+        this.solver = solver;
+        this.shape = shape;
+        this.uniqueUsage = uniqueUsage;
     }
 
     public Optional<Pair<Expression, Map<Parameter, Constant>>> synthesize(List<? extends TestCase> testSuite,
@@ -77,9 +84,15 @@ public class TreeBoundedSynthesis {
         root = new ExpressionOutput(testSuite.get(0).getOutputType());
         // top level -> current level
         Map<Expression, Expression> initialForbidden =
-                config.forbidden.stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
+                shape.getForbidden().stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
 
-        Optional<EncodingResult> result = encodeBranch(root, config.bound, uniqueComponents, initialForbidden);
+        Optional<EncodingResult> result;
+
+        if (shape instanceof BoundedShape) {
+            result = encodeBranch(root, ((BoundedShape)shape).getBound(), uniqueComponents, initialForbidden);
+        } else {
+            throw new UnsupportedOperationException();
+        }
 
         if (!result.isPresent()) {
             throw new IllegalArgumentException("wrong synthesis input");
@@ -110,7 +123,7 @@ public class TreeBoundedSynthesis {
                                 Node.conjunction(l.stream().map(Not::new).collect(Collectors.toList()))).collect(Collectors.toList())));
             }
         }
-        if (config.uniqueUsage) {
+        if (uniqueUsage) {
             for (Node component : uniqueComponents) {
                 if (result.get().componentUsage.containsKey(component)) {
                     synthesisClauses.addAll(Cardinality.SortingNetwork.atMostK(components.count(component),
