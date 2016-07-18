@@ -27,10 +27,10 @@ public class TestTreeBoundedSynthesis {
 
     @BeforeClass
     public static void initSolver() {
-        intSynthesizer = new Synthesis(new TreeBoundedEncoder(new BoundedShape(2, IntType.TYPE), false));
-        boolSynthesizer = new Synthesis(new TreeBoundedEncoder(new BoundedShape(2, BoolType.TYPE), false));
-        intSynthesizerUnique = new Synthesis(new TreeBoundedEncoder(new BoundedShape(2, IntType.TYPE)));
-        boolSynthesizerUnique = new Synthesis(new TreeBoundedEncoder(new BoundedShape(2, BoolType.TYPE)));
+        intSynthesizer = new Synthesis(new BoundedShape(2, IntType.TYPE), new TreeBoundedEncoder(false));
+        boolSynthesizer = new Synthesis(new BoundedShape(2, BoolType.TYPE), new TreeBoundedEncoder(false));
+        intSynthesizerUnique = new Synthesis(new BoundedShape(2, IntType.TYPE), new TreeBoundedEncoder());
+        boolSynthesizerUnique = new Synthesis(new BoundedShape(2, BoolType.TYPE), new TreeBoundedEncoder());
     }
 
     private final ProgramVariable x = ProgramVariable.mkInt("x");
@@ -86,7 +86,7 @@ public class TestTreeBoundedSynthesis {
         forbidden.add(Expression.app(Components.ADD, args));
 
         Synthesis synthesizerWithForbidden =
-                new Synthesis(new TreeBoundedEncoder(new BoundedShape(2, forbidden), false));
+                new Synthesis(new BoundedShape(2, forbidden), new TreeBoundedEncoder(false));
         Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertTrue(result.isPresent());
         Node node = result.get().getLeft().getSemantics(result.get().getRight());
@@ -122,7 +122,7 @@ public class TestTreeBoundedSynthesis {
         forbidden.add(Expression.app(Components.ADD, args2));
 
         Synthesis synthesizerWithForbidden =
-                new Synthesis(new TreeBoundedEncoder(new BoundedShape(2, forbidden), false));
+                new Synthesis(new BoundedShape(2, forbidden), new TreeBoundedEncoder(false));
         Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertFalse(result.isPresent());
     }
@@ -145,7 +145,7 @@ public class TestTreeBoundedSynthesis {
         forbidden.add(Expression.leaf(p));
 
         Synthesis synthesizerWithForbidden =
-                new Synthesis(new TreeBoundedEncoder(new BoundedShape(2, forbidden)));
+                new Synthesis(new BoundedShape(2, forbidden), new TreeBoundedEncoder());
         Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertFalse(result.isPresent());
     }
@@ -172,7 +172,7 @@ public class TestTreeBoundedSynthesis {
         forbidden.add(Expression.app(Components.MINUS, args2));
 
         Synthesis synthesizerWithForbidden =
-                new Synthesis(new TreeBoundedEncoder(new BoundedShape(3, forbidden)));
+                new Synthesis(new BoundedShape(3, forbidden), new TreeBoundedEncoder());
         Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertFalse(result.isPresent());
     }
@@ -225,7 +225,7 @@ public class TestTreeBoundedSynthesis {
         forbidden.add(Expression.app(Components.ITE, args2));
 
         Synthesis synthesizerWithForbidden =
-                new Synthesis(new TreeBoundedEncoder(new BoundedShape(3, forbidden)));
+                new Synthesis(new BoundedShape(3, forbidden), new TreeBoundedEncoder());
         Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertFalse(result.isPresent());
     }
@@ -244,7 +244,7 @@ public class TestTreeBoundedSynthesis {
         testCase1.setId("t1");
         testSuite.add(testCase1);
 
-        Synthesis synthesizerWithForbidden = new Synthesis(new TreeBoundedEncoder(new BoundedShape(3, IntType.TYPE)));
+        Synthesis synthesizerWithForbidden = new Synthesis(new BoundedShape(3, IntType.TYPE), new TreeBoundedEncoder());
         Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertTrue(result.isPresent());
     }
@@ -286,7 +286,7 @@ public class TestTreeBoundedSynthesis {
         forbidden.add(Expression.app(Components.ADD, args));
 
         Synthesis synthesizerWithForbidden =
-                new Synthesis(new TreeBoundedEncoder(new BoundedShape(3, forbidden)));
+                new Synthesis(new BoundedShape(3, forbidden), new TreeBoundedEncoder());
         Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertFalse(result.isPresent());
     }
@@ -317,7 +317,7 @@ public class TestTreeBoundedSynthesis {
         forbidden.add(Expression.app(Components.SUB, args));
 
         Synthesis synthesizerWithForbidden =
-                new Synthesis(new TreeBoundedEncoder(new BoundedShape(2, forbidden), false));
+                new Synthesis(new BoundedShape(2, forbidden), new TreeBoundedEncoder(false));
         Optional<Pair<Expression, Map<Parameter, Constant>>> result = synthesizerWithForbidden.synthesize(testSuite, components);
         assertTrue(result.isPresent());
         Node node = result.get().getLeft().getSemantics(result.get().getRight());

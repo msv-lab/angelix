@@ -16,20 +16,22 @@ import java.util.Optional;
 public class Synthesis {
 
     private TreeBoundedEncoder encoder;
+    private Shape shape;
     private Solver solver = new Z3();
 
-    public Synthesis(TreeBoundedEncoder encoder) {
+    public Synthesis(Shape shape, TreeBoundedEncoder encoder) {
+        this.shape = shape;
         this.encoder = encoder;
     }
 
     public Optional<Pair<Expression, Map<Parameter, Constant>>> synthesize(List<? extends TestCase> testSuite,
                                                                            Multiset<Node> components) {
 
-        Triple<Variable, List<Node>, TreeBoundedEncoder.EncodingInfo> encoding = encoder.encode(components);
+        Triple<Variable, Pair<List<Node>, List<Node>>, TreeBoundedEncoder.EncodingInfo> encoding = encoder.encode(shape, components);
 
         List<Node> synthesisClauses = new ArrayList<>();
         for (TestCase test : testSuite) {
-            for (Node node : encoding.getMiddle()) {
+            for (Node node : encoding.getMiddle().getLeft()) {
                 //FIXME: here we duplicate a lot of constraints:
                 synthesisClauses.add(node.instantiate(test));
             }
