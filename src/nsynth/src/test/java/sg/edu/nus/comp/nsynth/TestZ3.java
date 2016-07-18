@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class TestZ3 {
 
-    private static Solver solver;
+    private static Z3 solver;
 
     @BeforeClass
     public static void initSolver() {
@@ -53,10 +53,25 @@ public class TestZ3 {
         ArrayList<Node> soft = new ArrayList<>();
         soft.add(new Not(a));
         soft.add(new Not(b));
+
         Optional<Map<Variable, Constant>> result = solver.maxsat(hard, soft);
         assertTrue(result.isPresent());
-        assertTrue(((BoolConst) result.get().get(a)).getValue() || ((BoolConst) result.get().get(b)).getValue());
-        assertFalse(((BoolConst) result.get().get(a)).getValue() && ((BoolConst) result.get().get(b)).getValue());
+        boolean aVal = ((BoolConst) result.get().get(a)).getValue();
+        boolean bVal = ((BoolConst) result.get().get(b)).getValue();
+        assertTrue(aVal || bVal);
+        assertFalse(aVal && bVal);
+
+        solver.enableCustomMaxsatWithBound(2);
+        Optional<Map<Variable, Constant>> result2 = solver.maxsat(hard, soft);
+        try {
+            assertTrue(result2.isPresent());
+            boolean aVal2 = ((BoolConst) result2.get().get(a)).getValue();
+            boolean bVal2 = ((BoolConst) result2.get().get(b)).getValue();
+            assertTrue(aVal2 || bVal2);
+            assertFalse(aVal2 && bVal2);
+        } finally {
+            solver.disableCustomMaxsat();
+        }
     }
 
 }
