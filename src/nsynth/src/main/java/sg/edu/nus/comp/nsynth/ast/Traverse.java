@@ -27,8 +27,8 @@ public class Traverse {
         });
     }
 
-
-    public static <T> Set<T> collectByType(Node node, Class<T> type) {
+    //left-to-right
+    public static <T> List<T> collectByType(Node node, Class<T> type) {
         CollectVisitor visitor = new CollectVisitor(type);
         node.accept(visitor);
         return visitor.getCollected();
@@ -36,20 +36,23 @@ public class Traverse {
 
     private static class CollectVisitor<T> implements BottomUpVisitor {
 
-        public Set<T> getCollected() {
-            return collected;
+        public List<T> getCollected() {
+            return collectedList;
         }
 
         private Set<T> collected;
+        private List<T> collectedList;
         private Class<T> type;
 
         public CollectVisitor(Class<T> type) {
             this.type = type;
             collected = new HashSet<>();
+            collectedList = new ArrayList<T>();
         }
 
         private void addIfMatches(Node node) {
-            if (type.isInstance(node)) {
+            if (type.isInstance(node) && !collected.contains((T) node)) {
+                collectedList.add((T) node);
                 collected.add((T) node);
             }
         }
@@ -183,7 +186,6 @@ public class Traverse {
         public void visit(Selector selector) {
             addIfMatches(selector);
         }
-
 
         @Override
         public void visit(BranchOutput branchOutput) {

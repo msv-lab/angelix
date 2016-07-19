@@ -190,7 +190,6 @@ public class TestPatchSynthesis {
                 synthesizer.repair(original, testSuite, components, SynthesisLevel.SUBSTITUTION);
         assertTrue(result.isPresent());
         Node node = result.get().getLeft().getSemantics(result.get().getRight());
-        System.out.println(node);
         assertTrue(node.equals(new Add(x, IntConst.of(1))) || node.equals(new Add(IntConst.of(1), x)));
     }
 
@@ -224,14 +223,39 @@ public class TestPatchSynthesis {
         Expression original = Expression.app(Library.GT, args);
 
         Optional<Pair<Expression, Map<Parameter, Constant>>> result =
-                synthesizer.repair(original, testSuite, components, SynthesisLevel.LOGIC);
+                synthesizer.repair(original, testSuite, components, SynthesisLevel.CONDITIONAL);
         assertTrue(result.isPresent());
         Node node = result.get().getLeft().getSemantics(result.get().getRight());
-        System.out.println(node);
         assertTrue(node.equals(new Or(new Greater(x, y), new Equal(x, y))) ||
                 node.equals(new Or(new Greater(x, y), new Equal(y, x))));
     }
 
+    @Test
+    public void testConditional() {
+        Multiset<Node> components = HashMultiset.create();
+        components.add(x, 2);
+        components.add(y, 2);
+        components.add(Library.GT);
+        components.add(Library.SUB);
 
+        ArrayList<TestCase> testSuite = new ArrayList<>();
+        Map<ProgramVariable, Node> assignment1 = new HashMap<>();
+        assignment1.put(x, IntConst.of(2));
+        assignment1.put(y, IntConst.of(1));
+        testSuite.add(TestCase.ofAssignment(assignment1, IntConst.of(2)));
+
+        Map<ProgramVariable, Node> assignment2 = new HashMap<>();
+        assignment2.put(x, IntConst.of(1));
+        assignment2.put(y, IntConst.of(2));
+        testSuite.add(TestCase.ofAssignment(assignment2, IntConst.of(2)));
+
+        Expression original = Expression.leaf(x);
+
+        Optional<Pair<Expression, Map<Parameter, Constant>>> result =
+                synthesizer.repair(original, testSuite, components, SynthesisLevel.CONDITIONAL);
+        assertTrue(result.isPresent());
+        Node node = result.get().getLeft().getSemantics(result.get().getRight());
+        Assert.assertEquals(new ITE(new Greater(x, y), x, y), node);
+    }
 
 }

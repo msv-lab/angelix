@@ -57,7 +57,6 @@ public class PatchSynthesis {
         }
 
         List<Node> soft = encoding.getMiddle().getRight();
-
         Optional<Map<Variable, Constant>> solverResult = solver.maxsat(hard, soft);
         if (solverResult.isPresent()) {
             Pair<Expression, Map<Parameter, Constant>> decoded =

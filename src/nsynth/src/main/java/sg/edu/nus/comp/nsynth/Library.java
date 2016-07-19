@@ -33,7 +33,7 @@ public class Library {
     public static final BinaryOp IFF = new Iff(a, b);
     public static final UnaryOp NOT = new Not(a);
 
-    public static final Application ITE = new ITE(a, i, j);
+    public static final ITE ITE = new ITE(a, i, j);
 
     public static Hole ID(Type type) {
         if (type.equals(IntType.TYPE)) {

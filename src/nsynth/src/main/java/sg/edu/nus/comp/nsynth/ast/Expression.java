@@ -125,8 +125,7 @@ public class Expression {
     }
 
     public static List<Hole> getComponentInputs(Node component) {
-        //FIXME: this could be not good if set is non-deterministic
-        return new ArrayList<>(Traverse.collectByType(component, Hole.class));
+        return Traverse.collectByType(component, Hole.class);
     }
 
 }
