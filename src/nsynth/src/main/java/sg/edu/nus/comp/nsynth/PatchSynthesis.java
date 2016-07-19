@@ -15,7 +15,21 @@ import java.util.Optional;
  */
 public class PatchSynthesis {
 
-    private Solver solver = new Z3();
+    private List<Expression> antiPatterns;
+    private Z3 solver;
+
+    public PatchSynthesis() {
+        this.antiPatterns = new ArrayList<>();
+        this.solver = new Z3();
+    }
+
+    public PatchSynthesis(List<Expression> antiPatterns, Optional<Integer> bound) {
+        this.antiPatterns = antiPatterns;
+        this.solver = new Z3();
+        if (bound.isPresent()) {
+            this.solver.enableCustomMaxsatWithBound(bound.get());
+        }
+    }
 
     public Optional<Pair<Expression, Map<Parameter, Constant>>> repair(Expression original,
                                                                        List<? extends TestCase> testSuite,
@@ -23,7 +37,13 @@ public class PatchSynthesis {
                                                                        SynthesisLevel level) {
 
         TreeBoundedEncoder encoder = new TreeBoundedEncoder();
-        RepairShape shape = new RepairShape(original, level);
+        RepairShape shape;
+
+        if (antiPatterns.isEmpty()) {
+            shape = new RepairShape(original, level);
+        } else {
+            shape = new RepairShape(original, level, antiPatterns);
+        }
 
         Triple<Variable, Pair<List<Node>, List<Node>>, TreeBoundedEncoder.EncodingInfo> encoding = encoder.encode(shape, components);
 

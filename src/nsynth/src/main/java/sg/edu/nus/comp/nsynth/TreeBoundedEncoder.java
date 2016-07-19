@@ -134,9 +134,7 @@ public class TreeBoundedEncoder {
             }
         }
 
-        for (Selector selector : result.get().originalSelectors) {
-            soft.add(new Not(selector));
-        }
+        soft.addAll(result.get().originalSelectors);
 
         return new ImmutableTriple<>(root, new ImmutablePair<>(hard, soft), result.get());
     }
