@@ -59,7 +59,9 @@ public interface BottomUpVisitor {
 
     void visit(ExpressionOutput expressionOutput);
 
-    void visit(Indexed indexed);
+    void visit(ExecutionInstance executionInstance);
 
     void visit(NotEqual notEqual);
+
+    void visit(StatementInstance statementInstance);
 }

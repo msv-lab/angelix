@@ -38,8 +38,8 @@ public class TestPatchSynthesis {
         Multiset<Node> components = HashMultiset.create();
         components.add(x);
         components.add(y);
-        components.add(Components.ADD);
-        components.add(Components.SUB);
+        components.add(Library.ADD);
+        components.add(Library.SUB);
 
         ArrayList<TestCase> testSuite = new ArrayList<>();
         Map<ProgramVariable, Node> assignment1 = new HashMap<>();
@@ -53,9 +53,9 @@ public class TestPatchSynthesis {
         testSuite.add(TestCase.ofAssignment(assignment2, IntConst.of(-1)));
 
         Map<Hole, Expression> args = new HashMap<>();
-        args.put((Hole)Components.ADD.getLeft(), Expression.leaf(x));
-        args.put((Hole)Components.ADD.getRight(), Expression.leaf(y));
-        Expression original = Expression.app(Components.ADD, args);
+        args.put((Hole) Library.ADD.getLeft(), Expression.leaf(x));
+        args.put((Hole) Library.ADD.getRight(), Expression.leaf(y));
+        Expression original = Expression.app(Library.ADD, args);
 
         Optional<Pair<Expression, Map<Parameter, Constant>>> result =
                 synthesizer.repair(original, testSuite, components, SynthesisLevel.OPERATORS);
@@ -70,7 +70,7 @@ public class TestPatchSynthesis {
         components.add(x);
         components.add(y);
         components.add(IntConst.of(1));
-        components.add(Components.ADD);
+        components.add(Library.ADD);
 
         ArrayList<TestCase> testSuite = new ArrayList<>();
         Map<ProgramVariable, Node> assignment1 = new HashMap<>();
@@ -84,9 +84,9 @@ public class TestPatchSynthesis {
         testSuite.add(TestCase.ofAssignment(assignment2, IntConst.of(2)));
 
         Map<Hole, Expression> args = new HashMap<>();
-        args.put((Hole)Components.ADD.getLeft(), Expression.leaf(x));
-        args.put((Hole)Components.ADD.getRight(), Expression.leaf(y));
-        Expression original = Expression.app(Components.ADD, args);
+        args.put((Hole) Library.ADD.getLeft(), Expression.leaf(x));
+        args.put((Hole) Library.ADD.getRight(), Expression.leaf(y));
+        Expression original = Expression.app(Library.ADD, args);
 
         Optional<Pair<Expression, Map<Parameter, Constant>>> result1 =
                 synthesizer.repair(original, testSuite, components, SynthesisLevel.OPERATORS);
@@ -106,7 +106,7 @@ public class TestPatchSynthesis {
         components.add(x);
         components.add(y);
         components.add(IntConst.of(1));
-        components.add(Components.ADD);
+        components.add(Library.ADD);
 
         ArrayList<TestCase> testSuite = new ArrayList<>();
         Map<ProgramVariable, Node> assignment1 = new HashMap<>();
@@ -121,14 +121,14 @@ public class TestPatchSynthesis {
 
         List<Expression> forbidden = new ArrayList<>();
         Map<Hole, Expression> fargs = new HashMap<>();
-        fargs.put((Hole)Components.ADD.getLeft(), Expression.leaf(x));
-        fargs.put((Hole)Components.ADD.getRight(), Expression.leaf(IntConst.of(1)));
-        forbidden.add(Expression.app(Components.ADD, fargs));
+        fargs.put((Hole) Library.ADD.getLeft(), Expression.leaf(x));
+        fargs.put((Hole) Library.ADD.getRight(), Expression.leaf(IntConst.of(1)));
+        forbidden.add(Expression.app(Library.ADD, fargs));
 
         Map<Hole, Expression> args = new HashMap<>();
-        args.put((Hole)Components.ADD.getLeft(), Expression.leaf(x));
-        args.put((Hole)Components.ADD.getRight(), Expression.leaf(y));
-        Expression original = Expression.app(Components.ADD, args);
+        args.put((Hole) Library.ADD.getLeft(), Expression.leaf(x));
+        args.put((Hole) Library.ADD.getRight(), Expression.leaf(y));
+        Expression original = Expression.app(Library.ADD, args);
 
         PatchSynthesis synthesizerWithForbidden = new PatchSynthesis(forbidden, Optional.of(1));
 
@@ -143,8 +143,8 @@ public class TestPatchSynthesis {
         components.add(x);
         components.add(y);
         components.add(IntConst.of(1));
-        components.add(Components.ADD);
-        components.add(Components.ITE); //NODE: for larger substitutions (true ? x + 1 : y) would be also possible
+        components.add(Library.ADD);
+        components.add(Library.ITE); //NODE: for larger substitutions (true ? x + 1 : y) would be also possible
         components.add(BoolConst.TRUE);
 
         ArrayList<TestCase> testSuite = new ArrayList<>();

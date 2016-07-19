@@ -4,9 +4,9 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
- * Equal when the indexes and the subvariables are equal
+ * Created by Sergey Mechtaev on 19/7/2016.
  */
-public class Indexed extends Variable {
+public class StatementInstance extends Variable {
 
     private Variable variable;
 
@@ -21,7 +21,7 @@ public class Indexed extends Variable {
         return variable.isTestInstantiable();
     }
 
-    public Indexed(Variable variable, int index) {
+    public StatementInstance(Variable variable, int index) {
         this.variable = variable;
         this.index = index;
     }
@@ -47,12 +47,12 @@ public class Indexed extends Variable {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof Indexed))
+        if (!(obj instanceof StatementInstance))
             return false;
         if (obj == this)
             return true;
 
-        Indexed rhs = (Indexed) obj;
+        StatementInstance rhs = (StatementInstance) obj;
         return new EqualsBuilder().
                 append(variable, rhs.variable).
                 append(index, rhs.index).

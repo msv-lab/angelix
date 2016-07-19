@@ -138,6 +138,12 @@ public class Unifier {
         }
 
         @Override
+        public void visit(StatementInstance statementInstance) {
+            if (failed) return;
+            processLeaf(statementInstance);
+        }
+
+        @Override
         public void visit(Add add) {
             if (failed) return;
             processBinaryOp(add);
@@ -303,9 +309,9 @@ public class Unifier {
         }
 
         @Override
-        public void visit(Indexed indexed) {
+        public void visit(ExecutionInstance executionInstance) {
             if (failed) return;
-            processLeaf(indexed);
+            processLeaf(executionInstance);
         }
 
     }

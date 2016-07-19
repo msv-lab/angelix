@@ -6,7 +6,7 @@ import sg.edu.nus.comp.nsynth.ast.theory.*;
 /**
  * Created by Sergey Mechtaev on 14/4/2016.
  */
-public class Components {
+public class Library {
 
     private static final Hole i = new Hole("i", IntType.TYPE, Node.class);
     private static final Hole j = new Hole("j", IntType.TYPE, Node.class);
@@ -35,11 +35,15 @@ public class Components {
 
     public static final Application ITE = new ITE(a, i, j);
 
-    public static Variable ID(Type type) {
+    public static Node ID(Type type) {
         if (type.equals(IntType.TYPE)) {
             return i;
         } else {
             return a;
         }
     }
+
+    public static Node ABS = new ITE(new GreaterOrEqual(i, IntConst.of(0)), i, new Minus(i));
+    public static Node MAX = new ITE(new GreaterOrEqual(i, j), i, j);
+    public static Node MIN = new ITE(new GreaterOrEqual(i, j), j, i);
 }

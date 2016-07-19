@@ -21,7 +21,7 @@ public abstract class Node {
     public Node index(int index, Predicate<Variable> p) {
         return Traverse.transform(this, n -> {
             if (n instanceof Variable && p.test((Variable)n)) {
-                return new Indexed((Variable)n, index);
+                return new ExecutionInstance((Variable)n, index);
             }
             return n;
         });

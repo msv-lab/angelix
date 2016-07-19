@@ -1,11 +1,8 @@
 package sg.edu.nus.comp.nsynth;
 
 import com.microsoft.z3.*;
-import fj.test.Bool;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sg.edu.nus.comp.nsynth.ast.*;
@@ -245,6 +242,11 @@ public class Z3 implements Solver {
         }
 
         @Override
+        public void visit(StatementInstance statementInstance) {
+            processVariable(ctx, statementInstance);
+        }
+
+        @Override
         public void visit(Add add) {
             ArithExpr right = (ArithExpr) exprs.pop();
             ArithExpr left = (ArithExpr) exprs.pop();
@@ -387,8 +389,8 @@ public class Z3 implements Solver {
         }
 
         @Override
-        public void visit(Indexed indexed) {
-            processVariable(ctx, indexed);
+        public void visit(ExecutionInstance executionInstance) {
+            processVariable(ctx, executionInstance);
         }
 
     }

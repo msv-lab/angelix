@@ -121,6 +121,12 @@ public class TypeInference {
         }
 
         @Override
+        public void visit(StatementInstance statementInstance) {
+            if (typeError) return;
+            types.push(statementInstance.getType());
+        }
+
+        @Override
         public void visit(Add add) {
             if (typeError) return;
             if (types.size() < 2 || !types.pop().equals(IntType.TYPE) || !types.pop().equals(IntType.TYPE)) {
@@ -328,9 +334,9 @@ public class TypeInference {
         }
 
         @Override
-        public void visit(Indexed indexed) {
+        public void visit(ExecutionInstance executionInstance) {
             if (typeError) return;
-            types.push(indexed.getType());
+            types.push(executionInstance.getType());
         }
 
     }

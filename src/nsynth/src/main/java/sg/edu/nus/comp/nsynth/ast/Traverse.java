@@ -75,6 +75,11 @@ public class Traverse {
         }
 
         @Override
+        public void visit(StatementInstance statementInstance) {
+            addIfMatches(statementInstance);
+        }
+
+        @Override
         public void visit(Add add) {
             addIfMatches(add);
         }
@@ -191,8 +196,8 @@ public class Traverse {
         }
 
         @Override
-        public void visit(Indexed indexed) {
-            addIfMatches(indexed);
+        public void visit(ExecutionInstance executionInstance) {
+            addIfMatches(executionInstance);
         }
     }
 
@@ -239,6 +244,11 @@ public class Traverse {
             Node right = nodes.pop();
             Node left = nodes.pop();
             nodes.push(function.apply(new NotEqual(left, right)));
+        }
+
+        @Override
+        public void visit(StatementInstance statementInstance) {
+            nodes.push(function.apply(statementInstance));
         }
 
         @Override
@@ -386,8 +396,8 @@ public class Traverse {
         }
 
         @Override
-        public void visit(Indexed indexed) {
-            nodes.push(function.apply(indexed));
+        public void visit(ExecutionInstance executionInstance) {
+            nodes.push(function.apply(executionInstance));
         }
 
     }

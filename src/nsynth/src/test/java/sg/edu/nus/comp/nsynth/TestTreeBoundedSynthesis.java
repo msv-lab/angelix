@@ -41,7 +41,7 @@ public class TestTreeBoundedSynthesis {
         Multiset<Node> components = HashMultiset.create();
         components.add(x);
         components.add(y);
-        components.add(Components.ADD);
+        components.add(Library.ADD);
 
         ArrayList<TestCase> testSuite = new ArrayList<>();
         Map<ProgramVariable, Node> assignment1 = new HashMap<>();
@@ -66,7 +66,7 @@ public class TestTreeBoundedSynthesis {
         Multiset<Node> components = HashMultiset.create();
         components.add(x);
         components.add(y);
-        components.add(Components.ADD);
+        components.add(Library.ADD);
 
         ArrayList<TestCase> testSuite = new ArrayList<>();
         Map<ProgramVariable, Node> assignment1 = new HashMap<>();
@@ -81,9 +81,9 @@ public class TestTreeBoundedSynthesis {
 
         List<Expression> forbidden = new ArrayList<>();
         Map<Hole, Expression> args = new HashMap<>();
-        args.put((Hole)Components.ADD.getLeft(), Expression.leaf(x));
-        args.put((Hole)Components.ADD.getRight(), Expression.leaf(y));
-        forbidden.add(Expression.app(Components.ADD, args));
+        args.put((Hole) Library.ADD.getLeft(), Expression.leaf(x));
+        args.put((Hole) Library.ADD.getRight(), Expression.leaf(y));
+        forbidden.add(Expression.app(Library.ADD, args));
 
         Synthesis synthesizerWithForbidden =
                 new Synthesis(new BoundedShape(2, forbidden), new TreeBoundedEncoder(false));
@@ -98,7 +98,7 @@ public class TestTreeBoundedSynthesis {
         Multiset<Node> components = HashMultiset.create();
         components.add(x);
         components.add(y);
-        components.add(Components.ADD);
+        components.add(Library.ADD);
 
         ArrayList<TestCase> testSuite = new ArrayList<>();
         Map<ProgramVariable, Node> assignment1 = new HashMap<>();
@@ -113,13 +113,13 @@ public class TestTreeBoundedSynthesis {
 
         List<Expression> forbidden = new ArrayList<>();
         Map<Hole, Expression> args = new HashMap<>();
-        args.put((Hole)Components.ADD.getLeft(), Expression.leaf(x));
-        args.put((Hole)Components.ADD.getRight(), Expression.leaf(y));
+        args.put((Hole) Library.ADD.getLeft(), Expression.leaf(x));
+        args.put((Hole) Library.ADD.getRight(), Expression.leaf(y));
         Map<Hole, Expression> args2 = new HashMap<>();
-        args2.put((Hole)Components.ADD.getLeft(), Expression.leaf(y));
-        args2.put((Hole)Components.ADD.getRight(), Expression.leaf(x));
-        forbidden.add(Expression.app(Components.ADD, args));
-        forbidden.add(Expression.app(Components.ADD, args2));
+        args2.put((Hole) Library.ADD.getLeft(), Expression.leaf(y));
+        args2.put((Hole) Library.ADD.getRight(), Expression.leaf(x));
+        forbidden.add(Expression.app(Library.ADD, args));
+        forbidden.add(Expression.app(Library.ADD, args2));
 
         Synthesis synthesizerWithForbidden =
                 new Synthesis(new BoundedShape(2, forbidden), new TreeBoundedEncoder(false));
@@ -133,8 +133,8 @@ public class TestTreeBoundedSynthesis {
         Parameter p = Parameter.mkInt("p");
         components.add(p);
         //components.add(x);
-        components.add(Components.ADD);
-        components.add(Components.ITE);
+        components.add(Library.ADD);
+        components.add(Library.ITE);
 
         ArrayList<TestCase> testSuite = new ArrayList<>();
         Map<ProgramVariable, Node> assignment1 = new HashMap<>();
@@ -154,8 +154,8 @@ public class TestTreeBoundedSynthesis {
     public void testForbiddenDoubleNegation() {
         Multiset<Node> components = HashMultiset.create();
         components.add(x);
-        components.add(Components.MINUS, 2);
-        components.add(Components.ADD);
+        components.add(Library.MINUS, 2);
+        components.add(Library.ADD);
 
         ArrayList<TestCase> testSuite = new ArrayList<>();
         Map<ProgramVariable, Node> assignment1 = new HashMap<>();
@@ -166,10 +166,10 @@ public class TestTreeBoundedSynthesis {
         forbidden.add(Expression.leaf(x));
 
         Map<Hole, Expression> args = new HashMap<>();
-        args.put((Hole)Components.MINUS.getArg(), Expression.leaf(x));
+        args.put((Hole) Library.MINUS.getArg(), Expression.leaf(x));
         Map<Hole, Expression> args2 = new HashMap<>();
-        args2.put((Hole)Components.MINUS.getArg(), Expression.app(Components.MINUS, args));
-        forbidden.add(Expression.app(Components.MINUS, args2));
+        args2.put((Hole) Library.MINUS.getArg(), Expression.app(Library.MINUS, args));
+        forbidden.add(Expression.app(Library.MINUS, args2));
 
         Synthesis synthesizerWithForbidden =
                 new Synthesis(new BoundedShape(3, forbidden), new TreeBoundedEncoder());
@@ -185,8 +185,8 @@ public class TestTreeBoundedSynthesis {
         components.add(y);
         components.add(IntConst.of(0));
         components.add(IntConst.of(1));
-        components.add(Components.ITE);
-        components.add(Components.GT);
+        components.add(Library.ITE);
+        components.add(Library.GT);
 
         ArrayList<TestCase> testSuite = new ArrayList<>();
         Map<ProgramVariable, Node> assignment1 = new HashMap<>();
@@ -205,24 +205,24 @@ public class TestTreeBoundedSynthesis {
 
 
         Map<Hole, Expression> argsGT = new HashMap<>();
-        argsGT.put((Hole)Components.GT.getLeft(), Expression.leaf(x));
-        argsGT.put((Hole)Components.GT.getRight(), Expression.leaf(y));
+        argsGT.put((Hole) Library.GT.getLeft(), Expression.leaf(x));
+        argsGT.put((Hole) Library.GT.getRight(), Expression.leaf(y));
         Map<Hole, Expression> args = new HashMap<>();
-        args.put((Hole)Components.ITE.getArgs().get(0), Expression.app(Components.GT, argsGT));
-        args.put((Hole)Components.ITE.getArgs().get(1), Expression.leaf(IntConst.of(1)));
-        args.put((Hole)Components.ITE.getArgs().get(2), Expression.leaf(IntConst.of(0)));
+        args.put((Hole) Library.ITE.getArgs().get(0), Expression.app(Library.GT, argsGT));
+        args.put((Hole) Library.ITE.getArgs().get(1), Expression.leaf(IntConst.of(1)));
+        args.put((Hole) Library.ITE.getArgs().get(2), Expression.leaf(IntConst.of(0)));
 
         Map<Hole, Expression> argsGT2 = new HashMap<>();
-        argsGT2.put((Hole)Components.GT.getLeft(), Expression.leaf(y));
-        argsGT2.put((Hole)Components.GT.getRight(), Expression.leaf(x));
+        argsGT2.put((Hole) Library.GT.getLeft(), Expression.leaf(y));
+        argsGT2.put((Hole) Library.GT.getRight(), Expression.leaf(x));
         Map<Hole, Expression> args2 = new HashMap<>();
-        args2.put((Hole)Components.ITE.getArgs().get(0), Expression.app(Components.GT, argsGT2));
-        args2.put((Hole)Components.ITE.getArgs().get(1), Expression.leaf(IntConst.of(0)));
-        args2.put((Hole)Components.ITE.getArgs().get(2), Expression.leaf(IntConst.of(1)));
+        args2.put((Hole) Library.ITE.getArgs().get(0), Expression.app(Library.GT, argsGT2));
+        args2.put((Hole) Library.ITE.getArgs().get(1), Expression.leaf(IntConst.of(0)));
+        args2.put((Hole) Library.ITE.getArgs().get(2), Expression.leaf(IntConst.of(1)));
 
         List<Expression> forbidden = new ArrayList<>();
-        forbidden.add(Expression.app(Components.ITE, args));
-        forbidden.add(Expression.app(Components.ITE, args2));
+        forbidden.add(Expression.app(Library.ITE, args));
+        forbidden.add(Expression.app(Library.ITE, args2));
 
         Synthesis synthesizerWithForbidden =
                 new Synthesis(new BoundedShape(3, forbidden), new TreeBoundedEncoder());
@@ -236,7 +236,7 @@ public class TestTreeBoundedSynthesis {
         components.add(BoolConst.TRUE);
         components.add(IntConst.of(0));
         components.add(IntConst.of(1));
-        components.add(Components.ITE);
+        components.add(Library.ITE);
 
         ArrayList<TestCase> testSuite = new ArrayList<>();
         Map<ProgramVariable, Node> assignment1 = new HashMap<>();
@@ -254,7 +254,7 @@ public class TestTreeBoundedSynthesis {
     public void testUnique() {
         Multiset<Node> components = HashMultiset.create();
         components.add(x);
-        components.add(Components.ADD);
+        components.add(Library.ADD);
 
         ArrayList<TestCase> testSuite = new ArrayList<>();
         Map<ProgramVariable, Node> assignment1 = new HashMap<>();
@@ -270,8 +270,8 @@ public class TestTreeBoundedSynthesis {
     public void testUniqueMultiple() {
         Multiset<Node> components = HashMultiset.create();
         components.add(x, 2);
-        components.add(Components.ADD, 1);
-        components.add(Components.ITE);
+        components.add(Library.ADD, 1);
+        components.add(Library.ITE);
         components.add(BoolConst.TRUE);
 
         ArrayList<TestCase> testSuite = new ArrayList<>();
@@ -280,10 +280,10 @@ public class TestTreeBoundedSynthesis {
         testSuite.add(TestCase.ofAssignment(assignment1, IntConst.of(2)));
 
         Map<Hole, Expression> args = new HashMap<>();
-        args.put((Hole)Components.ADD.getLeft(), Expression.leaf(x));
-        args.put((Hole)Components.ADD.getRight(), Expression.leaf(x));
+        args.put((Hole) Library.ADD.getLeft(), Expression.leaf(x));
+        args.put((Hole) Library.ADD.getRight(), Expression.leaf(x));
         List<Expression> forbidden = new ArrayList<>();
-        forbidden.add(Expression.app(Components.ADD, args));
+        forbidden.add(Expression.app(Library.ADD, args));
 
         Synthesis synthesizerWithForbidden =
                 new Synthesis(new BoundedShape(3, forbidden), new TreeBoundedEncoder());
@@ -297,7 +297,7 @@ public class TestTreeBoundedSynthesis {
         Multiset<Node> components = HashMultiset.create();
         components.add(x);
         components.add(y);
-        components.add(Components.ADD);
+        components.add(Library.ADD);
 
         ArrayList<TestCase> testSuite = new ArrayList<>();
         Map<ProgramVariable, Node> assignment1 = new HashMap<>();
@@ -312,9 +312,9 @@ public class TestTreeBoundedSynthesis {
 
         List<Expression> forbidden = new ArrayList<>();
         Map<Hole, Expression> args = new HashMap<>();
-        args.put((Hole)Components.ADD.getLeft(), Expression.leaf(x));
-        args.put((Hole)Components.ADD.getRight(), Expression.leaf(y));
-        forbidden.add(Expression.app(Components.SUB, args));
+        args.put((Hole) Library.ADD.getLeft(), Expression.leaf(x));
+        args.put((Hole) Library.ADD.getRight(), Expression.leaf(y));
+        forbidden.add(Expression.app(Library.SUB, args));
 
         Synthesis synthesizerWithForbidden =
                 new Synthesis(new BoundedShape(2, forbidden), new TreeBoundedEncoder(false));
