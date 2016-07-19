@@ -26,6 +26,8 @@ public class TreeBoundedEncoder {
 
     private boolean uniqueUsage = true;
 
+    private final static int SUBSTITUTION_SUBNODE_BOUND = 1;
+
     protected class EncodingInfo {
         // branch values tree
         private Map<Variable, List<Variable>> tree;
@@ -203,7 +205,7 @@ public class TreeBoundedEncoder {
             Node original = ((RepairShape) shape).getOriginal().getRoot();
             SynthesisLevel level = ((RepairShape) shape).getLevel();
             if (((level == EMPTY || level == OPERATORS || level == LEAVES) && !Expression.isLeaf(original))
-                    || (level == ARITHMETIC)){
+                    || (level == SUBSTITUTION)){
                 encodeSubnodes = true;
             }
         }
@@ -243,8 +245,8 @@ public class TreeBoundedEncoder {
                             Node original = ((RepairShape) shape).getOriginal().getRoot();
                             SynthesisLevel level = ((RepairShape) shape).getLevel();
                             Shape subshape;
-                            if (level == ARITHMETIC && Expression.isLeaf(original)) {
-                                subshape = new BoundedShape(2, child.getType());
+                            if (level == SUBSTITUTION && Expression.isLeaf(original)) {
+                                subshape = new BoundedShape(SUBSTITUTION_SUBNODE_BOUND, child.getType());
                                 subnodeShape.put(child, subshape);
                             } else if (component.equals(original)) {
                                 Expression originalSubnode = ((RepairShape) shape).getOriginal().getChildren().get(input);
@@ -274,6 +276,14 @@ public class TreeBoundedEncoder {
                     }
                 }
                 branchMatching.put(component, args);
+            }
+
+            //FIXME: I am not sure if we can actually get here, maybe when intermediate node needs additional children?
+            for (Variable child : children) {
+                if (!subnodeShape.containsKey(child)) {
+                    assert shape instanceof RepairShape && ((RepairShape) shape).getLevel() == SUBSTITUTION;
+                    subnodeShape.put(child, new BoundedShape(SUBSTITUTION_SUBNODE_BOUND, child.getType()));
+                }
             }
 
             List<Variable> infeasibleChildren = new ArrayList<>();
@@ -416,12 +426,8 @@ public class TreeBoundedEncoder {
                 case LOGIC:
                     // because we need special encoding for that
                     throw new UnsupportedOperationException();
-                case ARITHMETIC:
-                    if (Expression.isLeaf(root) && TypeInference.typeOf(root).equals(IntType.TYPE)) {
-                        relevantComponents.addAll(components);
-                    } else {
-                        relevantComponents.add(root);
-                    }
+                case SUBSTITUTION:
+                    relevantComponents.addAll(components);
                     break;
                 case CONDITIONAL:
                     // because we need special encoding for that

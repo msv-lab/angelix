@@ -24,6 +24,9 @@ public class Components {
     public static final BinaryOp LT = new Less(i, j);
     public static final BinaryOp LE = new LessOrEqual(i, j);
 
+    public static final BinaryOp EQ = new Equal(i, j);
+    public static final BinaryOp NEQ = new NotEqual(i, j);
+
     public static final BinaryOp AND = new And(a, b);
     public static final BinaryOp OR = new Or(a, b);
     public static final BinaryOp IMP = new Impl(a, b);
@@ -31,4 +34,12 @@ public class Components {
     public static final UnaryOp NOT = new Not(a);
 
     public static final Application ITE = new ITE(a, i, j);
+
+    public static Variable ID(Type type) {
+        if (type.equals(IntType.TYPE)) {
+            return i;
+        } else {
+            return a;
+        }
+    }
 }

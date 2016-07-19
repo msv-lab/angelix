@@ -137,4 +137,36 @@ public class TestPatchSynthesis {
         assertFalse(result.isPresent());
     }
 
+    @Test
+    public void testSubstitution() {
+        Multiset<Node> components = HashMultiset.create();
+        components.add(x);
+        components.add(y);
+        components.add(IntConst.of(1));
+        components.add(Components.ADD);
+        components.add(Components.ITE); //NODE: for larger substitutions (true ? x + 1 : y) would be also possible
+        components.add(BoolConst.TRUE);
+
+        ArrayList<TestCase> testSuite = new ArrayList<>();
+        Map<ProgramVariable, Node> assignment1 = new HashMap<>();
+        assignment1.put(x, IntConst.of(2));
+        assignment1.put(y, IntConst.of(1));
+        testSuite.add(TestCase.ofAssignment(assignment1, IntConst.of(3)));
+
+        Map<ProgramVariable, Node> assignment2 = new HashMap<>();
+        assignment2.put(x, IntConst.of(1));
+        assignment2.put(y, IntConst.of(2));
+        testSuite.add(TestCase.ofAssignment(assignment2, IntConst.of(2)));
+
+        Expression original = Expression.leaf(x);
+
+        Optional<Pair<Expression, Map<Parameter, Constant>>> result =
+                synthesizer.repair(original, testSuite, components, SynthesisLevel.SUBSTITUTION);
+        assertTrue(result.isPresent());
+        Node node = result.get().getLeft().getSemantics(result.get().getRight());
+        System.out.println(node);
+        assertTrue(node.equals(new Add(x, IntConst.of(1))) || node.equals(new Add(IntConst.of(1), x)));
+    }
+
+
 }
