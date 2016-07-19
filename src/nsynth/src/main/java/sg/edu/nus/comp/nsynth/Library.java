@@ -35,7 +35,7 @@ public class Library {
 
     public static final Application ITE = new ITE(a, i, j);
 
-    public static Node ID(Type type) {
+    public static Hole ID(Type type) {
         if (type.equals(IntType.TYPE)) {
             return i;
         } else {

@@ -1,6 +1,7 @@
 package sg.edu.nus.comp.nsynth;
 
 import com.google.common.collect.Multiset;
+import fj.P;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Pair;
@@ -27,6 +28,9 @@ public class TreeBoundedEncoder {
     private boolean uniqueUsage = true;
 
     private final static int SUBSTITUTION_SUBNODE_BOUND = 1;
+    private final static int LOGIC_NODE_BOUND = 3;
+    private final static int CONDITIONAL_COND_BOUND = 3;
+    private final static int CONDITIONAL_ELSE_BOUND = 2;
 
     protected class EncodingInfo {
         // branch values tree
@@ -92,7 +96,12 @@ public class TreeBoundedEncoder {
 
         Optional<EncodingInfo> result;
 
-        result = encodeBranch(root, shape, uniqueComponents, initialForbidden);
+        if (shape instanceof RepairShape && ((RepairShape) shape).getLevel() == LOGIC) {
+            result = encodeLogic(root, ((RepairShape) shape).getOriginal(), uniqueComponents, initialForbidden);
+        } else {
+            result = encodeBranch(root, shape, uniqueComponents, initialForbidden);
+        }
+
 
         if (!result.isPresent()) {
             throw new RuntimeException("wrong synthesis configuration");
@@ -139,6 +148,102 @@ public class TreeBoundedEncoder {
         soft.addAll(result.get().originalSelectors);
 
         return new ImmutableTriple<>(root, new ImmutablePair<>(hard, soft), result.get());
+    }
+
+    private Optional<EncodingInfo> encodeLogic(Variable output, Expression original, List<Node> components, Map<Expression, Expression> forbidden) {
+        if (output.getType().equals(IntType.TYPE)) {
+            return encodeBranch(output, new RepairShape(original, EMPTY), components, forbidden);
+        } else {
+            Selector idChoice = new Selector();
+            Selector andChoice = new Selector();
+            Selector orChoice = new Selector();
+
+            BranchOutput leftOut = new BranchOutput(BoolType.TYPE);
+            BranchOutput rightOut = new BranchOutput(BoolType.TYPE);
+
+            //FIXME: forbidden not supported
+            EncodingInfo leftResult = encodeBranch(leftOut, new RepairShape(original, EMPTY), components, new HashMap<>()).get();
+            EncodingInfo rightResult = encodeBranch(rightOut, new BoundedShape(LOGIC_NODE_BOUND, BoolType.TYPE), components, new HashMap<>()).get();
+
+            List<EncodingInfo> results = new ArrayList<>();
+            results.add(leftResult);
+            results.add(rightResult);
+
+            List<Variable> children = new ArrayList<>();
+            children.add(leftOut);
+            children.add(rightOut);
+
+            Map<Variable, List<Variable>> tree = new HashMap<>();
+            tree.put(output, children);
+            tree.putAll(leftResult.tree);
+            tree.putAll(rightResult.tree);
+
+            List<Selector> currentChoices = new ArrayList<>();
+            currentChoices.add(idChoice);
+            currentChoices.add(andChoice);
+            currentChoices.add(orChoice);
+
+            Map<Variable, List<Selector>> nodeChoices = new HashMap<>();
+            nodeChoices.put(output, currentChoices);
+            nodeChoices.putAll(leftResult.nodeChoices);
+            nodeChoices.putAll(rightResult.nodeChoices);
+
+            Map<Selector, Node> selectedComponent = new HashMap<>();
+            selectedComponent.put(idChoice, Library.ID(BoolType.TYPE));
+            selectedComponent.put(andChoice, Library.AND);
+            selectedComponent.put(orChoice, Library.OR);
+            selectedComponent.putAll(leftResult.selectedComponent);
+            selectedComponent.putAll(rightResult.selectedComponent);
+
+            List<Selector> originalSelectors = new ArrayList<>();
+            originalSelectors.addAll(leftResult.originalSelectors); //NODE: only from left
+            originalSelectors.add(idChoice);
+
+            Map<Variable, List<Selector>> branchDependencies = new HashMap<>();
+            branchDependencies.put(leftOut, currentChoices);
+            List<Selector> rightChoices = new ArrayList<>();
+            rightChoices.add(andChoice);
+            rightChoices.add(orChoice);
+            branchDependencies.put(rightOut, rightChoices);
+            branchDependencies.putAll(leftResult.branchDependencies);
+            branchDependencies.putAll(rightResult.branchDependencies);
+
+            Map<Node, List<Selector>> componentUsage = new HashMap<>(); //NOTE: top components are not counted in usage
+            for (EncodingInfo result : results) {
+                for (Map.Entry<Node, List<Selector>> usage : result.componentUsage.entrySet()) {
+                    if (componentUsage.containsKey(usage.getKey())) {
+                        componentUsage.get(usage.getKey()).addAll(usage.getValue());
+                    } else {
+                        componentUsage.put(usage.getKey(), usage.getValue());
+                    }
+                }
+            }
+
+            Map<Hole, Variable> idBranchMatching = new HashMap<>();
+            idBranchMatching.put(Library.ID(BoolType.TYPE), leftOut);
+            Map<Hole, Variable> andBranchMatching = new HashMap<>();
+            andBranchMatching.put((Hole) Library.AND.getLeft(), leftOut);
+            andBranchMatching.put((Hole) Library.AND.getRight(), rightOut);
+            Map<Hole, Variable> orBranchMatching = new HashMap<>();
+            orBranchMatching.put((Hole) Library.OR.getLeft(), leftOut);
+            orBranchMatching.put((Hole) Library.OR.getRight(), rightOut);
+
+            List<Node> clauses = new ArrayList<>();
+            clauses.add(new Impl(idChoice, new Equal(output,
+                    Traverse.substitute(Library.ID(BoolType.TYPE), idBranchMatching))));
+            clauses.add(new Impl(andChoice, new Equal(output,
+                    Traverse.substitute(Library.AND, andBranchMatching))));
+            clauses.add(new Impl(idChoice, new Equal(output,
+                    Traverse.substitute(Library.OR, orBranchMatching))));
+            for (EncodingInfo result : results) {
+                clauses.addAll(result.clauses);
+
+            }
+
+            Map<Expression, List<List<Selector>>> globalForbiddenResult = new HashMap<>(); //NOTE: unsupported
+
+            return Optional.of(new EncodingInfo(tree, nodeChoices, selectedComponent, branchDependencies, componentUsage, globalForbiddenResult, originalSelectors, clauses));
+        }
     }
 
     private Optional<EncodingInfo> encodeBranch(Variable output, Shape shape, List<Node> components, Map<Expression, Expression> forbidden) {
