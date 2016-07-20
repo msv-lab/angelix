@@ -1,0 +1,66 @@
+{
+  "ti1": [
+    [
+      {
+        "value": {
+          "value": 1,
+          "name": "angelic"
+        },
+        "instId": 0,
+        "expression": "0-0-0-1",
+        "context": [
+          {
+            "value": 2,
+            "name": "x"
+          },
+          {
+            "value": 1,
+            "name": "y"
+          }
+        ]
+      }
+    ]
+  ],
+  "ti2": [
+    [
+      {
+        "value": {
+          "value": 2,
+          "name": "angelic"
+        },
+        "instId": 0,
+        "expression": "0-0-0-1",
+        "context": [
+          {
+            "value": 2,
+            "name": "x"
+          },
+          {
+            "value": 0,
+            "name": "y"
+          }
+        ]
+      }
+    ],
+    [
+      {
+        "value": {
+          "value": 1,
+          "name": "angelic"
+        },
+        "instId": 0,
+        "expression": "0-0-0-1",
+        "context": [
+          {
+            "value": 2,
+            "name": "x"
+          },
+          {
+            "value": 0,
+            "name": "y"
+          }
+        ]
+      }
+    ]
+  ]
+}

@@ -6,7 +6,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 /**
  * Corresponds to "instance" of Angelix
  */
-public class ExecutionInstance extends Variable {
+public class ExecutionInstance extends Instance {
 
     private Variable variable;
 
@@ -14,11 +14,6 @@ public class ExecutionInstance extends Variable {
 
     public Type getType() {
         return variable.getType();
-    }
-
-    @Override
-    public boolean isTestInstantiable() {
-        return variable.isTestInstantiable();
     }
 
     public ExecutionInstance(Variable variable, int index) {
@@ -73,4 +68,23 @@ public class ExecutionInstance extends Variable {
         return variable + "_" + index;
     }
 
+    @Override
+    public boolean isTestInstantiable() {
+        return variable.isTestInstantiable();
+    }
+
+    @Override
+    public boolean isStatementInstantiable() {
+        return variable.isStatementInstantiable();
+    }
+
+    @Override
+    public boolean isExecutionInstantiable() {
+        return false;
+    }
+
+    @Override
+    public Variable getVariable() {
+        return variable;
+    }
 }

@@ -638,6 +638,16 @@ public class TreeBoundedEncoder {
     protected Pair<Expression, Map<Parameter, Constant>> decode(Map<Variable, Constant> assignment,
                                                                 Variable root,
                                                                 EncodingInfo result) {
+        Map<Variable, Constant> deinstantiated = new HashMap<>();
+        for (Map.Entry<Variable, Constant> entry : assignment.entrySet()) {
+            deinstantiated.put((Variable) entry.getKey().deinstantiate(), entry.getValue());
+        }
+        return decodeAux(deinstantiated, root, result);
+    }
+
+    private Pair<Expression, Map<Parameter, Constant>> decodeAux(Map<Variable, Constant> assignment,
+                                                                 Variable root,
+                                                                 EncodingInfo result) {
         List<Selector> nodeChoices = result.nodeChoices.get(root);
         Selector choice = nodeChoices.stream().filter(s -> assignment.get(s).equals(BoolConst.TRUE)).findFirst().get();
         Node component = result.selectedComponent.get(choice);
@@ -656,7 +666,7 @@ public class TreeBoundedEncoder {
         for (Hole input : Expression.getComponentInputs(component)) {
             Variable child = children.stream().filter(o -> o.getType().equals(input.getType())).findFirst().get();
             children.remove(child);
-            Pair<Expression, Map<Parameter, Constant>> subresult = decode(assignment, child, result);
+            Pair<Expression, Map<Parameter, Constant>> subresult = decodeAux(assignment, child, result);
             parameterValuation.putAll(subresult.getRight());
             args.put(input, subresult.getLeft());
         }

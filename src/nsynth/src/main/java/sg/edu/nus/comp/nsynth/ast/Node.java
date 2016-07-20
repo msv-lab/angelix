@@ -1,5 +1,6 @@
 package sg.edu.nus.comp.nsynth.ast;
 
+import sg.edu.nus.comp.nsynth.AngelixLocation;
 import sg.edu.nus.comp.nsynth.ast.theory.And;
 import sg.edu.nus.comp.nsynth.ast.theory.BoolConst;
 import sg.edu.nus.comp.nsynth.ast.theory.Or;
@@ -16,18 +17,6 @@ public abstract class Node {
     public abstract void accept(BottomUpMemoVisitor visitor);
 
     /**
-     * Rename variables under condition
-     */
-    public Node index(int index, Predicate<Variable> p) {
-        return Traverse.transform(this, n -> {
-            if (n instanceof Variable && p.test((Variable)n)) {
-                return new ExecutionInstance((Variable)n, index);
-            }
-            return n;
-        });
-    }
-
-    /**
      * Rename variables so that the formulas for different tests can be conjoined
      */
     public Node instantiate(TestCase testCase) {
@@ -36,6 +25,34 @@ public abstract class Node {
                 return new TestInstance((Variable)n, testCase);
             }
             return n;
+        });
+    }
+
+    public Node instantiate(AngelixLocation loc) {
+        return Traverse.transform(this, n -> {
+            if (n instanceof Variable && ((Variable)n).isStatementInstantiable()) {
+                return new StatementInstance((Variable)n, loc);
+            }
+            return n;
+        });
+    }
+
+    public Node instantiate(int instance) {
+        return Traverse.transform(this, n -> {
+            if (n instanceof Variable && ((Variable)n).isExecutionInstantiable()) {
+                return new ExecutionInstance((Variable)n, instance);
+            }
+            return n;
+        });
+    }
+
+    public Node deinstantiate() {
+        return Traverse.transform(this, n -> {
+            Node current = n;
+            while (current instanceof Instance) {
+                current = ((Instance) current).getVariable();
+            }
+            return current;
         });
     }
 

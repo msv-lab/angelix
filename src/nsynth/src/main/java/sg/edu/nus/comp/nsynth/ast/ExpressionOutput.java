@@ -8,6 +8,8 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
  */
 public class ExpressionOutput extends Variable {
 
+    //FIXME: should I get rid of this type? Can use BranchOutput instead
+
     private Type type;
 
     public Type getType() {
@@ -16,6 +18,16 @@ public class ExpressionOutput extends Variable {
 
     @Override
     public boolean isTestInstantiable() {
+        return true;
+    }
+
+    @Override
+    public boolean isStatementInstantiable() {
+        return true;
+    }
+
+    @Override
+    public boolean isExecutionInstantiable() {
         return true;
     }
 

@@ -49,13 +49,13 @@ public class AngelicForest {
                     } else {
                         throw new RuntimeException("Unsupported value in angelic forest");
                     }
-                    int instance = Integer.parseInt(valueObj.get("instId").toString());
-                    AngelixLocation loc = AngelixLocation.parse(valueObj.get("expression").toString());
+                    int instance = valueObj.getInt("instId");
+                    AngelixLocation loc = AngelixLocation.parse(valueObj.getString("expression"));
                     JsonArray context = valueObj.getJsonArray("context");
                     Map<ProgramVariable, Constant> env = new HashMap<>();
                     for (JsonObject binding : context.getValuesAs(JsonObject.class)) {
-                        String variable = binding.get("name").toString();
-                        Constant value = IntConst.of(Integer.parseInt(binding.get("value").toString()));
+                        String variable = binding.getString("name");
+                        Constant value = IntConst.of(binding.getInt("value"));
                         env.put(ProgramVariable.mkInt(variable), value);
                     }
                     if (!angelicValues.containsKey(loc)) {

@@ -29,6 +29,16 @@ public class Hole extends Variable {
         return false;
     }
 
+    @Override
+    public boolean isStatementInstantiable() {
+        return false;
+    }
+
+    @Override
+    public boolean isExecutionInstantiable() {
+        return false;
+    }
+
     public Hole(String name, Type type, Class superclass) {
         this.name = name;
         this.type = type;

@@ -21,6 +21,16 @@ public class BranchOutput extends Variable {
         return true;
     }
 
+    @Override
+    public boolean isStatementInstantiable() {
+        return true;
+    }
+
+    @Override
+    public boolean isExecutionInstantiable() {
+        return true;
+    }
+
     public BranchOutput(Type type) {
         this.type = type;
         objectCounter = classCounter;

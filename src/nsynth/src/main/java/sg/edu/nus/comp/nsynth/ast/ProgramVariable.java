@@ -23,6 +23,16 @@ public class ProgramVariable extends Variable {
         return true;
     }
 
+    @Override
+    public boolean isStatementInstantiable() {
+        return true;
+    }
+
+    @Override
+    public boolean isExecutionInstantiable() {
+        return true;
+    }
+
     public ProgramVariable(String name, Type type) {
         this.name = name;
         this.type = type;

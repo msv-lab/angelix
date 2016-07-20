@@ -6,7 +6,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 /**
  * Created by Sergey Mechtaev on 7/4/2016.
  */
-public class TestInstance extends Variable {
+public class TestInstance extends Instance {
 
     private TestCase test;
 
@@ -17,6 +17,7 @@ public class TestInstance extends Variable {
         this.test = test;
     }
 
+    @Override
     public Variable getVariable() {
         return variable;
     }
@@ -82,4 +83,15 @@ public class TestInstance extends Variable {
     public boolean isTestInstantiable() {
         return false;
     }
+
+    @Override
+    public boolean isStatementInstantiable() {
+        return variable.isStatementInstantiable();
+    }
+
+    @Override
+    public boolean isExecutionInstantiable() {
+        return variable.isExecutionInstantiable();
+    }
+
 }

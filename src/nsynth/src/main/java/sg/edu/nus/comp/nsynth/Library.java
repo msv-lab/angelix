@@ -43,6 +43,7 @@ public class Library {
         }
     }
 
+    public static Node INT_TO_BOOL = new NotEqual(i, IntConst.of(0));
     public static Node ABS = new ITE(new GreaterOrEqual(i, IntConst.of(0)), i, new Minus(i));
     public static Node MAX = new ITE(new GreaterOrEqual(i, j), i, j);
     public static Node MIN = new ITE(new GreaterOrEqual(i, j), j, i);

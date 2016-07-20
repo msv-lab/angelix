@@ -1,0 +1,146 @@
+{
+  "ti1": [
+    [
+      {
+        "value": {
+          "value": true,
+          "name": "angelic"
+        },
+        "instId": 0,
+        "expression": "0-0-0-1",
+        "context": [
+          {
+            "value": 2,
+            "name": "x"
+          },
+          {
+            "value": 1,
+            "name": "y"
+          },
+          {
+            "value": 2,
+            "name": "v"
+          }
+        ]
+      },
+      {
+        "value": {
+          "value": true,
+          "name": "angelic"
+        },
+        "instId": 0,
+        "expression": "0-0-0-2",
+        "context": [
+          {
+            "value": 2,
+            "name": "x"
+          },
+          {
+            "value": 1,
+            "name": "y"
+          },
+          {
+            "value": 2,
+            "name": "v"
+          }
+        ]
+      }
+    ]
+  ],
+  "ti2": [
+    [
+      {
+        "value": {
+          "value": false,
+          "name": "angelic"
+        },
+        "instId": 0,
+        "expression": "0-0-0-1",
+        "context": [
+          {
+            "value": 1,
+            "name": "x"
+          },
+          {
+            "value": 2,
+            "name": "y"
+          },
+          {
+            "value": 3,
+            "name": "v"
+          }
+        ]
+      },
+      {
+        "value": {
+          "value": false,
+          "name": "angelic"
+        },
+        "instId": 0,
+        "expression": "0-0-0-2",
+        "context": [
+          {
+            "value": 1,
+            "name": "x"
+          },
+          {
+            "value": 2,
+            "name": "y"
+          },
+          {
+            "value": -1,
+            "name": "v"
+          }
+        ]
+      }
+    ]
+  ],
+    "ti3": [
+    [
+      {
+        "value": {
+          "value": true,
+          "name": "angelic"
+        },
+        "instId": 0,
+        "expression": "0-0-0-1",
+        "context": [
+          {
+            "value": 2,
+            "name": "x"
+          },
+          {
+            "value": 2,
+            "name": "y"
+          },
+          {
+            "value": 2,
+            "name": "v"
+          }
+        ]
+      },
+      {
+        "value": {
+          "value": true,
+          "name": "angelic"
+        },
+        "instId": 0,
+        "expression": "0-0-0-2",
+        "context": [
+          {
+            "value": 2,
+            "name": "x"
+          },
+          {
+            "value": 1,
+            "name": "y"
+          },
+          {
+            "value": 1,
+            "name": "v"
+          }
+        ]
+      }
+    ]
+  ]
+}

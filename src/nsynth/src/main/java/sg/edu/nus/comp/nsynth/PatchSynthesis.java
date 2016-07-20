@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Created by Sergey Mechtaev on 18/7/2016.
+ * This is a simple implementation of single-line patch synthesis used for testing
  */
 public class PatchSynthesis {
 

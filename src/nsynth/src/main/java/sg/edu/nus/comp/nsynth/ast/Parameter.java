@@ -23,6 +23,16 @@ public class Parameter extends Variable {
         return false;
     }
 
+    @Override
+    public boolean isStatementInstantiable() {
+        return true;
+    }
+
+    @Override
+    public boolean isExecutionInstantiable() {
+        return false;
+    }
+
     public Parameter(String name, Type type) {
         this.name = name;
         this.type = type;

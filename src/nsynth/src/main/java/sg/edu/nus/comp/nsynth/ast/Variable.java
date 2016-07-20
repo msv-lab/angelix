@@ -6,4 +6,6 @@ package sg.edu.nus.comp.nsynth.ast;
 public abstract class Variable extends Leaf {
     public abstract Type getType();
     public abstract boolean isTestInstantiable();
+    public abstract boolean isStatementInstantiable();
+    public abstract boolean isExecutionInstantiable();
 }

@@ -2,15 +2,20 @@ package sg.edu.nus.comp.nsynth.ast;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import sg.edu.nus.comp.nsynth.AngelixLocation;
 
 /**
  * Created by Sergey Mechtaev on 19/7/2016.
  */
-public class StatementInstance extends Variable {
+public class StatementInstance extends Instance {
 
     private Variable variable;
 
-    private int index;
+    public AngelixLocation getStmtId() {
+        return stmtId;
+    }
+
+    private AngelixLocation stmtId;
 
     public Type getType() {
         return variable.getType();
@@ -21,9 +26,19 @@ public class StatementInstance extends Variable {
         return variable.isTestInstantiable();
     }
 
-    public StatementInstance(Variable variable, int index) {
+    @Override
+    public boolean isStatementInstantiable() {
+        return false;
+    }
+
+    @Override
+    public boolean isExecutionInstantiable() {
+        return variable.isExecutionInstantiable();
+    }
+
+    public StatementInstance(Variable variable, AngelixLocation stmtId) {
         this.variable = variable;
-        this.index = index;
+        this.stmtId = stmtId;
     }
 
     @Override
@@ -55,7 +70,7 @@ public class StatementInstance extends Variable {
         StatementInstance rhs = (StatementInstance) obj;
         return new EqualsBuilder().
                 append(variable, rhs.variable).
-                append(index, rhs.index).
+                append(stmtId, rhs.stmtId).
                 isEquals();
     }
 
@@ -63,14 +78,18 @@ public class StatementInstance extends Variable {
     public int hashCode() {
         return new HashCodeBuilder(17, 31).
                 append(variable).
-                append(index).
+                append(stmtId).
                 toHashCode();
     }
 
 
     @Override
     public String toString() {
-        return variable + "_" + index;
+        return variable + "@" + stmtId;
     }
 
+    @Override
+    public Variable getVariable() {
+        return variable;
+    }
 }

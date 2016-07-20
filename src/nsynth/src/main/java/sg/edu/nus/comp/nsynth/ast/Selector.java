@@ -70,6 +70,19 @@ public class Selector extends Variable {
     }
 
     @Override
+    public boolean isStatementInstantiable() {
+        //NOTE: conceptually, selectors are statement-instantiated.
+        // However, each selector is unique and they are not shared by statements,
+        // so it is easier to assume that they are not instantiated
+        return false;
+    }
+
+    @Override
+    public boolean isExecutionInstantiable() {
+        return false;
+    }
+
+    @Override
     public void accept(BottomUpMemoVisitor visitor) {
         if (visitor.alreadyVisited(this)) {
             visitor.visitAgain(this);
