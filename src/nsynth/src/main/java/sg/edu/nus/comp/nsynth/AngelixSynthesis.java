@@ -109,7 +109,6 @@ public class AngelixSynthesis {
     private Set<AngelixLocation> getAllLocations(AngelicForest angelicForest) {
         Set<AngelixLocation> result = new HashSet<>();
         for (Map.Entry<AngelixTest, List<AngelicPath>> entry : angelicForest.getPaths().entrySet()) {
-            AngelixTest test = entry.getKey();
             List<AngelicPath> paths = entry.getValue();
             for (AngelicPath path : paths) {
                 result.addAll(path.getAngelicValues().keySet());
@@ -117,23 +116,5 @@ public class AngelixSynthesis {
         }
         return result;
     }
-
-    /**
-     * Note that not all instances should be used along each path
-     */
-    private Set<Integer> getAllInstances(AngelicForest angelicForest, AngelixLocation loc) {
-        Set<Integer> result = new HashSet<>();
-        for (Map.Entry<AngelixTest, List<AngelicPath>> entry : angelicForest.getPaths().entrySet()) {
-            AngelixTest test = entry.getKey();
-            List<AngelicPath> paths = entry.getValue();
-            for (AngelicPath path : paths) {
-                if (path.getAngelicValues().containsKey(loc)) {
-                    result.addAll(path.getAngelicValues().get(loc).keySet());
-                }
-            }
-        }
-        return result;
-    }
-
 
 }
