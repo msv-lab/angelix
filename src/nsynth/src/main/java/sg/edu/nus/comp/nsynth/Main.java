@@ -70,7 +70,7 @@ public class Main {
         Map<AngelixLocation, Expression> correctedOriginal = corrected.getRight();
 
         Map<AngelixLocation, Multiset<Node>> components = new HashMap<>();
-        for (AngelixLocation loc : original.keySet()) {
+        for (AngelixLocation loc : angelicForest.getAllLocations()) {
             components.put(loc, selectComponents(correctedOriginal.get(loc), correctedAngelicForest.getContextVariables(loc)));
         }
 
