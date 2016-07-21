@@ -177,4 +177,38 @@ public class TestAngelixSynthesis {
         Assert.assertEquals(new GreaterOrEqual(v, IntConst.of(1)), result.get().get(loc2));
     }
 
+    @Test
+    public void testConditional() {
+        Multiset<Node> components = HashMultiset.create();
+        components.add(x, 2);
+        components.add(y);
+        components.add(Parameter.mkInt("parameter"));
+        components.add(Library.GT);
+        components.add(Library.NEQ);
+        Map<AngelixLocation, Multiset<Node>> componentsMap = new HashMap<>();
+        componentsMap.put(loc1, components);
+
+        AngelicForest angelicForest = null;
+        try {
+            InputStream is = this.getClass().getResourceAsStream("af5.json");
+            angelicForest = AngelicForest.parse(is);
+            is.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Map<AngelixLocation, Expression> original = new HashMap<>();
+        Map<Hole, Expression> args = new HashMap<>();
+        args.put((Hole) Library.GT.getLeft(), Expression.leaf(x));
+        args.put((Hole) Library.GT.getRight(), Expression.leaf(y));
+        original.put(loc1, Expression.app(Library.GT, args));
+
+        Optional<Map<AngelixLocation, Node>> result =
+                synthesizer.repair(original, angelicForest, componentsMap, SynthesisLevel.CONDITIONAL);
+        assertTrue(result.isPresent());
+        Node node = result.get().get(loc1);
+        Assert.assertTrue(new Or(new Greater(x, y), new NotEqual(x, IntConst.of(1))).equals(node) ||
+                new Or(new Greater(x, y), new NotEqual(IntConst.of(1), x)).equals(node));
+    }
+
 }

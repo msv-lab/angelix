@@ -313,7 +313,7 @@ public class TreeBoundedEncoder {
                     Traverse.substitute(Library.ID(BoolType.TYPE), idBranchMatching))));
             clauses.add(new Impl(andChoice, new Equal(output,
                     Traverse.substitute(Library.AND, andBranchMatching))));
-            clauses.add(new Impl(idChoice, new Equal(output,
+            clauses.add(new Impl(orChoice, new Equal(output,
                     Traverse.substitute(Library.OR, orBranchMatching))));
             for (EncodingInfo result : results) {
                 clauses.addAll(result.clauses);
