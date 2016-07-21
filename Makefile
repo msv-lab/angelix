@@ -231,6 +231,8 @@ distclean-synthesis: clean-synthesis
 # Synthesis #
 
 nsynth:
+	mvn install:install-file -Dfile=$(Z3_JAR) -DgroupId=com.microsoft.z3 -DartifactId=z3 -Dversion=4 -Dpackaging=jar
+	cd $(ANGELIX_ROOT)/src/nsynth && mvn package
 
 clean-nsynth:
 

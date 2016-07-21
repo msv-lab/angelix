@@ -459,6 +459,8 @@ if __name__ == "__main__":
                         help='Don\'t terminate on transformation errors (default: %(default)s)')
     parser.add_argument('--ignore-infer-errors', action='store_true',
                         help='Consider path with errors for inference (default: %(default)s)')
+    parser.add_argument('--use-nsynth', action='store_true',
+                        help='use new synthesizer (default: %(default)s)')
     parser.add_argument('--synthesis-timeout', metavar='MS', type=int, default=30000, # 30 sec
                         help='synthesis timeout (default: %(default)s)')
     parser.add_argument('--synthesis-levels', metavar='LEVEL', nargs='+',
@@ -589,6 +591,7 @@ if __name__ == "__main__":
     config['klee_ignore_errors']    = args.klee_ignore_errors
     config['ignore_trans_errors']   = args.ignore_trans_errors
     config['ignore_infer_errors']   = args.ignore_infer_errors
+    config['use_nsynth']            = args.use_nsynth
     config['synthesis_timeout']     = args.synthesis_timeout
     config['synthesis_levels']      = args.synthesis_levels
     config['synthesis_global_vars'] = args.synthesis_global_vars

@@ -17,12 +17,12 @@ public class SMTParser {
         SMT smt = new SMT();
         ISource source = smt.smtConfig.smtFactory.createSource(new CharSequenceReader(new java.io.StringReader(string)),null);
         IParser parser = smt.smtConfig.smtFactory.createParser(smt.smtConfig,source);
-        ICommand.IScript script = null;
+        ICommand cmd = null;
         try {
-            script = parser.parseScript();
+            cmd = parser.parseCommand();
         } catch (IOException | IParser.ParserException e) {
             e.printStackTrace();
         }
-        return ((C_assert)script.commands().get(0)).expr();
+        return ((C_assert)cmd).expr();
     }
 }

@@ -88,7 +88,10 @@ class Synthesizer:
             with open(config_file, 'w') as file:
                 json.dump(config, file)
 
-            jar = os.environ['SYNTHESIS_JAR']
+            if self.config['use_nsynth']:
+                jar = os.environ['NSYNTH_JAR']
+            else:
+                jar = os.environ['SYNTHESIS_JAR']
 
             if self.config['verbose']:
                 stderr = None

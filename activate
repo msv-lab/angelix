@@ -34,6 +34,7 @@ export MAXSMT_DIR="$ANGELIX_ROOT/build/maxsmt-playground"
 export MAXSMT_JAR="$MAXSMT_DIR/target/scala-2.10/maxsmt-playground_2.10-1.1.jar"
 export SYNTHESIS_DIR="$ANGELIX_ROOT/src/synthesis"
 export SYNTHESIS_JAR="$SYNTHESIS_DIR/target/scala-2.10/repair-maxsat-assembly-1.0.jar"
+export NSYNTH_JAR="$ANGELIX_ROOT/src/nsynth/target/nsynth-1.0-jar-with-dependencies.jar"
 export LOCAL_PERL_ROOT="$ANGELIX_ROOT/build/perl"
 
 # envorinment for building and execution:
