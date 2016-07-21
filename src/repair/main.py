@@ -258,6 +258,7 @@ class Angelix:
                         if test in positive:
                             logger.warning('angelic forest for positive test {} not found'.format(test))
                             current_repair_suite.remove(test)
+                            del angelic_forest[test]
                             continue
                         inference_failed = True
                         break
