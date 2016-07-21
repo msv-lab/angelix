@@ -128,7 +128,7 @@ def parse_variables(vars):
     for name, type in output_type.items():
         for i in range(0, len(output_instances[name])):
             if i not in output_instances[name]:
-                logger.error('inconsistent variables')
+                logger.warn('output instance {} for variable {} is missing'.format(i, name))
                 raise InferenceError()
         outputs[name] = (type, len(output_instances[name]))
 
@@ -136,7 +136,7 @@ def parse_variables(vars):
     for expr, type in choice_type.items():
         for i in range(0, len(choice_instances[expr])):
             if i not in choice_instances[expr]:
-                logger.error('inconsistent variables')
+                logger.warn('choice instance {} for variable {} is missing'.format(i, name))
                 raise InferenceError()
         choices[expr] = (type, len(choice_instances[expr]), list(choice_env[expr]))
 
@@ -265,7 +265,10 @@ class Inferrer:
                          or str(var).startswith('char!')
                          or str(var).startswith('reachable!')]
 
-            outputs, choices, constants, reachable, original_available = parse_variables(variables)
+            try:
+                outputs, choices, constants, reachable, original_available = parse_variables(variables)
+            except:
+                continue
 
             # name -> value list (parsed)
             oracle_constraints = dict()
