@@ -97,4 +97,15 @@ public class AngelicForest {
         return new HashSet<>();
     }
 
+    @Override
+    public String toString() {
+        String s = "";
+        for (AngelixTest test : paths.keySet()) {
+            s += "Test " + test + "\n";
+            for (AngelicPath path : paths.get(test)) {
+                s += path.toString() + "\n";
+            };
+        }
+        return s;
+    }
 }

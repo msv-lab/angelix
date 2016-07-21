@@ -20,4 +20,9 @@ public class AngelicPath {
     public Map<AngelixLocation, Map<Integer, Pair<Constant, Map<ProgramVariable, Constant>>>> getAngelicValues() {
         return angelicValues;
     }
+
+    @Override
+    public String toString() {
+        return angelicValues.toString();
+    }
 }

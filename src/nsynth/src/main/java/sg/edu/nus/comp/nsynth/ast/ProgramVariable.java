@@ -70,7 +70,11 @@ public class ProgramVariable extends Variable {
 
     @Override
     public String toString() {
-        return name;
+        if (type.equals(IntType.TYPE)) {
+            return name + ":int";
+        } else {
+            return name + ":bool";
+        }
     }
 
     public void accept(BottomUpVisitor visitor) {

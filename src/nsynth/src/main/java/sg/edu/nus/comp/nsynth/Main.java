@@ -74,6 +74,9 @@ public class Main {
             components.put(loc, selectComponents(correctedOriginal.get(loc), correctedAngelicForest.getContextVariables(loc)));
         }
 
+        System.err.println(correctedOriginal.toString());
+        System.err.println(correctedAngelicForest.toString());
+
         Optional<Map<AngelixLocation, Node>> result =
                 synthesizer.repair(correctedOriginal, correctedAngelicForest, components, level);
 
