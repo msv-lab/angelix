@@ -85,7 +85,7 @@ class TestAngelix(unittest.TestCase):
         
     def test_guard(self):
         test_dir = os.path.join(script_dir, 'guard')
-        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--defect', 'guards', '--synthesis-level', 'extended-inequalities']
+        args = ['src', 'test.c', 'oracle', '1', '2', '3', '--assert', 'assert.json', '--defect', 'guards', '--synthesis-level', 'extended-inequalities', 'variables']
         result = run_angelix(args, test_dir)
         self.assertEqual(result, 'SUCCESS')
 
