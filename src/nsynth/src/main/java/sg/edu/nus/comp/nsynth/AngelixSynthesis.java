@@ -18,6 +18,7 @@ public class AngelixSynthesis {
 
     public AngelixSynthesis() {
         this.solver = new Z3();
+        solver.enableCustomMaxsatWithBound(3);
     }
 
     public Optional<Map<AngelixLocation, Node>> repair(Map<AngelixLocation, Expression> original,
