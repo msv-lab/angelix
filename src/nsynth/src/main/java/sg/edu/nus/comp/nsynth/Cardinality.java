@@ -1,6 +1,5 @@
 package sg.edu.nus.comp.nsynth;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import sg.edu.nus.comp.nsynth.ast.*;
