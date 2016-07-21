@@ -74,4 +74,27 @@ public class AngelicForest {
         return new AngelicForest(paths);
     }
 
+    public Set<AngelixLocation> getAllLocations() {
+        Set<AngelixLocation> result = new HashSet<>();
+        for (Map.Entry<AngelixTest, List<AngelicPath>> entry : this.getPaths().entrySet()) {
+            List<AngelicPath> paths = entry.getValue();
+            for (AngelicPath path : paths) {
+                result.addAll(path.getAngelicValues().keySet());
+            }
+        }
+        return result;
+    }
+
+    public Set<ProgramVariable> getContextVariables(AngelixLocation loc) {
+        for (Map.Entry<AngelixTest, List<AngelicPath>> entry : this.getPaths().entrySet()) {
+            List<AngelicPath> paths = entry.getValue();
+            for (AngelicPath path : paths) {
+                if (path.getAngelicValues().containsKey(loc)) {
+                    return path.getAngelicValues().get(loc).get(0).getRight().keySet();
+                }
+            }
+        }
+        return new HashSet<>();
+    }
+
 }

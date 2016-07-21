@@ -24,7 +24,7 @@ public class AngelixSynthesis {
                                                        AngelicForest angelicForest,
                                                        Map<AngelixLocation, Multiset<Node>> components,
                                                        SynthesisLevel level) {
-        Set<AngelixLocation> locations = getAllLocations(angelicForest);
+        Set<AngelixLocation> locations = angelicForest.getAllLocations();
         assert locations.stream().filter(loc -> !original.containsKey(loc)).count() == 0; //no locations without original expr
 
         List<Node> hard = new ArrayList<>();
@@ -104,17 +104,6 @@ public class AngelixSynthesis {
             relevant.put(v, entry.getValue());
         }
         return relevant;
-    }
-
-    private Set<AngelixLocation> getAllLocations(AngelicForest angelicForest) {
-        Set<AngelixLocation> result = new HashSet<>();
-        for (Map.Entry<AngelixTest, List<AngelicPath>> entry : angelicForest.getPaths().entrySet()) {
-            List<AngelicPath> paths = entry.getValue();
-            for (AngelicPath path : paths) {
-                result.addAll(path.getAngelicValues().keySet());
-            }
-        }
-        return result;
     }
 
 }

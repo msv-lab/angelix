@@ -12,12 +12,16 @@ import java.util.Stack;
 public class TypeInference {
 
     public static Type typeOf(Node node) {
+        if (node instanceof Leaf) {
+            Leaf leaf = (Leaf) node;
+            return leaf.getType();
+        }
+
         if (node instanceof Add ||
                 node instanceof Sub ||
                 node instanceof Mult ||
                 node instanceof Div ||
-                node instanceof Minus ||
-                node instanceof IntConst) {
+                node instanceof Minus) {
             return IntType.TYPE;
         }
 
@@ -31,15 +35,10 @@ public class TypeInference {
                 node instanceof Less ||
                 node instanceof GreaterOrEqual ||
                 node instanceof LessOrEqual ||
-                node instanceof Not ||
-                node instanceof BoolConst) {
+                node instanceof Not) {
             return BoolType.TYPE;
         }
 
-        if (node instanceof Variable) {
-            Variable variable = (Variable) node;
-            return variable.getType();
-        }
 
         if (node instanceof ITE) {
             Node thenBranch = ((ITE) node).getThenBranch();

@@ -2,10 +2,7 @@ package sg.edu.nus.comp.nsynth.ast.theory;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import sg.edu.nus.comp.nsynth.ast.BottomUpMemoVisitor;
-import sg.edu.nus.comp.nsynth.ast.BottomUpVisitor;
-import sg.edu.nus.comp.nsynth.ast.Constant;
-import sg.edu.nus.comp.nsynth.ast.TopDownVisitor;
+import sg.edu.nus.comp.nsynth.ast.*;
 
 /**
  * Created by Sergey Mechtaev on 7/4/2016.
@@ -70,4 +67,8 @@ public class IntConst extends Constant {
         return Integer.toString(value);
     }
 
+    @Override
+    public Type getType() {
+        return IntType.TYPE;
+    }
 }
