@@ -74,7 +74,7 @@ public class AngelixSynthesis {
             for (AngelixLocation loc : locations) {
                 Map<Variable, Constant> relevant = relevantSubmodel(solverResult.get(), loc);
                 Pair<Expression, Map<Parameter, Constant>> decoded =
-                        encoder.decode(solverResult.get(), encodings.get(loc).getLeft(), encodings.get(loc).getRight());
+                        encoder.decode(relevant, encodings.get(loc).getLeft(), encodings.get(loc).getRight());
                 result.put(loc, decoded.getLeft().getSemantics(decoded.getRight()));
             }
             return Optional.of(result);
