@@ -130,7 +130,11 @@ public class TypeCorrector {
     private static Expression switchToBool(Expression expression, Set<ProgramVariable> boolVars) {
         Node root = expression.getRoot();
         if (root instanceof ProgramVariable) {
-            return Expression.leaf(ProgramVariable.mkBool(((ProgramVariable)root).getName()));
+            if (boolVars.contains(root)) {
+                return Expression.leaf(ProgramVariable.mkBool(((ProgramVariable) root).getName()));
+            } else {
+                return expression;
+            }
         } else {
             Map<Hole, Expression> children = new HashMap<>();
             for (Hole input : Expression.getComponentInputs(root)) {
