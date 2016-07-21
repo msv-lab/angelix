@@ -85,7 +85,7 @@ public class Equal extends BinaryOp {
 
     @Override
     public String toString() {
-        return "(" + left.toString() + "=" + right.toString() + ")";
+        return "(" + left.toString() + " == " + right.toString() + ")";
     }
 
 }

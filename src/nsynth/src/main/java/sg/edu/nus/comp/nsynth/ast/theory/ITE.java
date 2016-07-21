@@ -88,7 +88,7 @@ public class ITE extends Application {
 
     @Override
     public String toString() {
-        return "(if " + condition.toString() + " " + thenBranch.toString() + " " + elseBranch.toString() + ")";
+        return "(" + condition.toString() + " ? " + thenBranch.toString() + " : " + elseBranch.toString() + ")";
     }
 
     @Override
