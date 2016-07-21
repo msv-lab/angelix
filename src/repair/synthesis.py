@@ -121,8 +121,10 @@ class Synthesizer:
                     if len(line) == 0:
                         continue
                     expr = tuple(map(int, line.strip().split('-')))
-                    original = content.pop(0).strip()
-                    fixed = content.pop(0).strip()
+                    def convert_to_c(s):
+                        return s.replace('_LBRSQR_', '[').replace('_RBRSQR_', ']')
+                    original = convert_to_c(content.pop(0).strip())
+                    fixed = convert_to_c(content.pop(0).strip())
                     if self.config['semfix']:
                         logger.info('synthesized expression {}: {}'.format(expr, fixed))
                     else:

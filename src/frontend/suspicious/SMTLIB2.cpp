@@ -199,6 +199,13 @@ public:
     }
   }
 
+  void VisitArraySubscriptExpr(ArraySubscriptExpr *Node) {
+    PrintExpr(Node->getLHS());
+    OS << "_LBRSQR_";
+    PrintExpr(Node->getRHS());
+    OS << "_RBRSQR_";
+  }
+
 };
 
 std::string toSMTLIB2(const Stmt* stmt) {

@@ -37,10 +37,13 @@ bool isBooleanExpr(const Expr* expr) {
 class CollectVariables : public StmtVisitor<CollectVariables> {
   std::unordered_set<VarDecl*> *VSet;
   std::unordered_set<MemberExpr*> *MSet;
+  std::unordered_set<ArraySubscriptExpr*> *ASet;
   VarTypes Types;
   
 public:
-  CollectVariables(std::unordered_set<VarDecl*> *vset, std::unordered_set<MemberExpr*> *mset, VarTypes t): VSet(vset), MSet(mset), Types(t) {}
+  CollectVariables(std::unordered_set<VarDecl*> *vset, 
+                   std::unordered_set<MemberExpr*> *mset, 
+                   std::unordered_set<ArraySubscriptExpr*> *aset, VarTypes t): VSet(vset), MSet(mset), ASet(aset), Types(t) {}
 
   void Collect(Expr *E) {
     if (E)
@@ -84,19 +87,26 @@ public:
     if (VSet && isa<VarDecl>(Node->getDecl())) {
       VarDecl* vd;
       if ((vd = cast<VarDecl>(Node->getDecl())) != NULL) {
-	if (suitableVarDecl(vd, Types)) {
-	  VSet->insert(vd);
-	}
+        if (suitableVarDecl(vd, Types)) {
+          VSet->insert(vd);
+        }
       }
     }
   }
+
+  void VisitArraySubscriptExpr(ArraySubscriptExpr *Node) {
+    if (ASet) {
+      ASet->insert(Node);
+    }
+  }
+
 
 };
 
 
 std::unordered_set<VarDecl*> collectVarsFromExpr(const Stmt* stmt, VarTypes t) {
   std::unordered_set<VarDecl*> set;
-  CollectVariables T(&set, NULL, t);
+  CollectVariables T(&set, NULL, NULL, t);
   T.Visit(const_cast<Stmt*>(stmt));
   return set;
 }
@@ -104,11 +114,17 @@ std::unordered_set<VarDecl*> collectVarsFromExpr(const Stmt* stmt, VarTypes t) {
 
 std::unordered_set<MemberExpr*> collectMemberExprFromExpr(const Stmt* stmt) {
   std::unordered_set<MemberExpr*> set;
-  CollectVariables T(NULL, &set, ALL);
+  CollectVariables T(NULL, &set, NULL, ALL);
   T.Visit(const_cast<Stmt*>(stmt));
   return set;
 }
 
+std::unordered_set<ArraySubscriptExpr*> collectArraySubscriptExprFromExpr(const Stmt* stmt) {
+  std::unordered_set<ArraySubscriptExpr*> set;
+  CollectVariables T(NULL, NULL, &set, ALL);
+  T.Visit(const_cast<Stmt*>(stmt));
+  return set;
+}
 
 std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > collectVarsFromScope(const ast_type_traits::DynTypedNode node, ASTContext* context, unsigned line) {
   VarTypes collectedTypes;
@@ -280,6 +296,7 @@ public:
       std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
       std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(expr, ALL);
       std::unordered_set<MemberExpr*> memberFromExpr = collectMemberExprFromExpr(expr);
+      std::unordered_set<ArraySubscriptExpr*> arraySubscriptFromExpr = collectArraySubscriptExprFromExpr(expr);
       std::unordered_set<VarDecl*> vars;
       vars.insert(varsFromScope.first.begin(), varsFromScope.first.end());
       vars.insert(varsFromExpr.begin(), varsFromExpr.end());
@@ -311,8 +328,19 @@ public:
         exprStream << toString(me);
         nameStream << "\"" << toString(me) << "\"";
       }
+      for (auto it = arraySubscriptFromExpr.begin(); it != arraySubscriptFromExpr.end(); ++it) {
+        if (first) {
+          first = false;
+        } else {
+          exprStream << ", ";
+          nameStream << ", ";
+        }
+        ArraySubscriptExpr* ae = *it;
+        exprStream << toString(ae->getLHS()) << "[" << toString(ae->getRHS()) << "]";
+        nameStream << "\"" <<  toString(ae->getLHS()) << "_LBRSQR_" << toString(ae->getRHS()) << "_RBRSQR_" << "\"";
+      }
 
-      int size = vars.size() + members.size();
+      int size = vars.size() + members.size() + arraySubscriptFromExpr.size();
 
       std::ostringstream stringStream;
       stringStream << "ANGELIX_CHOOSE("

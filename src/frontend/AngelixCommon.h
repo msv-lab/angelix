@@ -110,6 +110,8 @@ StatementMatcher RepairableNode =
                                      hasType(pointerType()))))).bind("repairable"),
         declRefExpr(to(enumConstantDecl())).bind("repairable"),
         declRefExpr(to(namedDecl())).bind("repairable"),
+        arraySubscriptExpr(hasIndex(integerLiteral())).bind("repairable"),
+        arraySubscriptExpr(hasIndex(declRefExpr(to(varDecl(hasType(isInteger())))))).bind("repairable"),
         integerLiteral().bind("repairable"),
         characterLiteral().bind("repairable"),
         // TODO: I need to make sure that base is a variable here:
