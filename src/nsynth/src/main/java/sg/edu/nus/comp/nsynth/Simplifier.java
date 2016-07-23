@@ -41,6 +41,7 @@ public class Simplifier {
 
         simplificationRules.add(new RewriteRule(new Sub(i, j), (unused, unifier) ->
                 IntConst.of(getI.apply(unifier) - getJ.apply(unifier))));
+
         simplificationRules.add(new RewriteRule(new Mult(i, j), (unused, unifier) ->
                 IntConst.of(getI.apply(unifier) * getJ.apply(unifier))));
 
@@ -58,6 +59,12 @@ public class Simplifier {
 
         simplificationRules.add(new RewriteRule(new LessOrEqual(i, j), (unused, unifier) ->
                 BoolConst.of(getI.apply(unifier) <= getJ.apply(unifier))));
+
+        simplificationRules.add(new RewriteRule(new Equal(i, j), (unused, unifier) ->
+                BoolConst.of(getI.apply(unifier) == getJ.apply(unifier))));
+
+        simplificationRules.add(new RewriteRule(new NotEqual(i, j), (unused, unifier) ->
+                BoolConst.of(getI.apply(unifier) != getJ.apply(unifier))));
 
         simplificationRules.add(new RewriteRule(new Minus(i), (unused, unifier) ->
                 IntConst.of(- getI.apply(unifier))));
@@ -211,6 +218,12 @@ public class Simplifier {
 
         simplificationRules.add(new RewriteRule(new LessOrEqual(intHole, intHole),
                 RewriteRule.transformInto(BoolConst.TRUE)));
+
+        simplificationRules.add(new RewriteRule(new Equal(intHole, intHole),
+                RewriteRule.transformInto(BoolConst.TRUE)));
+
+        simplificationRules.add(new RewriteRule(new NotEqual(intHole, intHole),
+                RewriteRule.transformInto(BoolConst.FALSE)));
 
         simplificationRules.add(new RewriteRule(new ITE(BoolConst.TRUE, intHole, intHole2),
                 RewriteRule.transformInto(intHole)));

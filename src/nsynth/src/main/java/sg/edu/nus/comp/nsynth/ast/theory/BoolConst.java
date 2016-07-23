@@ -68,7 +68,10 @@ public class BoolConst extends Constant {
 
     @Override
     public String toString() {
-        return Boolean.toString(value);
+        if (value)
+            return "1";
+        else 
+            return "0";
     }
 
     @Override

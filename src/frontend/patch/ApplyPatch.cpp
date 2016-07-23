@@ -86,11 +86,7 @@ public:
 
       std::stringstream replacement;
 
-      if (guard == "0") {
-        replacement << "";
-      } else {
-        replacement << "if (" << guard << ") " << toString(stmt);
-      }
+      replacement << "if (" << guard << ") " << toString(stmt);
 
       std::cout << beginLine << " " << beginColumn << " " << endLine << " " << endColumn << "\n"
                 << "<   " << toString(stmt) << "\n"
