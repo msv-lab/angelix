@@ -76,6 +76,16 @@ SourceRange getExpandedLoc(const clang::Stmt* expr, SourceManager &srcMgr) {
 
 
 std::string toString(const clang::Stmt* stmt) {
+  /* Special case for break and continue statement
+     Reason: There were semicolon ; and newline found
+     after break/continue statement was converted to string
+  */
+  if (dyn_cast<clang::BreakStmt>(stmt))
+    return "break";
+  
+  if (dyn_cast<clang::ContinueStmt>(stmt))
+    return "continue";
+
   clang::LangOptions LangOpts;
   clang::PrintingPolicy Policy(LangOpts);
   std::string str;
@@ -268,9 +278,15 @@ StatementMatcher InterestingAssignment =
                  unless(hasAngelixOutput), unless(has(forStmt()))).bind("repairable");
 
 
+StatementMatcher CallInCondition =
+  anyOf(hasParent(ifStmt(hasCondition(expr(callExpr())))),
+        hasParent(whileStmt(hasCondition(expr(callExpr())))),
+        hasParent(forStmt(hasCondition(expr(callExpr())))));
+
+
 StatementMatcher InterestingCall =
   callExpr(isTopLevelStatement,
-           unless(hasAngelixOutput), unless(has(forStmt()))).bind("repairable");
+           unless(hasAngelixOutput), unless(has(forStmt())), unless(CallInCondition)).bind("repairable");
 
 
 StatementMatcher InterestingStatement =
