@@ -6,13 +6,13 @@
 
 
 #define ANGELIX_OUTPUT(type, expr, name)                  \
-  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_output_##type(expr, name) : expr)
+  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_output_##type(expr, name) : (expr))
 
 #define ANGELIX_CHOOSE(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
-  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_##type##_with_deps(expr, bl, bc, el, ec, env_ids, env_vals, env_size) : expr)
+  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_##type##_with_deps(expr, bl, bc, el, ec, env_ids, env_vals, env_size) : (expr))
 
 #define ANGELIX_CHOOSE_CONST(type, expr, bl, bc, el, ec)  \
-  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_const_##type(bl, bc, el, ec) : expr)
+  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_const_##type(bl, bc, el, ec) : (expr))
 
 #define ANGELIX_REACHABLE(name)                 \
   (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_reachable(name) : 1)
@@ -23,13 +23,13 @@
 
 
 #define ANGELIX_OUTPUT(type, expr, name)        \
-  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_output_##type(expr, name) : expr)
+  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_output_##type(expr, name) : (expr))
 
 #define ANGELIX_CHOOSE(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
-  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_##type(bl, bc, el, ec, env_ids, env_vals, env_size) : expr)
+  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_##type(bl, bc, el, ec, env_ids, env_vals, env_size) : (expr))
 
 #define ANGELIX_CHOOSE_CONST(type, expr, bl, bc, el, ec)  \
-  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_const_##type(bl, bc, el, ec) : expr)
+  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_const_##type(bl, bc, el, ec) : (expr))
 
 #define ANGELIX_REACHABLE(name)                 \
   (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_reachable(name) : 1)
@@ -49,10 +49,10 @@
   angelix_dump_output_##type(expr, name)
 
 #define ANGELIX_CHOOSE(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
-  expr
+  (expr)
 
 #define ANGELIX_CHOOSE_CONST(type, expr, bl, bc, el, ec)  \
-  expr
+  (expr)
 
 #define ANGELIX_REACHABLE(name)                 \
   angelix_dump_reachable(name)
