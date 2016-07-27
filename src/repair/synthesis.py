@@ -130,6 +130,9 @@ class Synthesizer:
                     else:
                         logger.info('fixing expression {}: {} ---> {}'.format(expr, original, fixed))
                     patch[expr] = fixed
+                if len(patch) == 0:
+                    logger.warn('patch contains no changes')
+                    return None
                 return patch
             else:
                 raise Exception('result: ' + str(result, 'UTF-8'))
