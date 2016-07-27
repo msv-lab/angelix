@@ -439,6 +439,8 @@ if __name__ == "__main__":
                         help='formula for localization algorithm (default: %(default)s)')
     parser.add_argument('--ignore-trivial', action='store_true',
                         help='ignore trivial expressions: variables and constants (default: %(default)s)')
+    parser.add_argument('--path-solving-timeout', metavar='MS', type=int, default=60000, # 60 seconds
+                        help='timeout for extracting single angelic path (default: %(default)s)')
     parser.add_argument('--max-angelic-paths', metavar='NUM', type=int, default=None,
                         help='max number of angelic paths for a test case (default: %(default)s)')
     parser.add_argument('--klee-search', metavar='HEURISTIC', default=None,
@@ -582,6 +584,7 @@ if __name__ == "__main__":
     config['suspicious']            = args.suspicious
     config['localization']          = args.localization
     config['ignore_trivial']        = args.ignore_trivial
+    config['path_solving_timeout']  = args.path_solving_timeout
     config['max_angelic_paths']     = args.max_angelic_paths
     config['klee_max_forks']        = args.klee_max_forks
     config['klee_max_depth']        = args.klee_max_depth
