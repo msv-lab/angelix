@@ -211,12 +211,15 @@ StatementMatcher NonTrivialRepairableLoopCondition =
 
 
 //TODO: better to create a variables, but I don't know what the type is
-#define isTopLevelStatement        \
-  anyOf(hasParent(compoundStmt()), \
-        hasParent(ifStmt()),       \
-        hasParent(labelStmt()),    \
-        hasParent(whileStmt()),    \
-        hasParent(forStmt()))
+#define isTopLevelStatement                     \
+  allOf(anyOf(hasParent(compoundStmt()),        \
+              hasParent(ifStmt()),              \
+              hasParent(labelStmt()),           \
+              hasParent(whileStmt()),           \
+              hasParent(forStmt())),            \
+        unless(has(forStmt())),                 \
+        unless(has(whileStmt())),               \
+        unless(has(ifStmt())))
 
 
 StatementMatcher RepairableAssignment =
@@ -275,18 +278,12 @@ StatementMatcher InterestingAssignment =
                  anyOf(hasOperatorName("="), hasOperatorName("+="), hasOperatorName("-="), hasOperatorName("*=")),
                  anyOf(hasLHS(ignoringParenImpCasts(declRefExpr())),
                        hasLHS(ignoringParenImpCasts(memberExpr()))),
-                 unless(hasAngelixOutput), unless(has(forStmt()))).bind("repairable");
-
-
-StatementMatcher CallInCondition =
-  anyOf(hasParent(ifStmt(hasCondition(expr(callExpr())))),
-        hasParent(whileStmt(hasCondition(expr(callExpr())))),
-        hasParent(forStmt(hasCondition(expr(callExpr())))));
+                 unless(hasAngelixOutput)).bind("repairable");
 
 
 StatementMatcher InterestingCall =
   callExpr(isTopLevelStatement,
-           unless(hasAngelixOutput), unless(has(forStmt())), unless(CallInCondition)).bind("repairable");
+           unless(hasAngelixOutput)).bind("repairable");
 
 
 StatementMatcher InterestingStatement =
