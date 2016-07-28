@@ -119,9 +119,9 @@ StatementMatcher RepairableNode =
         declRefExpr(to(varDecl(anyOf(hasType(isInteger()),
                                      hasType(pointerType()))))).bind("repairable"),
         declRefExpr(to(enumConstantDecl())).bind("repairable"),
-        declRefExpr(to(namedDecl())).bind("repairable"),
-        arraySubscriptExpr(hasIndex(integerLiteral())).bind("repairable"),
-        arraySubscriptExpr(hasIndex(declRefExpr(to(varDecl(hasType(isInteger())))))).bind("repairable"),
+        declRefExpr(to(namedDecl())), // no binding because it is only for member expression
+        arraySubscriptExpr(hasIndex(ignoringImpCasts(anyOf(integerLiteral(), declRefExpr(), memberExpr()))),
+                           hasBase(implicitCastExpr(hasSourceExpression(declRefExpr(hasType(arrayType(hasElementType(isInteger())))))))).bind("repairable"),
         integerLiteral().bind("repairable"),
         characterLiteral().bind("repairable"),
         // TODO: I need to make sure that base is a variable here:
@@ -226,7 +226,8 @@ StatementMatcher RepairableAssignment =
   binaryOperator(isTopLevelStatement,
                  anyOf(hasOperatorName("="), hasOperatorName("+="), hasOperatorName("-="), hasOperatorName("*=")),
                  anyOf(hasLHS(ignoringParenImpCasts(declRefExpr())),
-                       hasLHS(ignoringParenImpCasts(memberExpr()))),
+                       hasLHS(ignoringParenImpCasts(memberExpr())),
+                       hasLHS(ignoringParenImpCasts(arraySubscriptExpr()))),
                  hasRHS(ignoringParenImpCasts(RepairableExpression)));
 
 
@@ -234,7 +235,8 @@ StatementMatcher NonTrivialRepairableAssignment =
   binaryOperator(isTopLevelStatement,
                  anyOf(hasOperatorName("="), hasOperatorName("+="), hasOperatorName("-="), hasOperatorName("*=")),
                  anyOf(hasLHS(ignoringParenImpCasts(declRefExpr())),
-                       hasLHS(ignoringParenImpCasts(memberExpr()))),
+                       hasLHS(ignoringParenImpCasts(memberExpr())),
+                       hasLHS(ignoringParenImpCasts(arraySubscriptExpr()))),
                  hasRHS(ignoringParenImpCasts(NonTrivialRepairableExpression)));
 
 //TODO: currently these selectors are not completely orthogonal
@@ -263,7 +265,7 @@ StatementMatcher InterestingCondition =
         whileStmt(hasCondition(expr(unless(hasAngelixOutput)).bind("repairable"))),
         forStmt(hasCondition(expr(unless(hasAngelixOutput)).bind("repairable"))));
 
-
+//TODO: do I need it?
 StatementMatcher InterestingIntegerAssignment =
   binaryOperator(isTopLevelStatement,
                  anyOf(hasOperatorName("="), hasOperatorName("+="), hasOperatorName("-="), hasOperatorName("*=")),
@@ -277,7 +279,8 @@ StatementMatcher InterestingAssignment =
   binaryOperator(isTopLevelStatement,
                  anyOf(hasOperatorName("="), hasOperatorName("+="), hasOperatorName("-="), hasOperatorName("*=")),
                  anyOf(hasLHS(ignoringParenImpCasts(declRefExpr())),
-                       hasLHS(ignoringParenImpCasts(memberExpr()))),
+                       hasLHS(ignoringParenImpCasts(memberExpr())),
+                       hasLHS(ignoringParenImpCasts(arraySubscriptExpr()))),
                  unless(hasAngelixOutput)).bind("repairable");
 
 
