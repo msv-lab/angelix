@@ -7,6 +7,7 @@ import json
 import logging
 import time
 import sys
+import statistics
 
 from project import Validation, Frontend, Backend, CompilationError
 from utils import format_time, time_limit, TimeoutException
@@ -145,8 +146,11 @@ class Angelix:
 
 
     def evaluate(self, src):
+        testing_start_time = time.time()
+
         positive = []
         negative = []
+
         for test in self.validation_test_suite:
             if self.run_test(src, test):
                 positive.append(test)
@@ -161,6 +165,11 @@ class Angelix:
                     negative.remove(test)
                     positive.append(test)
 
+        testing_end_time = time.time()
+        testing_elapsed = testing_end_time - testing_start_time
+        statistics.data['time']['testing'] += testing_elapsed
+        statistics.save()
+
         return positive, negative
 
 
@@ -172,6 +181,8 @@ class Angelix:
             self.frontend_src.build()
         self.instrument_for_localization(self.frontend_src)
         self.frontend_src.build()
+
+        testing_start_time = time.time()
         if len(positive) > 0:
             logger.info('running positive tests for debugging')
         for test in positive:
@@ -217,6 +228,11 @@ class Angelix:
                 self.repair_test_suite.remove(test)
             self.validation_test_suite.remove(test)
 
+        testing_end_time = time.time()
+        testing_elapsed = testing_end_time - testing_start_time
+        statistics.data['time']['testing'] += testing_elapsed
+        statistics.save()
+
         logger.info("repair test suite: {}".format(self.repair_test_suite))
         logger.info("validation test suite: {}".format(self.validation_test_suite))
 
@@ -243,12 +259,14 @@ class Angelix:
             expressions = suspicious.pop(0)
             logger.info('considering suspicious expressions {}'.format(expressions))
             current_repair_suite = self.reduce(self.repair_test_suite, positive_traces, negative_traces, expressions)
+
             self.backend_src.restore_buggy()
             self.backend_src.configure()
             if config['build_before_instr']:
                 self.backend_src.build()
             self.instrument_for_inference(self.backend_src, expressions)
             self.backend_src.build()
+
             angelic_forest = dict()
             inference_failed = False
             for test in current_repair_suite:
@@ -279,6 +297,7 @@ class Angelix:
                 logger.info('cannot synthesize fix')
                 continue
             logger.info('candidate fix synthesized')
+
             self.validation_src.restore_buggy()
             try:
                 self.apply_patch(self.validation_src, initial_fix)
@@ -286,6 +305,7 @@ class Angelix:
                 logger.info('cannot apply fix')
                 continue
             self.validation_src.build()
+
             pos, neg = self.evaluate(self.validation_src)
             if not set(neg).isdisjoint(set(current_repair_suite)):
                 not_repaired = list(set(current_repair_suite) & set(neg))
@@ -522,12 +542,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    FORMAT = '%(levelname)-8s %(name)-15s %(message)s'
-    if args.quiet:
-        logging.basicConfig(level=logging.WARNING, format=FORMAT)
-    else:
-        logging.basicConfig(level=logging.INFO, format=FORMAT)
-
     def rm_force(action, name, exc):
         os.chmod(name, stat.S_IREAD)
         shutil.rmtree(name)
@@ -536,6 +550,19 @@ if __name__ == "__main__":
     if exists(working_dir):
         shutil.rmtree(working_dir, onerror=rm_force)
     os.mkdir(working_dir)
+
+    rootLogger = logging.getLogger()
+    FORMAT = logging.Formatter('%(levelname)-8s %(name)-15s %(message)s')
+    if args.quiet:
+        rootLogger.setLevel(logging.WARNING)
+    else:
+        rootLogger.setLevel(logging.INFO)
+    fileHandler = logging.FileHandler("{0}/{1}.log".format(working_dir, 'angelix'))
+    fileHandler.setFormatter(FORMAT)
+    rootLogger.addHandler(fileHandler)
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setFormatter(FORMAT)
+    rootLogger.addHandler(consoleHandler)
 
     if vars(args)['assert'] is not None and not args.dump_only:
         with open(vars(args)['assert']) as output_file:
@@ -620,6 +647,8 @@ if __name__ == "__main__":
         for key, value in config.items():
             logger.info('option {} = {}'.format(key, value))
 
+    statistics.init(working_dir)
+
     if args.ignore_lines:
         args.lines = None
 
@@ -671,6 +700,8 @@ if __name__ == "__main__":
 
     end = time.time()
     elapsed = format_time(end - start)
+    statistics.data['time']['total'] = end - start
+    statistics.save()
 
     if patch is None:
         logger.info("no patch generated in {}".format(elapsed))

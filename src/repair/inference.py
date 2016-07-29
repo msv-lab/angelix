@@ -6,6 +6,7 @@ from glob import glob
 import os
 from pprint import pprint
 import time
+import statistics
 import shutil
 
 
@@ -192,7 +193,12 @@ class Inferrer:
             environment['ANGELIX_USE_SEMFIX_SYN'] = 'YES'
         environment['ANGELIX_KLEE_WORKDIR'] = project.dir
 
+        klee_start_time = time.time()
         self.run_test(project, test, klee=True, env=environment)
+        klee_end_time = time.time()
+        klee_elapsed = klee_end_time - klee_start_time
+        statistics.data['time']['klee'] += klee_elapsed
+        statistics.save()
 
         logger.info('sleeping for 1 second...')
         time.sleep(1)
@@ -244,6 +250,7 @@ class Inferrer:
                 oracle[var].append(content)
 
         # solving path constraints
+        inference_start_time = time.time()
 
         angelic_paths = []
 
@@ -537,5 +544,19 @@ class Inferrer:
             angelic_paths = self._reduce_angelic_forest(angelic_paths)
         else:
             logger.info('found {} angelic paths for test \'{}\''.format(len(angelic_paths), test))
+
+        inference_end_time = time.time()
+        inference_elapsed = inference_end_time - inference_start_time
+        statistics.data['time']['inference'] += inference_elapsed
+
+        iter_stat = dict()
+        iter_stat['time'] = dict()
+        iter_stat['time']['klee'] = klee_elapsed
+        iter_stat['time']['inference'] = inference_elapsed
+        iter_stat['paths'] = dict()
+        iter_stat['paths']['explored'] = len(smt_files)
+        iter_stat['paths']['angelic'] = len(angelic_paths)
+        statistics.data['iterations']['klee'].append(iter_stat)
+        statistics.save()
 
         return angelic_paths

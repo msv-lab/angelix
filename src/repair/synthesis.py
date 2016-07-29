@@ -8,6 +8,8 @@ from pprint import pprint
 import tempfile
 import shutil
 from os.path import join
+import statistics
+import time
 
 
 logger = logging.getLogger(__name__)
@@ -100,6 +102,8 @@ class Synthesizer:
 
             args = [self.angelic_forest_file, self.extracted, patch_file, config_file]
 
+            synthesis_start_time = time.time()
+            
             try:
                 result = subprocess.check_output(['java', '-jar', jar] + args, stderr=stderr)
             except subprocess.CalledProcessError:
@@ -107,6 +111,16 @@ class Synthesizer:
                 if self.config['term_when_syn_crashes']:
                     sys.exit()
                 continue
+            finally:
+                synthesis_end_time = time.time()
+                synthesis_elapsed = synthesis_end_time - synthesis_start_time
+                statistics.data['time']['synthesis'] += synthesis_elapsed
+                iter_stat = dict()
+                iter_stat['tests'] = len(angelic_forest)
+                iter_stat['level'] = level
+                iter_stat['time'] = synthesis_elapsed
+                statistics.data['iterations']['synthesis'].append(iter_stat)
+                statistics.save()
 
             if str(result, 'UTF-8').strip() == 'TIMEOUT':
                 logger.warning('timeout when synthesizing fix')

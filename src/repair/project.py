@@ -10,6 +10,8 @@ import logging
 import tempfile
 import sys
 import re
+import statistics
+import time
 
 
 logger = logging.getLogger(__name__)
@@ -64,6 +66,7 @@ class Project:
             json.dump(compilation_db, file, indent=2)
 
     def configure(self):
+        compile_start_time = time.time()
         src = basename(self.dir)
         logger.info('configuring {} source'.format(src))
         if self.configure_cmd is None:
@@ -75,6 +78,9 @@ class Project:
                                           stdout=self.subproc_output)
         if return_code != 0 and not self.config['mute_warning']:
                 logger.warning("configuration of {} returned non-zero code".format(relpath(dir)))
+        compile_end_time = time.time()
+        compile_elapsed = compile_end_time - compile_start_time
+        statistics.data['time']['compilation'] += compile_elapsed
 
 
 def build_in_env(dir, cmd, subproc_output, config, env=os.environ):
@@ -111,19 +117,28 @@ class Validation(Project):
 
     def build(self):
         logger.info('building {} source'.format(basename(self.dir)))
+        compile_start_time = time.time()
         build_in_env(self.dir, self.build_cmd,
                      subprocess.DEVNULL if self.config['mute_build_message']
                      else self.subproc_output,
                      self.config)
+        compile_end_time = time.time()
+        compile_elapsed = compile_end_time - compile_start_time
+        statistics.data['time']['compilation'] += compile_elapsed
+
 
     def export_compilation_db(self):
         logger.info('building json compilation database from {} source'.format(basename(self.dir)))
-
+        compile_start_time = time.time()
         build_in_env(self.dir,
                      'bear ' + self.build_cmd,
                      subprocess.DEVNULL if self.config['mute_build_message']
                      else self.subproc_output,
                      self.config)
+        compile_end_time = time.time()
+        compile_elapsed = compile_end_time - compile_start_time
+        statistics.data['time']['compilation'] += compile_elapsed
+
 
         compilation_db_file = join(self.dir, 'compile_commands.json')
         with open(compilation_db_file) as file:
@@ -139,21 +154,30 @@ class Frontend(Project):
 
     def build(self):
         logger.info('building {} source'.format(basename(self.dir)))
+        compile_start_time = time.time()
         build_with_cc(self.dir,
                       self.build_cmd,
                       subprocess.DEVNULL if self.config['mute_build_message']
                       else self.subproc_output,
                       'angelix-compiler --test',
                       self.config)
+        compile_end_time = time.time()
+        compile_elapsed = compile_end_time - compile_start_time
+        statistics.data['time']['compilation'] += compile_elapsed
+
 
 
 class Backend(Project):
 
     def build(self):
         logger.info('building {} source'.format(basename(self.dir)))
+        compile_start_time = time.time()
         build_with_cc(self.dir,
                       self.build_cmd,
                       subprocess.DEVNULL if self.config['mute_build_message']
                       else self.subproc_output,
                       'angelix-compiler --klee',
                       self.config)
+        compile_end_time = time.time()
+        compile_elapsed = compile_end_time - compile_start_time
+        statistics.data['time']['compilation'] += compile_elapsed
