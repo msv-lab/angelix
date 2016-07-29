@@ -74,7 +74,7 @@ To set optimal configuration for your subject, refer to the Configuration sectio
 
 ## Changelog
 
-### [1.0](https://github.com/mechtaev/angelix/tree/1.0) (2015-Jul-8)
+### [1.0](https://github.com/mechtaev/angelix/tree/1.0) (2016-Jul-8)
 
 **Implemented enhancements:**
 
@@ -84,7 +84,7 @@ To set optimal configuration for your subject, refer to the Configuration sectio
 
 - Various reported bugs in frontend and localization.
 
-### [icse16](https://github.com/mechtaev/angelix/tree/icse16) (2015-Feb-19)
+### [icse16](https://github.com/mechtaev/angelix/tree/icse16) (2016-Feb-19)
 
 Initial release used to reproduce ICSE'16 experiments. Available on [VirtualBox VM](https://docs.google.com/forms/d/1XoQ3AomEwd2hke7-ty8CDaQ_iH7TH3W5foO5BQWc-6o/viewform?usp=send_form).
 

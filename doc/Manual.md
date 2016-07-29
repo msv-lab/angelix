@@ -29,7 +29,7 @@ Angelix is designed to support Makefile-based projects. The following is require
 * Compilation and linking are done by separate compiler calls.
 * Project is configured to use static linking.
 * All executables and object files are removed (e.g. run `make clean`).
-* Angelix environment is set as shown above.
+* Angelix environment is activated (`source /path/to/angelix/activate`).
 
 Angelix is hygienic (it does not modify original project files), however, it also assumes that the source code only uses relative references to the source tree. All intermediate data is stored in the `.angelix` directory.
 
