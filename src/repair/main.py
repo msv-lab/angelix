@@ -55,10 +55,10 @@ KLEE_SEARCH_STRATEGIES = ['dfs', 'bfs', 'random-state', 'random-path',
                           'nurs:icnt', 'nurs:cpicnt', 'nurs:qc']
 
 
-DEFAULT_GROUP_SIZE = 2
+DEFAULT_GROUP_SIZE = 1
 
 
-DEFAULT_INITIAL_TESTS = 2
+DEFAULT_INITIAL_TESTS = 1
 
 
 sys.setrecursionlimit(10000)  # Otherwise inference.get_vars fails
@@ -90,32 +90,6 @@ class Angelix:
         self.instrument_for_localization = RepairableTransformer(config)
         self.instrument_for_inference = SuspiciousTransformer(config, extracted)
         self.apply_patch = FixInjector(config)
-
-        # check build only options
-        if self.config['build_validation_only']:
-            validation_dir = join(working_dir, "validation")
-            shutil.copytree(src, validation_dir, symlinks=True)
-            self.validation_src = Validation(config, validation_dir, buggy, build, configure)
-            self.validation_src.configure()
-            compilation_db = self.validation_src.export_compilation_db()
-            self.validation_src.import_compilation_db(compilation_db)
-            sys.exit()
-
-        if self.config['build_golden_only']:
-            golden_dir = join(working_dir, "golden")
-            shutil.copytree(golden, golden_dir, symlinks=True)
-            self.golden_src = Frontend(config, golden_dir, buggy, build, configure)
-            self.golden_src.configure()
-            self.golden_src.build()
-            sys.exit()
-
-        if self.config['build_backend_only']:
-            backend_dir = join(working_dir, "backend")
-            shutil.copytree(src, backend_dir, symlinks=True)
-            self.backend_src = Backend(config, backend_dir, buggy, build, configure)
-            self.backend_src.configure()
-            self.backend_src.build()
-            sys.exit()
 
         validation_dir = join(working_dir, "validation")
         shutil.copytree(src, validation_dir, symlinks=True)
@@ -500,8 +474,8 @@ if __name__ == "__main__":
                         help='use global program variables for synthesis (default: %(default)s)')
     parser.add_argument('--synthesis-func-params', action='store_true',
                         help='use function parameters as variables for synthesis (default: %(default)s)')
-    parser.add_argument('--synthesis-used-vars', action='store_true',
-                        help='[deprecated] use variables that are used in scope for synthesis (default: %(default)s)')
+    parser.add_argument('--synthesis-used-vars', action='store_true',  # for backward compatibility
+                        help='[deprecated] use variables that are used in scope for synthesis (default: True)')
     parser.add_argument('--synthesis-ptr-vars', action='store_true',
                         help='use pointer variables for synthesis (default: %(default)s)')
     parser.add_argument('--synthesis-bool-only', action='store_true',
@@ -509,7 +483,7 @@ if __name__ == "__main__":
     parser.add_argument('--semfix', action='store_true',
                         help='enable SemFix mode (default: %(default)s)')
     parser.add_argument('--use-semfix-synthesizer', action='store_true',
-                        help='[deprecated] use SemFix synthesizer (default: %(default)s)')
+                        help='[deprecated] same as --semfix (default: %(default)s)')
     parser.add_argument('--max-z3-trials', metavar='NUM', type=int, default=2,
                         help='maxium Z3 trials when using SemFix synthesizer (default: %(default)s)')
     parser.add_argument('--dump-only', action='store_true',
@@ -530,20 +504,10 @@ if __name__ == "__main__":
                         help='mute test message (default: %(default)s)')
     parser.add_argument('--mute-warning', action='store_true',
                         help='mute warning message (default: %(default)s)')
-    parser.add_argument('--build-validation-only', action='store_true',
-                        help='build validation source and terminate (default: %(default)s)')
-    parser.add_argument('--build-golden-only', action='store_true',
-                        help='build golden source and terminate (default: %(default)s)')
-    parser.add_argument('--build-backend-only', action='store_true',
-                        help='build backend source and terminate (default: %(default)s)')
     parser.add_argument('--ignore-lines', action='store_true',
                         help='[deprecated] ignore --lines options (default: %(default)s)')
     parser.add_argument('--localize-only', action='store_true',
                         help='show all suspicious expressions and terminate (default: %(default)s)')
-    parser.add_argument('--term-when-syn-crashes', action='store_true',
-                        help='[deprecated] terminate when synthesis crashes (default: %(default)s)'
-                        if "AF_DEBUG" in os.environ
-                        else argparse.SUPPRESS)
     parser.add_argument('--version', action='version', version='Angelix 1.0')
 
     args = parser.parse_args()
@@ -642,7 +606,7 @@ if __name__ == "__main__":
     config['synthesis_levels']      = args.synthesis_levels
     config['synthesis_global_vars'] = args.synthesis_global_vars
     config['synthesis_func_params'] = args.synthesis_func_params
-    config['synthesis_used_vars']   = args.synthesis_used_vars
+    config['synthesis_used_vars']   = True  # for backward compatibility
     config['synthesis_ptr_vars']    = args.synthesis_ptr_vars
     config['synthesis_bool_only']   = args.synthesis_bool_only
     config['redundant_test']        = args.redundant_test
@@ -652,12 +616,8 @@ if __name__ == "__main__":
     config['mute_build_message']    = args.mute_build_message
     config['mute_test_message']     = args.mute_test_message
     config['mute_warning']          = args.mute_warning
-    config['build_validation_only'] = args.build_validation_only
-    config['build_golden_only']     = args.build_golden_only
-    config['build_backend_only']    = args.build_backend_only
     config['localize_only']         = args.localize_only
     config['invalid_localization']  = args.invalid_localization
-    config['term_when_syn_crashes'] = args.term_when_syn_crashes
 
     if args.verbose:
         for key, value in config.items():

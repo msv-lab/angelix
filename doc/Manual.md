@@ -127,9 +127,9 @@ To specify expected outputs values for instrumented expression, we use an assert
 
 Each output label corresponds to a list of values since an expression can be evaluated multiple times during test execution. `reachable` is a special label for capturing reachibility property and corresponding values include labels that are executed at least once. An empty list for a label means that the corresponding expression (or location) must not be executed, while the absence of a label in the test specification means that any values are allowed.
 
-It is often difficult to define correct values for an arbitrary program expression. For this reason, Angelix can extract such values automatically from program runs for passing test cases, and from golden version's runs for failing test cases if it is available. When using golden version, it must be instrumented accordingly.
+It could be non-trivial to define correct values for an arbitrary program expression. For this reason, Angelix can extract such values automatically from program runs for passing test cases, and from golden version's runs for failing test cases if it is available. Note that when values are extracted from program runs, the value of the label `reachable` is empty list by default, as opposite to other labels that are not present in the specification if not executed. 
 
-Note that when values are extracted from program runs, the value of the label `reachable` is empty list by default, as opposite to other labels that are not present in the specification if not executed.
+When using golden version, it must be instrumented accordingly. If your program prints output using `printf` function, Angelix can automatically wrap `printf` arguments with `ANGELIX_OUTPUT` macro. This instrumentation can be enabled using `--instr-printf` option.
 
 ## Defect Classes ##
 
@@ -253,20 +253,21 @@ SemFix is a predecessor of Angelix. Taking advantage of the modular design of An
 
 ## Configuration ##
 
-Default Angelix configuration corresponds to a very narrow repair search space. Typically, you need to specify defect classes, synthesis levels and bounds for symbolic execution and program synthesis. The values of the paramenters depends on the size and the structure of your subject programs. 
+Default Angelix configuration corresponds to a narrow search space and does not specify required bounds. Typically, you need to specify defect classes, synthesis levels and bounds for symbolic execution and program synthesis. Below you can found information about important options and configuration examples.
 
-Run `angelix --help` to see the list of available options. You can find example configurations for small programs in `tests/tests.py` of Angelix distribution and in `options.json` file for large programs in ICSE'16 experiments [scripts](http://www.comp.nus.edu.sg/~release/angelix/angelix-experiments.tar.gz).
+`--klee-solver-timeout`, `--klee-timeout` and `--klee-max-forks` are passed to KLEE during specification inference step. The values of these paramenters depend on the size and the structure of your subject program.
+
+`--group-size` specifies how many symbols are installed inside buggy program for a single run of specification inference (default value is 1). The value 1 increases the probability of synthesizing a patch, however, higher values are need to enable multiline patches. For this reason, we recommend to execute Angelix multiple times (say, with `--group-size 1` and `--group-size 5`).
+
+Run `angelix --help` to see the list of available options. You can find example configurations for small programs in `tests/tests.py` of Angelix distribution. For large programs, options can be found in `options.json` file in ICSE'16 experiments [scripts](http://www.comp.nus.edu.sg/~release/angelix/angelix-experiments.tar.gz).
 
 An example of configuration is the following:
 
     --defect if-conditions loop-conditions assignments \
     --synthesis-levels alternatives extended-arithmetic extended-logic extended-inequalities \
-    --timeout 3600 \
-    --group-size 1 \
     --klee-solver-timeout 20 \
     --klee-timeout 300 \
     --klee-max-forks 200 \
     --synthesis-timeout 100000 \
     --synthesis-global-vars \
-    --synthesis-func-params \
-    --synthesis-used-vars
+    --synthesis-func-params

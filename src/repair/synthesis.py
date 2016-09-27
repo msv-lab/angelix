@@ -108,8 +108,6 @@ class Synthesizer:
                 result = subprocess.check_output(['java', '-jar', jar] + args, stderr=stderr)
             except subprocess.CalledProcessError:
                 logger.warning("synthesis returned non-zero code")
-                if self.config['term_when_syn_crashes']:
-                    sys.exit()
                 continue
             finally:
                 synthesis_end_time = time.time()
