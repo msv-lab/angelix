@@ -20,7 +20,7 @@ Angelix is distributed in source code form and pre-installed in VirtualBox image
 
 ### Option 1: VirtualBox image ###
 
-You can [request](https://docs.google.com/forms/d/1XoQ3AomEwd2hke7-ty8CDaQ_iH7TH3W5foO5BQWc-6o/viewform?usp=send_form) VirtualBox image with pre-installed Angelix. Note that it does not contain the latest version of Angelix and is distributed only for the demonstration purpose.
+You can [request](https://docs.google.com/forms/d/1XoQ3AomEwd2hke7-ty8CDaQ_iH7TH3W5foO5BQWc-6o/viewform?usp=send_form) VirtualBox image with pre-installed Angelix. Note that it contains an outdated version of Angelix and is distributed only for the demonstration purpose.
 
 ### Option 2: Build from source ###
 
@@ -106,3 +106,8 @@ Developers:
 
 * Sergey Mechtaev
 * Jooyong Yi
+
+Contributors:
+
+* Shin Hwei Tan
+* Yulis

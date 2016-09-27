@@ -270,6 +270,7 @@ frontend: $(LLVM3_DIR)/tools/clang/tools/angelix
 	cp "$(LLVM3_DIR)/build/bin/instrument-repairable" "$(ANGELIX_ROOT)/build/bin"
 	cp "$(LLVM3_DIR)/build/bin/instrument-suspicious" "$(ANGELIX_ROOT)/build/bin"
 	cp "$(LLVM3_DIR)/build/bin/apply-patch" "$(ANGELIX_ROOT)/build/bin"
+	cp "$(LLVM3_DIR)/build/bin/instrument-printf" "$(ANGELIX_ROOT)/build/bin"
 	cp -r "$(LLVM3_DIR)/build/lib/clang/3.7.0/include/"* "$(ANGELIX_ROOT)/build/include"
 
 $(LLVM3_DIR)/tools/clang/tools/angelix:

@@ -152,3 +152,34 @@ class FixInjector:
         shutil.rmtree(dirpath)
 
         pass
+
+class PrintfTransformer:
+
+    def __init__(self, config):
+        self.config = config
+        if self.config['verbose']:
+            self.subproc_output = sys.stderr
+        else:
+            self.subproc_output = subprocess.DEVNULL
+
+    def __call__(self, project, source_file):
+        src = basename(project.dir)
+        logger.info('instrumenting printfs of {} source'.format(src))
+
+        with cd(project.dir):
+            return_code = subprocess.call(['instrument-printf', source_file],
+                                          stderr=self.subproc_output,
+                                          stdout=self.subproc_output)
+            with open(source_file, 'r+') as f:
+                content = f.read()
+                f.seek(0, 0)
+                f.write('#ifndef ANGELIX_OUTPUT\n#define ANGELIX_OUTPUT(type, expr, id) expr\n#endif\n' + content)
+
+        if return_code != 0:
+            if self.config['ignore_trans_errors']:
+                logger.error("transformation of {} failed".format(relpath(project.dir)))
+            else:
+                logger.error("transformation of {} failed".format(relpath(project.dir)))
+                raise TransformationError()
+
+        pass

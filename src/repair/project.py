@@ -12,6 +12,7 @@ import sys
 import re
 import statistics
 import time
+from transformation import PrintfTransformer
 
 
 logger = logging.getLogger(__name__)
@@ -33,6 +34,13 @@ class Project:
         self.buggy = buggy
         self.build_cmd = build_cmd
         self.configure_cmd = configure_cmd
+
+    def initialize(self):
+        if self.config['instr_printf'] is not None:
+            self.configure()
+            self.instrument_printf = PrintfTransformer(self.config)
+            self.instrument_printf(self, self.config['instr_printf'])
+
         self._buggy_backup = join(self.dir, self.buggy) + '.backup'
         shutil.copyfile(join(self.dir, self.buggy), self._buggy_backup)
 

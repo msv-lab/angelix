@@ -122,22 +122,26 @@ class Angelix:
         self.validation_src.configure()
         compilation_db = self.validation_src.export_compilation_db()
         self.validation_src.import_compilation_db(compilation_db)
+        self.validation_src.initialize()
 
         frontend_dir = join(working_dir, "frontend")
         shutil.copytree(src, frontend_dir, symlinks=True)
         self.frontend_src = Frontend(config, frontend_dir, buggy, build, configure)
         self.frontend_src.import_compilation_db(compilation_db)
+        self.frontend_src.initialize()
 
         backend_dir = join(working_dir, "backend")
         shutil.copytree(src, backend_dir, symlinks=True)
         self.backend_src = Backend(config, backend_dir, buggy, build, configure)
         self.backend_src.import_compilation_db(compilation_db)
+        self.backend_src.initialize()
 
         if golden is not None:
             golden_dir = join(working_dir, "golden")
             shutil.copytree(golden, golden_dir, symlinks=True)
             self.golden_src = Frontend(config, golden_dir, buggy, build, configure)
             self.golden_src.import_compilation_db(compilation_db)
+            self.golden_src.initialize()
         else:
             self.golden_src = None
 
@@ -439,8 +443,9 @@ if __name__ == "__main__":
                         help='build command in the form of simple shell command (default: %(default)s)')
     parser.add_argument('--build-before-instr', action='store_true',
                         help='build source before (and after) instrumentation (default: %(default)s)')
+    parser.add_argument('--instr-printf', metavar='FILE', default=None, help='instrument printf arguments as outputs')
     parser.add_argument('--timeout', metavar='SEC', type=int, default=None,
-                        help='total repair timeout (default: %(default)s)')
+                        help='[deprecated] total repair timeout (default: %(default)s)')
     parser.add_argument('--initial-tests', metavar='NUM', type=int, default=DEFAULT_INITIAL_TESTS,
                         help='initial repair test suite size (default: %(default)s)')
     parser.add_argument('--all-tests', action='store_true',
@@ -633,6 +638,7 @@ if __name__ == "__main__":
     config['redundant_test']        = args.redundant_test
     config['verbose']               = args.verbose
     config['build_before_instr']    = args.build_before_instr
+    config['instr_printf']          = args.instr_printf
     config['mute_build_message']    = args.mute_build_message
     config['mute_test_message']     = args.mute_test_message
     config['mute_warning']          = args.mute_warning

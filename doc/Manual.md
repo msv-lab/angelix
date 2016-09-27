@@ -90,7 +90,6 @@ The following types of output expressions are supported:
 * long
 * bool
 * char
-* str (null-terminated string)
 
 ### Running ###
 
