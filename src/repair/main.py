@@ -8,6 +8,7 @@ import logging
 import time
 import sys
 import statistics
+from pathlib import Path
 
 from project import Validation, Frontend, Backend, CompilationError
 from utils import format_time, time_limit, TimeoutException
@@ -568,6 +569,15 @@ if __name__ == "__main__":
     consoleHandler = logging.StreamHandler()
     consoleHandler.setFormatter(FORMAT)
     rootLogger.addHandler(consoleHandler)
+
+    def is_subdir(path, directory):
+        p = Path(os.path.abspath(path))
+        d = Path(directory)
+        return p in [d] + [p for p in d.parents]
+
+    if is_subdir(args.src, os.getcwd()):
+        logger.error('angelix must be run outside of the source directory')
+        exit(1)
 
     if vars(args)['assert'] is not None and not args.dump_only:
         with open(vars(args)['assert']) as output_file:
