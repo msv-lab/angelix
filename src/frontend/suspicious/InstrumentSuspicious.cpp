@@ -39,10 +39,10 @@ class CollectVariables : public StmtVisitor<CollectVariables> {
   std::unordered_set<MemberExpr*> *MSet;
   std::unordered_set<ArraySubscriptExpr*> *ASet;
   VarTypes Types;
-  
+
 public:
-  CollectVariables(std::unordered_set<VarDecl*> *vset, 
-                   std::unordered_set<MemberExpr*> *mset, 
+  CollectVariables(std::unordered_set<VarDecl*> *vset,
+                   std::unordered_set<MemberExpr*> *mset,
                    std::unordered_set<ArraySubscriptExpr*> *aset, VarTypes t): VSet(vset), MSet(mset), ASet(aset), Types(t) {}
 
   void Collect(Expr *E) {
@@ -126,7 +126,7 @@ std::unordered_set<ArraySubscriptExpr*> collectArraySubscriptExprFromExpr(const 
   return set;
 }
 
-std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > collectVarsFromScope(const ast_type_traits::DynTypedNode node, ASTContext* context, unsigned line) {
+std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > collectVarsFromScope(const ast_type_traits::DynTypedNode node, ASTContext* context, unsigned line, Rewriter &Rewrite) {
   VarTypes collectedTypes;
   if (getenv("ANGELIX_POINTER_VARIABLES")) {
     collectedTypes = INT_AND_PTR;
@@ -166,7 +166,7 @@ std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > colle
     }
     std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > result(var_set, member_set);
     return result;
-    
+
   } else {
 
     std::unordered_set<VarDecl*> var_set;
@@ -200,6 +200,18 @@ std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > colle
               VarDecl* vd = cast<VarDecl>(d);
               if (line > beginLine && vd->hasInit() && suitableVarDecl(vd, collectedTypes)) {
                 var_set.insert(vd);
+              } else {
+                if (getenv("ANGELIX_INIT_UNINIT_VARS")) {
+                  if (line > beginLine && suitableVarDecl(vd, collectedTypes)) {
+                    std::ostringstream stringStream;
+                    stringStream << vd->getType().getAsString() << " "
+                                 << vd->getNameAsString()
+                                 << " = 0;";
+                    std::string replacement = stringStream.str();
+                    Rewrite.ReplaceText(expandedLoc, replacement);
+                    var_set.insert(vd);
+                  }
+                }
               }
             }
           }
@@ -228,14 +240,14 @@ std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > colle
             }
           }
         }
-        
+
       }
     }
-    
+
     ArrayRef<ast_type_traits::DynTypedNode> parents = context->getParents(node);
     if (parents.size() > 0) {
       const ast_type_traits::DynTypedNode parent = *(parents.begin()); // TODO: for now only first
-      std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > parent_vars = collectVarsFromScope(parent, context, line);
+      std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > parent_vars = collectVarsFromScope(parent, context, line, Rewrite);
       var_set.insert(parent_vars.first.cbegin(), parent_vars.first.cend());
       member_set.insert(parent_vars.second.cbegin(), parent_vars.second.cend());
     }
@@ -293,7 +305,7 @@ public:
       fs << "(assert " << toSMTLIB2(expr) << ")\n";
 
       const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*expr);
-      std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
+      std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > varsFromScope = collectVarsFromScope(node, Result.Context, beginLine, Rewrite);
       std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(expr, ALL);
       std::unordered_set<MemberExpr*> memberFromExpr = collectMemberExprFromExpr(expr);
       std::unordered_set<ArraySubscriptExpr*> arraySubscriptFromExpr = collectArraySubscriptExprFromExpr(expr);
@@ -396,7 +408,7 @@ public:
       fs << "(assert true)\n"; // this is a hack, but not dangerous
 
       const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*expr);
-      std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
+      std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > varsFromScope = collectVarsFromScope(node, Result.Context, beginLine, Rewrite);
       std::unordered_set<VarDecl*> varsFromExpr = collectVarsFromExpr(expr, ALL);
       std::unordered_set<VarDecl*> vars;
       vars.insert(varsFromScope.first.begin(), varsFromScope.first.end());
@@ -478,7 +490,7 @@ public:
       fs << "(assert (not (= 1 0)))\n";
 
       const ast_type_traits::DynTypedNode node = ast_type_traits::DynTypedNode::create(*stmt);
-      std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > varsFromScope = collectVarsFromScope(node, Result.Context, beginLine);
+      std::pair< std::unordered_set<VarDecl*>, std::unordered_set<MemberExpr*> > varsFromScope = collectVarsFromScope(node, Result.Context, beginLine, Rewrite);
       std::unordered_set<VarDecl*> vars;
       vars.insert(varsFromScope.first.begin(), varsFromScope.first.end());
       //FIXME: why no members here?
@@ -538,7 +550,7 @@ public:
       Matcher.addMatcher(InterestingIntegerAssignment, &SemfixHandlerForIntegerExpressions);
     } else {
       Matcher.addMatcher(RepairableAssignment, &HandlerForIntegerExpressions);
-      Matcher.addMatcher(InterestingRepairableCondition, &HandlerForBooleanExpressions);      
+      Matcher.addMatcher(InterestingRepairableCondition, &HandlerForBooleanExpressions);
       Matcher.addMatcher(InterestingStatement, &HandlerForStatements);
     }
   }
@@ -549,11 +561,11 @@ public:
 
 private:
   ExpressionHandler HandlerForIntegerExpressions;
-  ExpressionHandler HandlerForBooleanExpressions;  
+  ExpressionHandler HandlerForBooleanExpressions;
   StatementHandler HandlerForStatements;
   SemfixExpressionHandler SemfixHandlerForIntegerExpressions;
-  SemfixExpressionHandler SemfixHandlerForBooleanExpressions;  
-  
+  SemfixExpressionHandler SemfixHandlerForBooleanExpressions;
+
   MatchFinder Matcher;
 };
 
@@ -565,7 +577,7 @@ public:
   void EndSourceFileAction() override {
     FileID ID = TheRewriter.getSourceMgr().getMainFileID();
     if (INPLACE_MODIFICATION) {
-      overwriteMainChangedFile(TheRewriter);      
+      overwriteMainChangedFile(TheRewriter);
       //      TheRewriter.overwriteChangedFiles();
     } else {
       TheRewriter.getEditBuffer(ID).write(llvm::outs());

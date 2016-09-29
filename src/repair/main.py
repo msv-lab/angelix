@@ -478,6 +478,8 @@ if __name__ == "__main__":
                         help='[deprecated] use variables that are used in scope for synthesis (default: True)')
     parser.add_argument('--synthesis-ptr-vars', action='store_true',
                         help='use pointer variables for synthesis (default: %(default)s)')
+    parser.add_argument('--init-uninit-vars', action='store_true',
+                        help='initialize the uninitialized variables of the program with default values (default: %(default)s)')
     parser.add_argument('--synthesis-bool-only', action='store_true',
                         help='synthesize only boolean expressions (default: %(default)s)')
     parser.add_argument('--semfix', action='store_true',
@@ -609,6 +611,7 @@ if __name__ == "__main__":
     config['synthesis_used_vars']   = True  # for backward compatibility
     config['synthesis_ptr_vars']    = args.synthesis_ptr_vars
     config['synthesis_bool_only']   = args.synthesis_bool_only
+    config['init_uninit_vars']      = args.init_uninit_vars
     config['redundant_test']        = args.redundant_test
     config['verbose']               = args.verbose
     config['build_before_instr']    = args.build_before_instr
