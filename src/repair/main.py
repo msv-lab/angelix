@@ -425,7 +425,7 @@ if __name__ == "__main__":
                         help='initial repair test suite size (default: %(default)s)')
     parser.add_argument('--all-tests', action='store_true',
                         help='use all tests for repair (default: %(default)s)')
-    parser.add_argument('--test-timeout', metavar='MS', type=int, default=None,
+    parser.add_argument('--test-timeout', metavar='SEC', type=int, default=None,
                         help='test case timeout (default: %(default)s)')
     parser.add_argument('--group-size', metavar='NUM', type=int, default=DEFAULT_GROUP_SIZE,
                         help='number of statements considered at once (default: %(default)s)')
