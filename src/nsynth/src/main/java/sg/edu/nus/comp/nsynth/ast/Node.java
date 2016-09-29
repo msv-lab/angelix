@@ -1,6 +1,5 @@
 package sg.edu.nus.comp.nsynth.ast;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import sg.edu.nus.comp.nsynth.AngelixLocation;
 import sg.edu.nus.comp.nsynth.ast.theory.And;
 import sg.edu.nus.comp.nsynth.ast.theory.BoolConst;
