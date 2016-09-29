@@ -1,5 +1,6 @@
 package sg.edu.nus.comp.nsynth.ast;
 
+import com.sun.javaws.exceptions.InvalidArgumentException;
 import sg.edu.nus.comp.nsynth.AngelixLocation;
 import sg.edu.nus.comp.nsynth.ast.theory.And;
 import sg.edu.nus.comp.nsynth.ast.theory.BoolConst;
@@ -70,19 +71,31 @@ public abstract class Node {
     }
 
     public static Node disjunction(List<? extends Node> clauses) {
-        Node node = BoolConst.FALSE;
-        for (Node clause : clauses) {
-            node = new Or(node, clause);
+        if (clauses.size() == 0) {
+            return BoolConst.FALSE;
         }
-        return node;
+        if (clauses.size() == 1) {
+            return clauses.get(0);
+        }
+        if (clauses.size() == 2) {
+            return new Or(clauses.get(0), clauses.get(1));
+        }
+        int middle = clauses.size() / 2;
+        return new Or(disjunction(clauses.subList(0, middle)), disjunction(clauses.subList(middle, clauses.size())));
     }
 
     public static Node conjunction(List<? extends Node> clauses) {
-        Node node = BoolConst.TRUE;
-        for (Node clause : clauses) {
-            node = new And(node, clause);
+        if (clauses.size() == 0) {
+            return BoolConst.TRUE;
         }
-        return node;
+        if (clauses.size() == 1) {
+            return clauses.get(0);
+        }
+        if (clauses.size() == 2) {
+            return new And(clauses.get(0), clauses.get(1));
+        }
+        int middle = clauses.size() / 2;
+        return new And(conjunction(clauses.subList(0, middle)), conjunction(clauses.subList(middle, clauses.size())));
     }
 
 }
