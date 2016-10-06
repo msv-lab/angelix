@@ -20,7 +20,7 @@ Source code transformation failed. Can happen when the frontend is not built suc
 
 Angelix builds three targets: validation target using normal compilation, frontend target linked with Angelix runtime library, and backend target linked with Angelix runtime library and compiled into LLVM bitcode. This warning is often preceded by the message "failed to build ..." that can help to identify the problem.
 
-#### cannot find crt1.o: No such file or directory ####
+### cannot find crt1.o: No such file or directory ###
 
 If Angelix fails with the following compilation message on Ubuntu 14.04
 
@@ -32,22 +32,22 @@ If Angelix fails with the following compilation message on Ubuntu 14.04
 
 follow instructions [here](https://stackoverflow.com/questions/6329887/compiling-problems-cannot-find-crt1-o).
 
-## no suspicious expressions localized ##
+### no suspicious expressions localized ###
 
 Suspicious expressions cannot be localized when the program does not have expressions within the selected defect class that are executed by the given failing tests. You can either change the defect class or add other failing tests. 
 
-## synthesis returned non-zero code ##
+### synthesis returned non-zero code ###
 
-Can happen when the synthesizer is not built successfully. Try `make synthesis`.
+Can happen when the synthesizer is not built successfully. Try `make synthesis` or `make nsynth` if you use the new synthesizer.
 
-## ANGELIX_RUN is not executed by test ... ##
+### ANGELIX_RUN is not executed by test ... ###
 
 The test script is not instrumented correctly. Add ANGELIX_RUN according to the manual.
 
-## ANGELIX_RUN is executed multiple times by test ... ##
+### ANGELIX_RUN is executed multiple times by test ... ###
 
 The test script is no instrumented correctly or the binary is executed multiple times which is not supported by Angelix.
 
-## generated invalid fix (tests ... not repaired) ##
+### generated invalid fix (tests ... not repaired) ###
 
 Inferred angelic forest is wrong. Can be caused by incorrect output instrumentation, incorrect expected output or imprecision of symbolic execution.

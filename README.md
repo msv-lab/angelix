@@ -12,7 +12,7 @@ If you use Angelix in your research project, please include the following citati
         year={2016},
         organization={ACM}
     }
-            
+
 
 ## Installation ##
 
@@ -30,7 +30,7 @@ The following is required to install Angelix from source code:
 * 8GM Memory
 * Ubuntu 14.04 64-bit\*
 
-\* Angelix can be run on other 64-bit Linux distributions, however installation scripts were tested only on Ubuntu 14.04. If you want to install Angelix on a different system, you may need to modify Makefile and activate scripts.
+\* Angelix can run on other 64-bit Linux distributions, however installation scripts were tested only on Ubuntu 14.04. If you want to install Angelix on a different system, you may need to modify Makefile and activate scripts.
 
 Clone repository recursively:
 
@@ -49,7 +49,7 @@ Install Java 8 (for Ubuntu 14.04) and Maven:
     sudo apt-get update
     sudo apt-get install oracle-java8-installer
     sudo apt-get install maven
-    
+
 Install SBT by following [intructions](http://www.scala-sbt.org/0.13/docs/Installing-sbt-on-Linux.html).
 
 Set Angelix environment:
@@ -59,7 +59,7 @@ Set Angelix environment:
 Download and build required modules:
 
     make default
-    
+
 Run tests:
 
     make test

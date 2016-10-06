@@ -48,41 +48,45 @@ To abstract over test framework, Angelix require the following:
 
 Angelix requires specifying output expressions in the source code of the subject program. Consider a simple example:
 
-    #include <stdio.h>
+```c
+#include <stdio.h>
 
-    int main(int argc, char** argv) {
-        int x, y, z;
-        x = atoi(argv[1]);
-        y = atoi(argv[2]);
-        z = x + y;
-        if (z < 0) {
-            printf("Error\n");
-        }
-        printf("%d\n", z + 1);
-        return 0;
+int main(int argc, char** argv) {
+    int x, y, z;
+    x = atoi(argv[1]);
+    y = atoi(argv[2]);
+    z = x + y;
+    if (z < 0) {
+        printf("Error\n");
     }
+    printf("%d\n", z + 1);
+    return 0;
+}
+```
 
 Output expressions are wrapped with `ANGELIX_OUTPUT` macro providing their type and label. Reachibility can be captured using `ANGELIX_REACHABLE` macro with label. You also need to provide default definitions for these macros, so that the program remains compilable:
 
-    #include <stdio.h>
+```c
+#include <stdio.h>
 
-    #ifndef ANGELIX_OUTPUT
-    #define ANGELIX_OUTPUT(type, expr, label) expr
-    #define ANGELIX_REACHABLE(label)
-    #endif
+#ifndef ANGELIX_OUTPUT
+#define ANGELIX_OUTPUT(type, expr, label) expr
+#define ANGELIX_REACHABLE(label)
+#endif
 
-    int main(int argc, char** argv) {
-        int x, y, z;
-        x = atoi(argv[1]);
-        y = atoi(argv[2]);
-        z = x + y;
-        if (z < 0) {
-            ANGELIX_REACHABLE("error");
-            printf("Error\n");
-        }
-        printf("%d\n", ANGELIX_OUTPUT(int, z + 1, "stdout"));
-        return 0;
+int main(int argc, char** argv) {
+    int x, y, z;
+    x = atoi(argv[1]);
+    y = atoi(argv[2]);
+    z = x + y;
+    if (z < 0) {
+        ANGELIX_REACHABLE("error");
+        printf("Error\n");
     }
+    printf("%d\n", ANGELIX_OUTPUT(int, z + 1, "stdout"));
+    return 0;
+}
+```
 
 The following types of output expressions are supported:
 
@@ -97,16 +101,18 @@ To provide interface to test runner, we use the notion of oracle executable. It 
 
 Oracle executes bug-reproducing binary using _angelix run command_ stored in `ANGELIX_RUN` environment variable, if it is defined. Each test must include at most one execution of angelix run command. This is an example of an oracle script:
 
-    #!/bin/bash
+```shell
+#!/bin/bash
 
-    case "$1" in
-        test1)
-            ${ANGELIX_RUN:-eval} ./test 1 2
-            ;;
-        test2)
-            ${ANGELIX_RUN:-eval} ./test 0 -1
-            ;;
-    ...
+case "$1" in
+    test1)
+        ${ANGELIX_RUN:-eval} ./test 1 2
+        ;;
+    test2)
+        ${ANGELIX_RUN:-eval} ./test 0 -1
+        ;;
+...
+```
 
 Oracle is executed from the root of a copy of the source code directory, therefore all references to the source tree must be relative to the root of the source tree.
 
@@ -114,16 +120,18 @@ Oracle is executed from the root of a copy of the source code directory, therefo
 
 To specify expected outputs values for instrumented expression, we use an assert file. Outputs are specified in JSON format:
 
-    {
-        "test1": {
-            "stdout": [4]
-            },
-        "test2": {
-            "stdout": [0],
-            "reachable": ["error"]
-        }
-        ...
+```json
+{
+    "test1": {
+        "stdout": [4]
+        },
+    "test2": {
+        "stdout": [0],
+        "reachable": ["error"]
     }
+    ...
+}
+```
 
 Each output label corresponds to a list of values since an expression can be evaluated multiple times during test execution. `reachable` is a special label for capturing reachibility property and corresponding values include labels that are executed at least once. An empty list for a label means that the corresponding expression (or location) must not be executed, while the absence of a label in the test specification means that any values are allowed.
 
@@ -190,10 +198,10 @@ Synthesis levels are sets of primitive components that are used to repair buggy 
 
 Additinal components similar to existing ones:
 
-Existing  | Additional
---------- | ----------
-`||`      | `&&`
-`&&`      | `||`
+| Existing      | Additional     |
+| ------------- | -------------- |
+| `             | |`      | `&&` |
+| `&&`      | ` |                |
 `==`      | `!=`
 `!=`      | `==`
 `<`       | `<=`
@@ -249,19 +257,19 @@ Additional visible variables, integer constant, `>`, `>=`, `+`, `-`, `ite`.
 
 ## SemFix ##
 
-SemFix is a predecessor of Angelix. Taking advantage of the modular design of Angelix, we incorporated the algorithm of SemFix into Angelix. To download and build SemFix dependencies, execute `make semfix`, to verify your installation, run `make test-semfix`. After installation, SemFix can be activated using the `--semfix` option of Angelix.
+SemFix is a predecessor of Angelix. Taking advantage of the modular design of Angelix, we incorporated the algorithm of SemFix into Angelix. To download and build SemFix dependencies, execute `make semfix`; to verify your installation, run `make test-semfix`. After installation, SemFix can be activated using the `--semfix` option of Angelix.
 
 ## Configuration ##
 
-Default Angelix configuration corresponds to a narrow search space and does not specify required bounds. Typically, you need to specify defect classes, synthesis levels and bounds for symbolic execution and program synthesis. Below you can found information about important options and configuration examples.
+Default Angelix configuration corresponds to a narrow search space and does not specify search bounds. Typically, you need to indicate defect classes, synthesis levels and bounds for symbolic execution and program synthesis. Below you can found information about important options and configuration examples.
 
 `--klee-solver-timeout`, `--klee-timeout` and `--klee-max-forks` are passed to KLEE during specification inference step. The values of these paramenters depend on the size and the structure of your subject program.
 
-`--group-size` specifies how many symbols are installed inside buggy program for a single run of specification inference (default value is 1). The value 1 increases the probability of synthesizing a patch, however, higher values are need to enable multiline patches. For this reason, we recommend to execute Angelix multiple times (say, with `--group-size 1` and `--group-size 5`).
+`--group-size` specifies how many symbols are installed inside buggy program for a single run of specification inference (default value is 1). The value 1 increases the probability of synthesizing a patch, however, higher values are need to enable multiline patches. For this reason, we recommend to execute Angelix multiple times with different values of this option (say, with `--group-size 1` and `--group-size 5`).
 
 Run `angelix --help` to see the list of available options. You can find example configurations for small programs in `tests/tests.py` of Angelix distribution. For large programs, options can be found in `options.json` file in ICSE'16 experiments [scripts](http://www.comp.nus.edu.sg/~release/angelix/angelix-experiments.tar.gz).
 
-An example of configuration is the following:
+Here is an example of Angelix configuration:
 
     --defect if-conditions loop-conditions assignments \
     --synthesis-levels alternatives extended-arithmetic extended-logic extended-inequalities \
