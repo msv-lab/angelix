@@ -218,8 +218,10 @@ StatementMatcher NonTrivialRepairableLoopCondition =
               hasParent(whileStmt()),           \
               hasParent(forStmt())),            \
         unless(has(forStmt())),                 \
-        unless(has(whileStmt())),               \
-        unless(has(ifStmt())))
+        unless(has(whileStmt())))
+
+// this does not work when if statement body is not a block statement
+//        unless(has(ifStmt())))
 
 
 StatementMatcher RepairableAssignment =
