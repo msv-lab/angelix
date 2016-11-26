@@ -26,7 +26,7 @@ You can [request](https://docs.google.com/forms/d/1XoQ3AomEwd2hke7-ty8CDaQ_iH7TH
 
 The following is required to install Angelix from source code:
 
-* 30GB Hard drive
+* 40GB Hard drive
 * 8GM Memory
 * Ubuntu 14.04 64-bit\*
 

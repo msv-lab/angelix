@@ -1,6 +1,6 @@
 # Tutorial #
 
-This tutorial explain main steps needed to repair a simple program with Angelix. Suppose we have the following buggy program (distance.c):
+This tutorial explains main steps needed to repair a simple program with Angelix. Suppose we have the following buggy program (distance.c):
 
 ```c
 #include <stdio.h>
