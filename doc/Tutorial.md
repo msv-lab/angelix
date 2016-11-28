@@ -136,6 +136,13 @@ Apart from that, it is required to provide expected output values for failing te
 }
 ```
 
+To summarize, we should have the following files:
+
+    oracle
+    assert.json
+    src/distance.c
+    src/Makefile
+
 Now we can run Angelix to generate a patch that would make all the tests pass:
 
 
