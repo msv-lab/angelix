@@ -38,7 +38,7 @@ Clone repository recursively:
 
 Install dependencies:
 
-    sudo apt-get install git wget xz-utils build-essential
+    sudo apt-get install git wget xz-utils build-essential time
     sudo apt-get install curl dejagnu subversion bison flex bc libcap-dev
     sudo apt-get install cmake libncurses5-dev libboost-all-dev
 
