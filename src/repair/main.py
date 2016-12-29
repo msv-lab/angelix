@@ -189,7 +189,7 @@ class Angelix:
             if test not in self.dump:
                 if self.golden_src is None:
                     logger.error("golden version or assert file needed for test {}".format(test))
-                    return None
+                    return []
                 if not golden_is_built:
                     self.golden_src.configure()
                     self.golden_src.build()
@@ -228,8 +228,10 @@ class Angelix:
             logger.warning('no suspicious expressions localized')
 
         repaired = len(negative) == 0
+        
+        patches = []
 
-        while not repaired and len(suspicious) > 0:
+        while (config['generate_all'] or not repaired) and len(suspicious) > 0:
             if self.config['use_semfix_syn']:
                 # prepare a clean directory
                 shutil.rmtree(join(self.working_dir, 'semfix-syn-input'),
@@ -291,6 +293,8 @@ class Angelix:
                 logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
                 continue
             repaired = len(neg) == 0
+            if repaired:
+                patches.append(self.validation_src.diff_buggy())
             neg = list(set(neg) & set(self.repair_test_suite))
             current_positive, current_negative = pos, neg
 
@@ -327,6 +331,8 @@ class Angelix:
                 self.validation_src.build()
                 pos, neg = self.evaluate(self.validation_src)
                 repaired = len(neg) == 0
+                if repaired:
+                    patches.append(self.validation_src.diff_buggy())
                 neg = list(set(neg) & set(self.repair_test_suite))
                 current_positive, current_negative = pos, neg
 
@@ -335,11 +341,8 @@ class Angelix:
                     logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
                     break
                 negative_idx = 0
-
-        if not repaired:
-            return None
-        else:
-            return self.validation_src.diff_buggy()
+                
+        return patches
 
     def dump_outputs(self):
         self.frontend_src.configure()
@@ -379,7 +382,7 @@ class Angelix:
         fix = self.synthesize_fix(af_file)
         if fix is None:
             logger.info('cannot synthesize fix')
-            return None
+            return []
         logger.info('fix is synthesized')
 
         self.validation_src.restore_buggy()
@@ -389,13 +392,13 @@ class Angelix:
         if not set(negative).isdisjoint(set(repair_suite)):
             not_repaired = list(set(repair_suite) & set(negative))
             logger.warning("generated invalid fix (tests {} not repaired)".format(not_repaired))
-            return None
+            return []
 
         if len(negative) > 0:
             logger.info("tests {} fail".format(negative))
-            return None
+            return []
         else:
-            return self.validation_src.diff_buggy()
+            return [self.validation_src.diff_buggy()]
 
 
 if __name__ == "__main__":
@@ -478,6 +481,8 @@ if __name__ == "__main__":
                         help='[deprecated] use variables that are used in scope for synthesis (default: True)')
     parser.add_argument('--synthesis-ptr-vars', action='store_true',
                         help='use pointer variables for synthesis (default: %(default)s)')
+    parser.add_argument('--generate-all', action='store_true',
+                        help='generate all patches (default: %(default)s)')
     parser.add_argument('--init-uninit-vars', action='store_true',
                         help='initialize the uninitialized variables of the program with default values (default: %(default)s)')
     parser.add_argument('--synthesis-bool-only', action='store_true',
@@ -611,6 +616,7 @@ if __name__ == "__main__":
     config['synthesis_used_vars']   = True  # for backward compatibility
     config['synthesis_ptr_vars']    = args.synthesis_ptr_vars
     config['synthesis_bool_only']   = args.synthesis_bool_only
+    config['generate_all']          = args.generate_all
     config['init_uninit_vars']      = args.init_uninit_vars
     config['redundant_test']        = args.redundant_test
     config['verbose']               = args.verbose
@@ -665,9 +671,9 @@ if __name__ == "__main__":
     try:
         if args.timeout is not None:
             with time_limit(args.timeout):
-                patch = repair()
+                patches = repair()
         else:
-            patch = repair()
+            patches = repair()
     except TimeoutException:
         logger.info("failed to generate patch (timeout)")
         print('TIMEOUT')
@@ -682,15 +688,26 @@ if __name__ == "__main__":
     statistics.data['time']['total'] = end - start
     statistics.save()
 
-    if patch is None:
+    if not patches:
         logger.info("no patch generated in {}".format(elapsed))
         print('FAIL')
         exit(0)
     else:
-        patch_file = basename(abspath(args.src)) + '-' + time.strftime("%Y-%b%d-%H%M%S") + '.patch'
-        logger.info("patch successfully generated in {} (see {})".format(elapsed, patch_file))
+        if config['generate_all']:
+            patch_dir = basename(abspath(args.src)) + '-' + time.strftime("%Y-%b%d-%H%M%S")
+            if not exists(patch_dir):
+                os.mkdir(patch_dir)
+            for idx, patch in enumerate(patches):
+                patch_file = os.path.join(patch_dir, str(idx) + '.patch')
+                with open(patch_file, 'w+') as file:
+                    for line in patch:
+                        file.write(line)
+            logger.info("patches successfully generated in {} (see {})".format(elapsed, patch_dir))
+        else:
+            patch_file = basename(abspath(args.src)) + '-' + time.strftime("%Y-%b%d-%H%M%S") + '.patch'
+            logger.info("patch successfully generated in {} (see {})".format(elapsed, patch_file))
+            with open(patch_file, 'w+') as file:
+                for line in patches[0]:
+                    file.write(line)
         print('SUCCESS')
-        with open(patch_file, 'w+') as file:
-            for line in patch:
-                file.write(line)
         exit(0)
