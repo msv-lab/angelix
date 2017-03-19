@@ -515,7 +515,7 @@ if __name__ == "__main__":
                         help='[deprecated] ignore --lines options (default: %(default)s)')
     parser.add_argument('--localize-only', action='store_true',
                         help='show all suspicious expressions and terminate (default: %(default)s)')
-    parser.add_argument('--version', action='version', version='Angelix 1.0')
+    parser.add_argument('--version', action='version', version='Angelix 1.1')
 
     args = parser.parse_args()
 

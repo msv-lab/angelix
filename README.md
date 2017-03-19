@@ -74,6 +74,19 @@ To set optimal configuration for your subject, refer to the Configuration sectio
 
 ## Changelog
 
+### [1.1](https://github.com/mechtaev/angelix/tree/1.1) (2017-Mar-20)
+
+**Implemented enhancements:**
+
+- New experimental synthesizer (`--use-nsynth` option)
+- Automatically instrumenting printf arguments with `ANGELIX_OUTPUT` (`--instr-printf` option)
+- Finding all patches (`--generate-all` option)
+- Improved language support
+
+**Fixed bugs:**
+
+- Various bugs in frontend, inference and synthesis.
+
 ### [1.0](https://github.com/mechtaev/angelix/tree/1.0) (2016-Jul-8)
 
 **Implemented enhancements:**
