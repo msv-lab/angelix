@@ -48,10 +48,11 @@ CLANG_TOOLS_EXTRA_URL=http://llvm.org/git/clang-tools-extra.git
 STP_URL=https://github.com/stp/stp.git
 MINISAT_URL=https://github.com/niklasso/minisat.git
 Z3_URL=https://github.com/mechtaev/z3.git
-Z3_2_19_URL=http://research.microsoft.com/en-us/um/redmond/projects/z3/z3-2.19.tar.gz
+Z3_2_19_URL=https://github.com/Z3Prover/bin/raw/master/legacy/z3-2.19.tar.gz
 Z3_2_19_ARCHIVE=z3-2.19.tar.gz
 KLEE_UCLIBC_URL=https://github.com/klee/klee-uclibc.git
 BEAR_URL=https://github.com/rizsotto/Bear.git
+BEAR_VERSION=2.1.4
 MAXSMT_URL=https://github.com/mechtaev/maxsmt-playground.git
 LOCAL_LIB_URL=http://search.cpan.org/CPAN/authors/id/H/HA/HAARG/local-lib-2.000018.tar.gz
 LOCAL_LIB_ARCHIVE=local-lib-2.000018.tar.gz
@@ -285,7 +286,7 @@ bear: $(BEAR_DIR)
 	sed -i 's/exit_code = subprocess.call(args.build, env=environment)/exit_code = subprocess.call(args.build, env=environment, shell=True)/' "$(BEAR_DIR)/build/bear/bear"
 
 $(BEAR_DIR):
-	cd build && git clone --depth=1 $(BEAR_URL)
+	cd build && git clone --branch $(BEAR_VERSION) $(BEAR_URL)
 
 clean-bear:
 	rm -rf "$(BEAR_DIR)/build"
