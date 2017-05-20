@@ -53,6 +53,7 @@ Z3_2_19_ARCHIVE=z3-2.19.tar.gz
 KLEE_UCLIBC_URL=https://github.com/klee/klee-uclibc.git
 BEAR_URL=https://github.com/rizsotto/Bear.git
 BEAR_VERSION=2.1.4
+STP_VERSION=2.1.2
 MAXSMT_URL=https://github.com/mechtaev/maxsmt-playground.git
 LOCAL_LIB_URL=http://search.cpan.org/CPAN/authors/id/H/HA/HAARG/local-lib-2.000018.tar.gz
 LOCAL_LIB_ARCHIVE=local-lib-2.000018.tar.gz
@@ -97,7 +98,7 @@ stp: $(STP_DIR)
 	cd $(STP_DIR) && mkdir -p build && cd build && cmake -DMINISAT_LIBRARY="$(MINISAT_DIR)/build/libminisat.so.2" -DMINISAT_INCLUDE_DIR="$(MINISAT_DIR)" -G 'Unix Makefiles' $(STP_DIR) && make
 
 $(STP_DIR):
-	cd build && git clone --depth=1 $(STP_URL)
+	cd build && git clone --branch $(STP_VERSION) $(STP_URL)
 
 clean-stp:
 	rm -rf $(STP_DIR)/build
