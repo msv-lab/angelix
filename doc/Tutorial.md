@@ -66,7 +66,7 @@ To abstract over the testing framework, Angelix utilizes three entities:
 
 This is similar to the organization of xUnit tests and can be injected into existing test framework without significant modifications.
 
-Output values are specified by wrapping them with `ANGELIX_OUTPUT` macro. In out example, the only output value is the computed distance, therefore the instrumentation will look as follows:
+Output values are specified by wrapping them with `ANGELIX_OUTPUT` macro. In out example, the only output value is the computed distance, therefore the instrumentation will look as follows (override original distance.c):
 
 ```c
 #include <stdio.h>
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 
 Note that we need to provide a default definition of the `ANGELIC_OUTPUT` macro, so that the program remains compilable.
 
-Oracle script must execute the test using `ANGELIX_RUN` command if it is defined. It can be organized, for example, in the following way:
+Oracle script must execute the test using `ANGELIX_RUN` command if it is defined. It can be organized, for example, in the following way (save as `oracle`):
 
 ```shell
 #!/bin/bash
@@ -125,6 +125,8 @@ case "$1" in
         ;;
 esac
 ```
+
+And since we need to execute this file latter, please change the mode of it by `chmod +x oracle`.
 
 Apart from that, it is required to provide expected output values for failing test, because in general they cannot be extracted automatically from the test scripts. Expected output are specified using JSON format. In the example, we only need to specify the expected output for the test 3 (assert.json):
 
