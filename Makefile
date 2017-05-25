@@ -44,7 +44,6 @@ CLANG_ARCHIVE=cfe-3.7.0.src.tar.xz
 CLANG_TOOLS_EXTRA_URL=http://llvm.org/git/clang-tools-extra.git
 COMPILER_RT_URL=http://llvm.org/releases/3.7.0/compiler-rt-3.7.0.src.tar.xz
 COMPILER_RT_ARCHIVE=compiler-rt-3.7.0.src.tar.xz
-CLANG_TOOLS_EXTRA_URL=http://llvm.org/git/clang-tools-extra.git
 STP_URL=https://github.com/stp/stp.git
 MINISAT_URL=https://github.com/niklasso/minisat.git
 Z3_URL=https://github.com/mechtaev/z3.git
@@ -53,6 +52,7 @@ Z3_2_19_ARCHIVE=z3-2.19.tar.gz
 KLEE_UCLIBC_URL=https://github.com/klee/klee-uclibc.git
 BEAR_URL=https://github.com/rizsotto/Bear.git
 BEAR_VERSION=2.1.4
+STP_VERSION=2.1.2
 MAXSMT_URL=https://github.com/mechtaev/maxsmt-playground.git
 LOCAL_LIB_URL=http://search.cpan.org/CPAN/authors/id/H/HA/HAARG/local-lib-2.000018.tar.gz
 LOCAL_LIB_ARCHIVE=local-lib-2.000018.tar.gz
@@ -79,7 +79,7 @@ clean-llvm-gcc:
 
 llvm2: build/$(LLVM2_ARCHIVE) build/$(LLVM2_PATCH)
 	cd build && tar xf $(LLVM2_ARCHIVE)
-	cd build && patch -p0 < $(LLVM2_PATCH)
+	cd build && patch -p0 -N < $(LLVM2_PATCH)
 	cd $(LLVM2_DIR) && ./configure --enable-optimized --enable-assertions && make
 
 build/$(LLVM2_ARCHIVE):
@@ -97,7 +97,7 @@ stp: $(STP_DIR)
 	cd $(STP_DIR) && mkdir -p build && cd build && cmake -DMINISAT_LIBRARY="$(MINISAT_DIR)/build/libminisat.so.2" -DMINISAT_INCLUDE_DIR="$(MINISAT_DIR)" -G 'Unix Makefiles' $(STP_DIR) && make
 
 $(STP_DIR):
-	cd build && git clone --depth=1 $(STP_URL)
+	cd build && git clone --branch $(STP_VERSION) $(STP_URL)
 
 clean-stp:
 	rm -rf $(STP_DIR)/build
@@ -247,7 +247,7 @@ clang: build/$(LLVM3_ARCHIVE) build/$(CLANG_ARCHIVE) build/$(COMPILER_RT_ARCHIVE
 	cd build && tar xf $(CLANG_ARCHIVE) --directory "$(LLVM3_DIR)/tools/clang" --strip-components=1
 	mkdir -p "$(LLVM3_DIR)/projects/compiler-rt"
 	cd build && tar xf $(COMPILER_RT_ARCHIVE) --directory "$(LLVM3_DIR)/projects/compiler-rt" --strip-components=1
-	cd "$(LLVM3_DIR)/tools/clang/tools/" && git clone --branch release_37 $(CLANG_TOOLS_EXTRA_URL) extra
+	cd "$(LLVM3_DIR)/tools/clang/tools/" && rm extra -rf && git clone --branch release_37 $(CLANG_TOOLS_EXTRA_URL) extra
 	mkdir -p "$(LLVM3_DIR)/build" && cd "$(LLVM3_DIR)/build" && cmake -G "Unix Makefiles" ../ && make
 
 build/$(LLVM3_ARCHIVE):

@@ -42,7 +42,7 @@ Can happen when the synthesizer is not built successfully. Try `make synthesis` 
 
 ### ANGELIX_RUN is not executed by test ... ###
 
-The test script is not instrumented correctly. Add ANGELIX_RUN according to the manual.
+The test script is not instrumented correctly. Add ANGELIX_RUN and change `oracle` file mode to `execute` according to the manual.
 
 ### ANGELIX_RUN is executed multiple times by test ... ###
 
