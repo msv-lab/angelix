@@ -1,33 +1,63 @@
-FROM ubuntu:14.04
+FROM ubuntu:16.04
+LABEL maintainer="mechtaev@gmail.com"
+ARG DEBIAN_FRONTEND=noninteractive
 
+RUN mkdir /angelix
 
-MAINTAINER Sergey Mechtaev <mechtaev@gmail.com>
+RUN apt-get update && apt-get upgrade -y && apt-get autoremove -y
 
-# Dependencies
+RUN apt-get install -y python3 python3-pip
 
-RUN apt-get -y install apt-transport-https
+RUN pip3 install --upgrade pip
 
-RUN echo "deb https://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list
+RUN yes | pip3 install 'PySMT==0.8.0' 'wllvm==1.2.7'
 
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 642AC823
+RUN apt-get install -y wget unzip git
 
-RUN apt-get -y update
+RUN cd /angelix && \
+    wget https://github.com/Z3Prover/z3/releases/download/z3-4.7.1/z3-4.7.1-x64-ubuntu-16.04.zip && \
+    unzip z3-4.7.1-x64-ubuntu-16.04.zip
 
-RUN apt-get -y install git wget xz-utils build-essential \
-                       curl dejagnu subversion bison flex bc libcap-dev \
-                       cmake libncurses5-dev libboost-all-dev \
-                       default-jdk sbt
+RUN apt-get install -y build-essential \
+                       curl \
+                       libcap-dev \
+                       cmake \
+                       libncurses5-dev \
+                       python-minimal \
+                       python-pip \
+                       zlib1g-dev \
+                       libtcmalloc-minimal4 \
+                       libgoogle-perftools-dev
 
+RUN apt-get install -y clang-6.0 \
+                       llvm-6.0 \
+                       llvm-6.0-dev \
+                       llvm-6.0-tools
 
-# Installing Angelix
+RUN cd /angelix && \
+    git clone https://github.com/klee/klee-uclibc.git && \  
+    cd klee-uclibc && \
+    git checkout 8ccd74cf69550a39b5e7bd40f4dbf1fdbdf0a4a3 && \
+    ./configure --make-llvm-lib --with-llvm-config /usr/bin/llvm-config-6.0 && \
+    make -j2
 
-RUN git clone --recursive https://github.com/mechtaev/angelix.git
+# TODO: I need to configure it for C++
+RUN cd /angelix && \
+    git clone https://github.com/klee/klee.git && \
+    cd klee && \
+    git checkout v2.0 && \
+    mkdir build && \
+    cd build && \
+    cmake -DENABLE_SOLVER_Z3=ON \
+          -DENABLE_POSIX_RUNTIME=ON \
+          -DENABLE_KLEE_UCLIBC=ON \
+          -DZ3_INCLUDE_DIRS=/angelix/z3-4.7.1-x64-ubuntu-16.04/include/ \
+          -DZ3_LIBRARIES=/angelix/z3/z3-4.7.1-x64-ubuntu-16.04/bin/libz3.a \
+          -DLLVM_CONFIG_BINARY=/usr/bin/llvm-config-6.0 \
+          -DKLEE_UCLIBC_PATH=/angelix/klee-uclibc \
+          -DENABLE_UNIT_TESTS=OFF \
+          -DENABLE_SYSTEM_TESTS=OFF \
+          .. && \
+    make
 
-WORKDIR angelix
-
-ENV JAVA_TOOL_OPTIONS -Dfile.encoding=UTF8
-
-RUN bash -c 'source activate && make z3 && make maxsmt && make synthesis && make all'
-
-RUN rm -rf build/llvm-3.7.0.src
-
+# ADD repair /angelix/repair
