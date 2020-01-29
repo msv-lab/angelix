@@ -26,7 +26,7 @@ RUN git clone --recursive https://github.com/mechtaev/angelix.git --depth 1
 
 
 RUN apt-get purge icedtea-* openjdk-* -y
-RUN sudo add-apt-repository -y ppa:openjdk-r/ppa && sudo apt-get update && sudo apt-get install -y openjdk-8-jdk
+RUN add-apt-repository -y ppa:openjdk-r/ppa && apt-get update && sudo apt-get install -y openjdk-8-jdk
 #check if java command is pointing to " link currently points to /opt/jdk/jdk1.8.0_05/bin/java"
 RUN update-alternatives --display java
 
