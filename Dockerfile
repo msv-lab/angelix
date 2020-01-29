@@ -15,7 +15,7 @@ RUN apt-get -y update
 RUN apt-get -y install git wget xz-utils build-essential \
                        curl dejagnu subversion bison flex bc libcap-dev \
                        cmake libncurses5-dev libboost-all-dev \
-                       default-jdk sbt --no-install-recommends
+                       sbt --no-install-recommends
 
 
 # Installing Angelix
