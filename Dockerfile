@@ -51,6 +51,9 @@ RUN bash -c 'source activate && make -j8 clang'
 RUN bash -c 'source activate && make -j8 bear'
 RUN bash -c 'source activate && make -j8 runtime'
 RUN bash -c 'source activate && make -j8 frontend'
+RUN /usr/bin/printf '\xfe\xed\xfe\xed\x00\x00\x00\x02\x00\x00\x00\x00\xe2\x68\x6e\x45\xfb\x43\xdf\xa4\xd9\x92\xdd\x41\xce\xb6\xb2\x1c\x63\x30\xd7\x92' > /etc/ssl/certs/java/cacerts
+RUN update-ca-certificates -f
+RUN /var/lib/dpkg/info/ca-certificates-java.postinst configure
 RUN bash -c 'source activate && make -j8 maxsmt'
 RUN bash -c 'source activate && make -j8 synthesis'
 ENV VER=3.6.3
@@ -64,3 +67,4 @@ RUN bash -c 'source activate && source /etc/profile.d/maven.sh && make -j8 nsynt
 RUN bash -c 'source activate && source /etc/profile.d/maven.sh && make -j8 semfix'
 
 RUN rm -rf build/llvm-3.7.0.src
+RUN rm -rf /opt/maven
