@@ -20,7 +20,18 @@ Angelix is distributed in source code form and pre-installed in VirtualBox image
 
 ### Option 1: VirtualBox image ###
 
-You can [request](https://docs.google.com/forms/d/1XoQ3AomEwd2hke7-ty8CDaQ_iH7TH3W5foO5BQWc-6o/viewform?usp=send_form) VirtualBox image with pre-installed Angelix. Note that it contains an outdated version of Angelix and is distributed only for the demonstration purpose.
+You can download VirtualBox image with pre-installed Angelix. Note that it contains an outdated version of Angelix and is distributed only for the demonstration purpose.
+
+Please download the following files:
+https://s3-ap-southeast-1.amazonaws.com/angelix/angelix-icse16-v2.vbox
+https://s3-ap-southeast-1.amazonaws.com/angelix/angelix-icse16-v2.vdi (9.7 GB)
+https://s3-ap-southeast-1.amazonaws.com/angelix/md5sum.txt
+
+Execute "md5sum -c md5sum.txt" to verify your download.
+
+The image includes Ubuntu 14.04 64-bit with pre-installed Angelix.
+
+The user/password are angelix/angelix.
 
 ### Option 2: Build from source ###
 
