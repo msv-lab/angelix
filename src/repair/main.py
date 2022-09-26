@@ -410,6 +410,7 @@ if __name__ == "__main__":
     parser.add_argument('tests', metavar='TEST', nargs='+', help='test case')
     parser.add_argument('--golden', metavar='DIR', help='golden source directory')
     parser.add_argument('--assert', metavar='FILE', help='assert expected outputs')
+    parser.add_argument('--output', metavar='DIR', help='output patch directory')
     parser.add_argument('--defect', metavar='CLASS', nargs='+',
                         default=DEFAULT_DEFECTS,
                         choices=DEFECT_CLASSES,
@@ -627,6 +628,7 @@ if __name__ == "__main__":
     config['mute_warning']          = args.mute_warning
     config['localize_only']         = args.localize_only
     config['invalid_localization']  = args.invalid_localization
+    config['output_dir']            = args.output
 
     if args.verbose:
         for key, value in config.items():
@@ -695,8 +697,11 @@ if __name__ == "__main__":
     else:
         if config['generate_all']:
             patch_dir = basename(abspath(args.src)) + '-' + time.strftime("%Y-%b%d-%H%M%S")
-            if not exists(patch_dir):
-                os.mkdir(patch_dir)
+            if config['output_dir']:
+                patch_dir = config['output_dir']
+            if exists(patch_dir):
+                os.removedirs(patch_dir)
+            os.mkdir(patch_dir)
             for idx, patch in enumerate(patches):
                 patch_file = os.path.join(patch_dir, str(idx) + '.patch')
                 with open(patch_file, 'w+') as file:
